@@ -100,7 +100,7 @@ LRESULT CALLBACK window_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) 
 
 	window_win32* window = hwnd ? reinterpret_cast<window_win32*>(GetWindowLongPtr(hwnd, GWLP_USERDATA)) : NULL;
 	if (window) {
-		if (msg = WM_CLOSE) {
+		if (msg == WM_CLOSE) {
 			window->close();
 		}
 	}
