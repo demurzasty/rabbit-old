@@ -45,6 +45,7 @@ add_subdirectory ("lib")
 
 set (SRC 
 	"src/config.cpp"
+	"src/uuid.cpp"
 	"src/clock.cpp"
 	"src/window.cpp"
 	"src/keyboard.cpp"
