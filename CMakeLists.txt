@@ -96,6 +96,10 @@ if (MSVC)
 	target_compile_definitions (rabbit PUBLIC NOMINMAX _CRT_SECURE_NO_WARNINGS)
 endif ()
 
+if (RB_GRAPHICS_BACKEND_OPENGL) 
+	target_link_libraries (rabbit PRIVATE glad)
+endif ()
+
 target_compile_definitions (rabbit PUBLIC -DRB_WINDOWS=$<BOOL:${RB_WINDOWS}>)
 target_compile_definitions (rabbit PUBLIC -DRB_LINUX=$<BOOL:${RB_LINUX}>)
 target_compile_definitions (rabbit PUBLIC -DRB_MACOS=$<BOOL:${RB_MACOS}>)
