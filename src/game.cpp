@@ -1,5 +1,6 @@
 #include <rabbit/game.hpp>
 #include <rabbit/clock.hpp>
+#include <rabbit/texture_loader.hpp>
 
 #include <chrono>
 #include <iostream>
@@ -13,6 +14,9 @@ game::game(rb::config& config)
     _mouse = make_mouse(config, _window);
     _graphics_device = make_graphics_device(config, _window);
     _gamepad = make_gamepad(config);
+    _asset_manager = std::make_shared<rb::asset_manager>();
+
+    _asset_manager->add_loader<texture>(std::make_shared<texture_loader>(_graphics_device));
 }
 
 void game::run() {
@@ -79,6 +83,10 @@ std::shared_ptr<mouse> game::mouse() const {
 
 std::shared_ptr<gamepad> game::gamepad() const {
     return _gamepad;
+}
+
+std::shared_ptr<asset_manager> game::asset_manager() const {
+    return _asset_manager;
 }
 
 void game::initialize() {

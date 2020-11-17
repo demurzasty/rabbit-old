@@ -53,6 +53,7 @@ set (SRC
 	"src/gamepad.cpp"
 	"src/game.cpp"
 	"src/texture.cpp"
+	"src/texture_loader.cpp"
 	"src/graphics_device.cpp"
 	"src/sprite_batch.cpp"
 	"src/image.cpp"
