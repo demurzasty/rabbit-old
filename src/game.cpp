@@ -39,11 +39,11 @@ void game::run() {
             acc -= _config.fixed_time_step;
         }
 
-        if (_window->size() != _graphics_device->backbuffer_size()) {
-            _graphics_device->set_backbuffer_size(_window->size());
-        }
-
         if (_window->is_focused()) {
+            if (_window->size() != _graphics_device->backbuffer_size()) {
+                _graphics_device->set_backbuffer_size(_window->size());
+            }
+
             _graphics_device->set_render_target(nullptr);
 
             draw();
