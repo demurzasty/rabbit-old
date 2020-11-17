@@ -14,14 +14,9 @@ set (RB_GRAPHICS_BACKEND_DIRECTX FALSE)
 set (RB_GRAPHICS_BACKEND_OPENGL FALSE)
 set (RB_GRAPHICS_BACKEND_METAL FALSE)
 
-set (RB_WINDOW_BACKEND_WIN32 FALSE)
-set (RB_WINDOW_BACKEND_GLFW FALSE)
-set (RB_WINDOW_BACKEND_SDL2 FALSE)
-set (RB_WINDOW_BACKEND_COCOA FALSE)
-
-set (RB_KEYBOARD_BACKEND_WIN32 FALSE)
-
-set (RB_MOUSE_BACKEND_WIN32 FALSE)
+set (RB_PLATFORM_BACKEND_WIN32 FALSE)
+set (RB_PLATFORM_BACKEND_X11 FALSE)
+set (RB_PLATFORM_BACKEND_COCOA FALSE)
 
 set (RB_GAMEPAD_BACKEND_XINPUT FALSE)
 
@@ -30,14 +25,13 @@ set (RB_AUDIO_BACKEND_OPENAL FALSE)
 
 if (RB_WINDOWS)
 	set (RB_GRAPHICS_BACKEND_DIRECTX TRUE)
-	set (RB_WINDOW_BACKEND_WIN32 TRUE)
-	set (RB_KEYBOARD_BACKEND_WIN32 TRUE)
-	set (RB_MOUSE_BACKEND_WIN32 TRUE)
+	set (RB_GRAPHICS_BACKEND_OPENGL TRUE)
+	set (RB_PLATFORM_BACKEND_WIN32 TRUE)
 	set (RB_GAMEPAD_BACKEND_XINPUT TRUE)
 	set (RB_AUDIO_BACKEND_XAUDIO TRUE)
 elseif (RB_LINUX)
 	set (RB_GRAPHICS_BACKEND_OPENGL TRUE)
-	set (RB_PLATFORM_BACKEND_GLFW TRUE)
+	set (RB_PLATFORM_BACKEND_X11 TRUE)
 	set (RB_AUDIO_BACKEND_OPENAL TRUE)
 elseif (RB_MACOX)
 	set (RB_GRAPHICS_BACKEND_METAL TRUE)
@@ -63,20 +57,10 @@ set (SRC
 	"src/image.cpp"
 )
 
-if (RB_WINDOW_BACKEND_WIN32) 
+if (RB_PLATFORM_BACKEND_WIN32) 
 	set (SRC ${SRC}
 		"src/win32/window_win32.cpp"
-	)
-endif ()
-
-if (RB_KEYBOARD_BACKEND_WIN32) 
-	set (SRC ${SRC}
 		"src/win32/keyboard_win32.cpp"
-	)
-endif ()
-
-if (RB_MOUSE_BACKEND_WIN32) 
-	set (SRC ${SRC}
 		"src/win32/mouse_win32.cpp"
 	)
 endif ()
@@ -95,6 +79,14 @@ if (RB_GRAPHICS_BACKEND_DIRECTX)
 	)
 endif ()
 
+if (RB_GRAPHICS_BACKEND_OPENGL) 
+	set (SRC ${SRC}
+		"src/ogl3/graphics_device_ogl3.cpp"
+		"src/ogl3/texture_ogl3.cpp"
+		"src/ogl3/standard_shaders_ogl3.cpp"
+	)
+endif ()
+
 add_library (rabbit STATIC ${SRC})
 target_compile_features (rabbit PUBLIC cxx_std_17)
 target_include_directories (rabbit PUBLIC "include")
@@ -109,13 +101,9 @@ target_compile_definitions (rabbit PUBLIC -DRB_LINUX=$<BOOL:${RB_LINUX}>)
 target_compile_definitions (rabbit PUBLIC -DRB_MACOS=$<BOOL:${RB_MACOS}>)
 target_compile_definitions (rabbit PUBLIC -DRB_SWITCH=$<BOOL:${RB_SWITCH}>)
 
-target_compile_definitions (rabbit PUBLIC -DRB_WINDOW_BACKEND_WIN32=$<BOOL:${RB_WINDOW_BACKEND_WIN32}>)
-target_compile_definitions (rabbit PUBLIC -DRB_WINDOW_BACKEND_GLFW=$<BOOL:${RB_WINDOW_BACKEND_GLFW}>)
-target_compile_definitions (rabbit PUBLIC -DRB_WINDOW_BACKEND_SWITCH=$<BOOL:${RB_WINDOW_BACKEND_SWITCH}>)
-
-target_compile_definitions (rabbit PUBLIC -DRB_KEYBOARD_BACKEND_WIN32=$<BOOL:${RB_KEYBOARD_BACKEND_WIN32}>)
-
-target_compile_definitions (rabbit PUBLIC -DRB_MOUSE_BACKEND_WIN32=$<BOOL:${RB_MOUSE_BACKEND_WIN32}>)
+target_compile_definitions (rabbit PUBLIC -DRB_PLATFORM_BACKEND_WIN32=$<BOOL:${RB_PLATFORM_BACKEND_WIN32}>)
+target_compile_definitions (rabbit PUBLIC -DRB_PLATFORM_BACKEND_X11=$<BOOL:${RB_PLATFORM_BACKEND_X11}>)
+target_compile_definitions (rabbit PUBLIC -DRB_PLATFORM_BACKEND_SWITCH=$<BOOL:${RB_PLATFORM_BACKEND_SWITCH}>)
 
 target_compile_definitions (rabbit PUBLIC -DRB_GAMEPAD_BACKEND_XINPUT=$<BOOL:${RB_GAMEPAD_BACKEND_XINPUT}>)
 

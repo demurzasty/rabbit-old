@@ -6,29 +6,13 @@
 #include <string>
 
 namespace rb {
-	enum class window_backend : std::int8_t {
+	enum class platform_backend : std::int8_t {
 		unknown = -1,
 
 		win32,
-		glfw,
+		x11,
 		cocoa,
 		nswitch,
-
-		count
-	};
-
-	enum class keyboard_backend : std::int8_t {
-		unknown = -1,
-
-		win32,
-
-		count
-	};
-
-	enum class mouse_backend : std::int8_t {
-		unknown = -1,
-
-		win32,
 
 		count
 	};
@@ -62,9 +46,7 @@ namespace rb {
 	};
 
 	struct config {
-		window_backend window_backend = window_backend::unknown;
-		keyboard_backend keyboard_backend = keyboard_backend::unknown;
-		mouse_backend mouse_backend = mouse_backend::unknown;
+		platform_backend platform_backend = platform_backend::unknown;
 		gamepad_backend gamepad_backend = gamepad_backend::unknown;
 		graphics_backend graphics_backend = graphics_backend::unknown;
 		audio_backend audio_backend = audio_backend::unknown;

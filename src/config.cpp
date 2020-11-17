@@ -3,18 +3,10 @@
 using namespace rb;
 
 config::config() {
-#if RB_WINDOW_BACKEND_WIN32
-    window_backend = window_backend::win32;
-#elif RB_WINDOW_BACKEND_SWITCH
-    window_backend = window_backend::nswitch;
-#endif
-
-#if RB_KEYBOARD_BACKEND_WIN32
-    keyboard_backend = keyboard_backend::win32;
-#endif
-
-#if RB_MOUSE_BACKEND_WIN32
-    mouse_backend = mouse_backend::win32;
+#if RB_PLATFORM_BACKEND_WIN32
+    platform_backend = platform_backend::win32;
+#elif RB_PLATFORM_BACKEND_SWITCH
+    platform_backend = platform_backend::nswitch;
 #endif
 
 #if RB_GAMEPAD_BACKEND_XINPUT
