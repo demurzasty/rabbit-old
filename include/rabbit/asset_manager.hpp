@@ -18,7 +18,7 @@ namespace rb {
 
         template<typename Asset>
         std::shared_ptr<Asset> load(const std::string& filename) {
-            auto& asset = _assets[fnv1a(filename)];
+            auto& asset = _assets[filename];
             if (!asset) {
                 auto loader = _loaders.at(typeid(Asset));
                 asset = loader->load(filename);
@@ -28,6 +28,6 @@ namespace rb {
 
     private:
         std::unordered_map<std::type_index, std::shared_ptr<loader>> _loaders;
-        std::unordered_map<fnv1a_result_t, std::shared_ptr<void>> _assets;
+        std::unordered_map<std::string, std::shared_ptr<void>> _assets;
     };
 }
