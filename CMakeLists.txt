@@ -45,6 +45,7 @@ add_subdirectory ("lib")
 
 set (SRC 
 	"src/config.cpp"
+	"src/uuid.cpp"
 	"src/clock.cpp"
 	"src/window.cpp"
 	"src/keyboard.cpp"
@@ -52,6 +53,7 @@ set (SRC
 	"src/gamepad.cpp"
 	"src/game.cpp"
 	"src/texture.cpp"
+	"src/texture_loader.cpp"
 	"src/graphics_device.cpp"
 	"src/sprite_batch.cpp"
 	"src/image.cpp"

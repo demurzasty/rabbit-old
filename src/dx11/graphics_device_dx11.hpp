@@ -51,9 +51,9 @@ namespace rb {
 
     private:
         struct vertex_shader_data {
-            mat4f world;
-            mat4f view;
-            mat4f projection;
+            mat4f world = mat4f::identity();
+            mat4f view = mat4f::identity();
+            mat4f projection = mat4f::identity();
         };
 
     private:
