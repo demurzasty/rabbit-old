@@ -14,5 +14,6 @@ protected:
     void draw() override;
 
 private:
+    std::shared_ptr<rb::sprite_batch> _sprite_batch;
     std::shared_ptr<rb::texture> _texture;
 };

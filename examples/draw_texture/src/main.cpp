@@ -7,6 +7,8 @@ draw_texture::draw_texture(rb::config& config)
 }
 
 void draw_texture::initialize() {
+    _sprite_batch = std::make_shared<rb::sprite_batch>(graphics_device());
+
     // Load texture from file.
     _texture = asset_manager()->load<rb::texture>("data/mockup.png");
 }
@@ -21,14 +23,11 @@ void draw_texture::update(float elapsed_time) {
 void draw_texture::draw() {
     graphics_device()->clear(rb::color::cornflower_blue());
 
-    graphics_device()->set_projection_matrix(rb::mat4f::orthographic(0.0f, 480.0f, 320.0f, 0.0f, -1.0f, 1.0f));
+    _sprite_batch->begin();
 
-    rb::vertex2d vertices[4];
-    vertices[0] = { { 0.0f, 0.0f }, { 0.0f, 0.0f }, rb::color::white() };
-    vertices[1] = { { 480.0f, 0.0f }, { 1.0f, 0.0f }, rb::color::white() };
-    vertices[2] = { { 0.0f, 320.0f }, { 0.0f, 1.0f }, rb::color::white() };
-    vertices[3] = { { 480.0f, 320.0f }, { 1.0f, 1.0f }, rb::color::white() };
-    graphics_device()->draw_textured(rb::topology::triangle_strip, vertices, _texture);
+    _sprite_batch->draw(_texture, { 0, 0, 480, 320 }, { 0.0f, 0.0f, 960.0f, 640.0f }, rb::color::white());
+
+    _sprite_batch->end();
 }
 
 int main(int argc, char* argv[]) {
