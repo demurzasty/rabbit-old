@@ -5,6 +5,8 @@
 #include <cstring>
 #include <unordered_map>
 
+#include <objbase.h>
+
 #pragma comment(lib, "Xinput9_1_0.lib")
 
 using namespace rb;
@@ -28,6 +30,7 @@ static std::unordered_map<gamepad_button, WORD> gamepad_button_map = {
 
 gamepad_xinput::gamepad_xinput()
     : _last_state(), _state() {
+	CoInitialize(NULL);
 }
 
 void gamepad_xinput::refresh() {

@@ -2,7 +2,7 @@
 
 #include <rabbit/texture.hpp>
 
-#include <glad/glad.h>
+#include <GL/glew.h>
 
 namespace rb {
     class texture_ogl3 : public texture {

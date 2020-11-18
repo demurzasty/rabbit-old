@@ -5,5 +5,5 @@ add_subdirectory ("json-3.9.1")
 add_subdirectory ("stb")
 
 if (RB_GRAPHICS_BACKEND_OPENGL) 
-	add_subdirectory ("glad-0.1.34")
+	add_subdirectory ("glew-2.1.0")
 endif ()

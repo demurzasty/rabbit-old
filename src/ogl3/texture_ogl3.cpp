@@ -12,7 +12,7 @@ static std::map<texture_format, GLenum> formats = {
 static std::map<texture_format, GLint> internal_formats = {
 	{ texture_format::r8, GL_R8 },
 	{ texture_format::rg8, GL_RG8 },
-	{ texture_format::rgba8, GL_RGB8 },
+	{ texture_format::rgba8, GL_RGBA8 },
 	{ texture_format::d24s8, GL_DEPTH24_STENCIL8 }
 };
 

@@ -99,7 +99,7 @@ if (MSVC)
 endif ()
 
 if (RB_GRAPHICS_BACKEND_OPENGL) 
-	target_link_libraries (rabbit PRIVATE glad)
+	target_link_libraries (rabbit PRIVATE opengl32 glew)
 endif ()
 
 target_compile_definitions (rabbit PUBLIC -DRB_WINDOWS=$<BOOL:${RB_WINDOWS}>)

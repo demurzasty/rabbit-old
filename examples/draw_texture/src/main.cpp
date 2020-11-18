@@ -33,6 +33,7 @@ void draw_texture::draw() {
 
 int main(int argc, char* argv[]) {
     rb::config config;
+    config.graphics_backend = rb::graphics_backend::opengl3;
     config.window_title = "Hello World";
     config.window_size = { 960, 640 };
     draw_texture{ config }.run();
