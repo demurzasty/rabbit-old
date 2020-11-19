@@ -12,6 +12,8 @@ namespace rb {
     public:
         template<typename Asset>
         void add_loader(std::shared_ptr<loader> loader) {
+            loader->_asset_manager = this;
+
             _loaders.emplace(typeid(Asset), loader);
         }
 
