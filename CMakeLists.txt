@@ -56,6 +56,7 @@ set (SRC
 	"src/texture_loader.cpp"
 	"src/graphics_device.cpp"
 	"src/sprite_batch.cpp"
+	"src/asset_manager.cpp"
 	"src/loader.cpp"
 	"src/image.cpp"
 	"src/state.cpp"

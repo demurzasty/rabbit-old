@@ -27,6 +27,8 @@ namespace rb {
             return std::static_pointer_cast<Asset>(asset);
         }
 
+        std::string filename(std::shared_ptr<void> asset) const;
+
     private:
         std::unordered_map<std::type_index, std::shared_ptr<loader>> _loaders; // todo: should we use unique_ptr instead?
         std::unordered_map<std::string, std::shared_ptr<void>> _assets; // todo; use weak_ptr instead
