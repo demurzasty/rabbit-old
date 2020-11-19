@@ -15,12 +15,9 @@ game::game(rb::config& config)
     _graphics_device = make_graphics_device(config, _window);
     _gamepad = make_gamepad(config);
     _asset_manager = std::make_shared<rb::asset_manager>();
+    _state_manager = std::make_shared<rb::state_manager>();
 
     _asset_manager->add_loader<texture>(std::make_shared<texture_loader>(_graphics_device));
-}
-
-void game::set_state(const std::string& name) {
-    _current_state = _states.at(name);
 }
 
 void game::run() {
@@ -41,9 +38,14 @@ void game::run() {
 
         update(static_cast<float>(elapsed_time));
 
+        _state_manager->update(static_cast<float>(elapsed_time));
+
         acc += elapsed_time;
         while (acc >= _config.fixed_time_step) {
             fixed_update(static_cast<float>(_config.fixed_time_step));
+
+            _state_manager->fixed_update(static_cast<float>(_config.fixed_time_step));
+
             acc -= _config.fixed_time_step;
         }
 
@@ -56,9 +58,15 @@ void game::run() {
 
             draw();
 
+            _state_manager->draw();
+
             _graphics_device->present();
         }
     }
+
+    _state_manager->release();
+
+    release();
 }
 
 void game::exit() {
@@ -93,27 +101,21 @@ std::shared_ptr<asset_manager> game::asset_manager() const {
     return _asset_manager;
 }
 
-void game::add_state(const std::string& name, std::shared_ptr<state> state) {
-    _states.emplace(name, state);
+std::shared_ptr<state_manager> game::state_manager() const {
+    return _state_manager;
 }
 
 void game::initialize() {
 }
 
+void game::release() {
+}
+
 void game::update(float elapsed_time) {
-    if (_current_state) {
-        _current_state->update(elapsed_time);
-    }
 }
 
 void game::fixed_update(float fixed_time) {
-    if (_current_state) {
-        _current_state->fixed_update(fixed_time);
-    }
 }
 
 void game::draw() {
-    if (_current_state) {
-        _current_state->draw();
-    }
 }

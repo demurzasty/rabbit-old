@@ -2,9 +2,9 @@
 
 #include <rabbit/rabbit.hpp>
 
-class draw_texture : public rb::game {
+class example_game : public rb::game {
 public:
-    draw_texture(rb::config& config);
+    example_game(rb::config& config);
 
 protected:
     void initialize() override;

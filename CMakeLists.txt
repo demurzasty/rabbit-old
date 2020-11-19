@@ -58,6 +58,7 @@ set (SRC
 	"src/sprite_batch.cpp"
 	"src/image.cpp"
 	"src/state.cpp"
+	"src/state_manager.cpp"
 )
 
 if (RB_PLATFORM_BACKEND_WIN32) 

@@ -1,13 +1,14 @@
 #include "main.hpp"
 
-hello_world::hello_world(rb::config& config)
+example_game::example_game(rb::config& config)
     : rb::game(config) {
 }
 
-void hello_world::initialize() {
+void example_game::initialize() {
+    game::initialize();
 }
 
-void hello_world::update(float elapsed_time) {
+void example_game::update(float elapsed_time) {
     game::update(elapsed_time);
 
     // Exit game if back button on gamepad or escape on keyboard was pressed.
@@ -17,7 +18,7 @@ void hello_world::update(float elapsed_time) {
     }
 }
 
-void hello_world::draw() {
+void example_game::draw() {
     // Clear window with color.
     graphics_device()->clear(rb::color::cornflower_blue());
 
@@ -26,7 +27,7 @@ void hello_world::draw() {
 
 int main(int argc, char* argv[]) {
     rb::config config;
-    config.window_title = "Hello World";
+    config.window_title = "Hello World Example";
     config.window_size = { 960, 640 };
-    hello_world{ config }.run();
+    example_game{ config }.run();
 }
