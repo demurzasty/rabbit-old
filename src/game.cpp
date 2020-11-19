@@ -19,6 +19,10 @@ game::game(rb::config& config)
     _asset_manager->add_loader<texture>(std::make_shared<texture_loader>(_graphics_device));
 }
 
+void game::set_state(const std::string& name) {
+    _current_state = _states.at(name);
+}
+
 void game::run() {
     initialize();
 
@@ -89,14 +93,27 @@ std::shared_ptr<asset_manager> game::asset_manager() const {
     return _asset_manager;
 }
 
+void game::add_state(const std::string& name, std::shared_ptr<state> state) {
+    _states.emplace(name, state);
+}
+
 void game::initialize() {
 }
 
 void game::update(float elapsed_time) {
+    if (_current_state) {
+        _current_state->update(elapsed_time);
+    }
 }
 
 void game::fixed_update(float fixed_time) {
+    if (_current_state) {
+        _current_state->fixed_update(fixed_time);
+    }
 }
 
 void game::draw() {
+    if (_current_state) {
+        _current_state->draw();
+    }
 }

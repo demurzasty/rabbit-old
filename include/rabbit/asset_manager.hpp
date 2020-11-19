@@ -1,6 +1,5 @@
 #pragma once 
 
-#include "fnv1a.hpp"
 #include "loader.hpp"
 
 #include <memory>
@@ -27,7 +26,7 @@ namespace rb {
         }
 
     private:
-        std::unordered_map<std::type_index, std::shared_ptr<loader>> _loaders;
-        std::unordered_map<std::string, std::shared_ptr<void>> _assets;
+        std::unordered_map<std::type_index, std::shared_ptr<loader>> _loaders; // todo: should we use unique_ptr instead?
+        std::unordered_map<std::string, std::shared_ptr<void>> _assets; // todo; use weak_ptr instead
     };
 }
