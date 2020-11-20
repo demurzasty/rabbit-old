@@ -6,8 +6,8 @@
 
 namespace rb {
 	static std::random_device random;
-	static std::mt19937 generator(random());
-	static std::uniform_int_distribution<std::uint32_t> distribution(0, std::numeric_limits<std::uint32_t>::max());
+	static std::mt19937 generator{ random() };
+	static std::uniform_int_distribution<std::uint32_t> distribution{ 0, std::numeric_limits<std::uint32_t>::max() };
 	static std::uint32_t empty_uuid[4] = { 0, 0, 0, 0 };
 
 	static std::uint8_t hex_to_uint8(const char ch) {
