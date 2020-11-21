@@ -44,6 +44,7 @@ option (RB_PROD_BUILD "Enable production build" OFF)
 add_subdirectory ("lib")
 
 set (SRC 
+	"src/exception.cpp"
 	"src/config.cpp"
 	"src/uuid.cpp"
 	"src/clock.cpp"
@@ -96,7 +97,7 @@ endif ()
 add_library (rabbit STATIC ${SRC})
 target_compile_features (rabbit PUBLIC cxx_std_17)
 target_include_directories (rabbit PUBLIC "include")
-target_link_libraries (rabbit PUBLIC stb json gsl)
+target_link_libraries (rabbit PUBLIC fmt stb json gsl)
 
 if (MSVC) 
 	target_compile_definitions (rabbit PUBLIC NOMINMAX _CRT_SECURE_NO_WARNINGS)

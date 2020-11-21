@@ -106,6 +106,15 @@ namespace rb {
         virtual void draw(topology topology, const span<const vertex2d>& vertices) = 0;
 
         /**
+         * @brief Draws a sequence of indexed geometric primitives of the specified type.
+         *
+         * @param topology Describes the type of primitive to draw.
+         * @param vertices Input data to draw from.
+         * @param indices Input data to index vertices.
+         */
+        virtual void draw(topology topology, const span<const vertex2d>& vertices, const span<const std::uint32_t>& indices) = 0;
+
+        /**
          * @brief Draws a textured sequence of non-indexed geometric primitives of the specified type.
          *        If texture is not provided, primitives will be drawed in solid mode.
          * 
@@ -114,6 +123,18 @@ namespace rb {
          * @param texture Texture to be used.
          */
         virtual void draw_textured(topology topology, const span<const vertex2d>& vertices, const std::shared_ptr<texture>& texture) = 0;
+
+        /**
+         * @brief Draws a textured sequence of indexed geometric primitives of the specified type.
+         *        If texture is not provided, primitives will be drawed in solid mode.
+         *
+         * @param topology Describes the type of primitive to draw.
+         * @param vertices Input data to draw from.
+         * @param texture Texture to be used.
+         * @param indices Input data to index vertices.
+         */
+        virtual void draw_textured(topology topology, const span<const vertex2d>& vertices, const span<const std::uint32_t>& indices, const std::shared_ptr<texture>& texture) = 0;
+
     };
 
     std::shared_ptr<graphics_device> make_graphics_device(const config& config, std::shared_ptr<window> window);

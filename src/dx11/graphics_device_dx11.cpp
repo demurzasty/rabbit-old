@@ -2,7 +2,9 @@
 #include "standard_shaders_dx11.hpp"
 #include "texture_dx11.hpp"
 
-#include <cassert>
+#include <rabbit/exception.hpp>
+
+#include <fmt/format.h>
 
 #pragma comment (lib, "d3d11.lib")
 #pragma comment (lib, "Dxgi.lib")
@@ -65,27 +67,39 @@ graphics_device_dx11::graphics_device_dx11(const config& config, std::shared_ptr
 	D3D_FEATURE_LEVEL feature_level;
 
 	HRESULT result = D3D11CreateDevice(nullptr, D3D_DRIVER_TYPE_HARDWARE, nullptr, flags, feature_levels, 7, D3D11_SDK_VERSION, &_device, &feature_level, &context);
-	assert(SUCCEEDED(result));
+	if (FAILED(result)) {
+		throw exception{ "Cannot create d3d11 device" };
+	}
 
 	result = context->QueryInterface(__uuidof(ID3D11DeviceContext1), reinterpret_cast<void**>(&_device_context));
-	assert(SUCCEEDED(result));
+	if (FAILED(result)) {
+		throw exception{ "Cannot query d3d11 device context" };
+	}
 
 	const auto window_size = window->size();
 
 	IDXGIDevice2* dxgi_device;
 	result = _device->QueryInterface(__uuidof(IDXGIDevice2), reinterpret_cast<void**>(&dxgi_device));
-	assert(SUCCEEDED(result));
+	if (FAILED(result)) {
+		throw exception{ "Cannot query dxgi device" };
+	}
 
 	result = dxgi_device->SetMaximumFrameLatency(1);
-	assert(SUCCEEDED(result));
+	if (FAILED(result)) {
+		throw exception{ "Cannot set maximum frame latency to 1" };
+	}
 
 	IDXGIAdapter* dxgi_adapter;
 	result = dxgi_device->GetParent(__uuidof(IDXGIAdapter*), reinterpret_cast<void**>(&dxgi_adapter));
-	assert(SUCCEEDED(result));
+	if (FAILED(result)) {
+		throw exception{ "Cannot get dxgi adapter from dxgi device" };
+	}
 
 	IDXGIFactory2* dxgi_factory;
 	result = dxgi_adapter->GetParent(__uuidof(IDXGIFactory*), reinterpret_cast<void**>(&dxgi_factory));
-	assert(SUCCEEDED(result));
+	if (FAILED(result)) {
+		throw exception{ "Cannot get dxgi factory from dxgi adapter" };
+	}
 
 	DXGI_SWAP_CHAIN_DESC1 swap_chain_desc;
 	ZeroMemory(&swap_chain_desc, sizeof(swap_chain_desc));
@@ -101,23 +115,33 @@ graphics_device_dx11::graphics_device_dx11(const config& config, std::shared_ptr
 	swap_chain_desc.Flags = 0;
 
 	result = dxgi_factory->CreateSwapChainForHwnd(_device, window->native_handle(), &swap_chain_desc, nullptr, nullptr, &_swap_chain);
-	assert(SUCCEEDED(result));
+	if (FAILED(result)) {
+		throw exception{ "Cannot create swap chain for window" };
+	}
 
 	result = dxgi_factory->MakeWindowAssociation(window->native_handle(), DXGI_MWA_NO_WINDOW_CHANGES);
-	assert(SUCCEEDED(result));
+	if (FAILED(result)) {
+		throw exception{ "Cannot make window association" };
+	}
 
 	ID3D11Texture2D* back_buffer;
 	result = _swap_chain->GetBuffer(0, __uuidof(ID3D11Texture2D), reinterpret_cast<void**>(&back_buffer));
-	assert(SUCCEEDED(result));
+	if (FAILED(result)) {
+		throw exception{ "Cannot get back buffer from swap chain" };
+	}
 
 	result = _device->CreateRenderTargetView(back_buffer, nullptr, &_render_target);
-	assert(SUCCEEDED(result));
+	if (FAILED(result)) {
+		throw exception{ "Cannot create render target view" };
+	}
 
 	back_buffer->Release();
 
 	const auto vertex_shader = standard_shaders_dx11::vertex_shader();
 	result = _device->CreateVertexShader(vertex_shader.data(), vertex_shader.size_bytes(), nullptr, &_vertex_shader);
-	assert(SUCCEEDED(result));
+	if (FAILED(result)) {
+		throw exception{ "Cannot create vertex shader" };
+	}
 
 	const D3D11_INPUT_ELEMENT_DESC vertex_desc[] = {
 		{ "POSITION", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
@@ -126,15 +150,21 @@ graphics_device_dx11::graphics_device_dx11(const config& config, std::shared_ptr
 	};
 
 	result = _device->CreateInputLayout(vertex_desc, 3, vertex_shader.data(), vertex_shader.size_bytes(), &_input_layout);
-	assert(SUCCEEDED(result));
+	if (FAILED(result)) {
+		throw exception{ "Cannot create input layout" };
+	}
 
 	const auto solid_pixel_shader = standard_shaders_dx11::solid_pixel_shader();
 	result = _device->CreatePixelShader(solid_pixel_shader.data(), solid_pixel_shader.size_bytes(), nullptr, &_color_pixel_shader);
-	assert(SUCCEEDED(result));
+	if (FAILED(result)) {
+		throw exception{ "Cannot create solid pixel shader" };
+	}
 
 	const auto texture_pixel_shader = standard_shaders_dx11::texture_pixel_shader();
 	result = _device->CreatePixelShader(texture_pixel_shader.data(), texture_pixel_shader.size_bytes(), nullptr, &_texture_pixel_shader);
-	assert(SUCCEEDED(result));
+	if (FAILED(result)) {
+		throw exception{ "Cannot create texture pixel shader" };
+	}
 
 	D3D11_BUFFER_DESC constant_buffer_desc;
 	ZeroMemory(&constant_buffer_desc, sizeof(D3D11_BUFFER_DESC));
@@ -143,7 +173,9 @@ graphics_device_dx11::graphics_device_dx11(const config& config, std::shared_ptr
 	constant_buffer_desc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
 
 	result = _device->CreateBuffer(&constant_buffer_desc, nullptr, &_vertex_constant_buffer);
-	assert(SUCCEEDED(result));
+	if (FAILED(result)) {
+		throw exception{ "Cannot create constant buffer" };
+	}
 
 	D3D11_RASTERIZER_DESC rasterizer_desc;
 	rasterizer_desc.AntialiasedLineEnable = FALSE;
@@ -157,7 +189,9 @@ graphics_device_dx11::graphics_device_dx11(const config& config, std::shared_ptr
 	rasterizer_desc.ScissorEnable = TRUE;
 	rasterizer_desc.SlopeScaledDepthBias = 0.0f;
 	result = _device->CreateRasterizerState(&rasterizer_desc, &_rasterizer_state);
-	assert(SUCCEEDED(result));
+	if (FAILED(result)) {
+		throw exception{ "Cannot create rasterizer state" };
+	}
 
 	D3D11_VIEWPORT viewport = { 0 };
 
@@ -194,7 +228,7 @@ graphics_device_dx11::~graphics_device_dx11() {
 	safe_release(_device_context);
 	safe_release(_swap_chain);
 	safe_release(_render_target);
-	safe_release(_vertex_buffer);
+	//safe_release(_vertex_buffer);
 	safe_release(_vertex_constant_buffer);
 	safe_release(_vertex_shader);
 	safe_release(_color_pixel_shader);
@@ -203,8 +237,8 @@ graphics_device_dx11::~graphics_device_dx11() {
 	safe_release(_rasterizer_state);
 }
 
-std::shared_ptr<texture> graphics_device_dx11::make_texture(const texture_desc& desc) {
-	return std::make_shared<texture_dx11>(_device, _device_context, desc);
+std::shared_ptr<texture> graphics_device_dx11::make_texture(const texture_desc& texture_desc) {
+	return std::make_shared<texture_dx11>(_device, _device_context, texture_desc);
 }
 
 void graphics_device_dx11::clear(const color& color) {
@@ -280,7 +314,9 @@ void graphics_device_dx11::set_backbuffer_size(const vec2i& size) {
 	ID3D11Texture2D* buffer;
 	_swap_chain->GetBuffer(0, __uuidof(ID3D11Texture2D), (void**)&buffer);
 	const auto result = _device->CreateRenderTargetView(buffer, NULL, &_render_target);
-	assert(SUCCEEDED(result));
+	if (FAILED(result)) {
+		throw exception{ "Cannot create render target view" };
+	}
 
 	buffer->Release();
 
@@ -368,6 +404,23 @@ void graphics_device_dx11::draw(topology topology, const span<const vertex2d>& v
 	_device_context->Draw((UINT)vertices.size(), 0);
 }
 
+void graphics_device_dx11::draw(topology topology, const span<const vertex2d>& vertices, const span<const std::uint32_t>& indices) {
+	_device_context->RSSetState(_rasterizer_state);
+
+	update_vertex_buffer(vertices);
+	update_index_buffer(indices);
+
+	_device_context->UpdateSubresource(_vertex_constant_buffer, 0, nullptr, &_vertex_shader_data, 0, 0);
+
+	_device_context->VSSetConstantBuffers(0, 1, &_vertex_constant_buffer);
+	_device_context->VSSetShader(_vertex_shader, nullptr, 0);
+	_device_context->IASetInputLayout(_input_layout);
+	_device_context->PSSetShader(_color_pixel_shader, nullptr, 0);
+
+	_device_context->IASetPrimitiveTopology(topologies.at(topology));
+	_device_context->DrawIndexed(static_cast<UINT>(indices.size()), 0, 0);
+}
+
 void graphics_device_dx11::draw_textured(topology topology, const span<const vertex2d>& vertices, const std::shared_ptr<texture>& texture) {
 	_device_context->RSSetState(_rasterizer_state);
 
@@ -391,6 +444,30 @@ void graphics_device_dx11::draw_textured(topology topology, const span<const ver
 	_device_context->Draw(static_cast<UINT>(vertices.size()), 0);
 }
 
+void graphics_device_dx11::draw_textured(topology topology, const span<const vertex2d>& vertices, const span<const std::uint32_t>& indices, const std::shared_ptr<texture>& texture) {
+	_device_context->RSSetState(_rasterizer_state);
+
+	update_vertex_buffer(vertices);
+	update_index_buffer(indices);
+
+	const auto native_texture = std::static_pointer_cast<texture_dx11>(texture);
+
+	ID3D11ShaderResourceView* shader_resource_view = native_texture->shader_resource_view();
+	ID3D11SamplerState* sampler_state = native_texture->sampler();
+
+	_device_context->UpdateSubresource(_vertex_constant_buffer, 0, nullptr, &_vertex_shader_data, 0, 0);
+
+	_device_context->VSSetConstantBuffers(0, 1, &_vertex_constant_buffer);
+	_device_context->VSSetShader(_vertex_shader, nullptr, 0);
+	_device_context->IASetInputLayout(_input_layout);
+	_device_context->PSSetShader(_texture_pixel_shader, nullptr, 0);
+	_device_context->PSSetShaderResources(0, 1, &shader_resource_view);
+	_device_context->PSSetSamplers(0, 1, &sampler_state);
+
+	_device_context->IASetPrimitiveTopology(topologies.at(topology));
+	_device_context->DrawIndexed(static_cast<UINT>(indices.size()), 0, 0);
+}
+
 ID3D11Device* graphics_device_dx11::device() const {
 	return _device;
 }
@@ -410,7 +487,9 @@ void graphics_device_dx11::update_vertex_buffer(const span<const vertex2d>& vert
 	if (_vertex_buffer && vertices.size_bytes() <= desc.ByteWidth) {
 		D3D11_MAPPED_SUBRESOURCE mapped_resource;
 		const HRESULT result = _device_context->Map(_vertex_buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped_resource);
-		assert(SUCCEEDED(result));
+		if (FAILED(result)) {
+			throw exception{ "Cannot map vertex buffer" };
+		}
 
 		memcpy(mapped_resource.pData, vertices.data(), vertices.size_bytes());
 		_device_context->Unmap(_vertex_buffer, 0);
@@ -434,8 +513,53 @@ void graphics_device_dx11::update_vertex_buffer(const span<const vertex2d>& vert
 		vertex_buffer_data.SysMemSlicePitch = 0;
 
 		const HRESULT result = _device->CreateBuffer(&desc, &vertex_buffer_data, &_vertex_buffer);
-		assert(SUCCEEDED(result));
+		if (FAILED(result)) {
+			throw exception{ "Cannot create vertex buffer" };
+		}
 
 		_device_context->IASetVertexBuffers(0, 1, &_vertex_buffer, &stride, &offset);
+	}
+}
+
+void graphics_device_dx11::update_index_buffer(const span<const std::uint32_t>& indices) {
+	D3D11_BUFFER_DESC desc;
+	if (_index_buffer) {
+		_index_buffer->GetDesc(&desc);
+	} else {
+		ZeroMemory(&desc, sizeof(D3D11_BUFFER_DESC));
+	}
+
+	if (_index_buffer && indices.size_bytes() <= desc.ByteWidth) {
+		D3D11_MAPPED_SUBRESOURCE mapped_resource;
+
+		const auto result = _device_context->Map(_index_buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped_resource);
+		if (FAILED(result)) {
+			throw exception{ "Cannot map index buffer" };
+		}
+
+		memcpy(mapped_resource.pData, indices.data(), indices.size_bytes());
+		_device_context->Unmap(_index_buffer, 0);
+	} else {
+		if (_index_buffer) {
+			_index_buffer->Release();
+		}
+
+		desc.ByteWidth = static_cast<UINT>(indices.size_bytes());
+		desc.Usage = D3D11_USAGE_DYNAMIC;
+		desc.BindFlags = D3D10_BIND_INDEX_BUFFER;
+		desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+
+		D3D11_SUBRESOURCE_DATA index_buffer_data;
+		ZeroMemory(&index_buffer_data, sizeof(D3D11_SUBRESOURCE_DATA));
+		index_buffer_data.pSysMem = indices.data();
+		index_buffer_data.SysMemPitch = 0;
+		index_buffer_data.SysMemSlicePitch = 0;
+
+		const auto result = _device->CreateBuffer(&desc, &index_buffer_data, &_index_buffer);
+		if (FAILED(result)) {
+			throw exception{ "Cannot create index buffer" };
+		}
+
+		_device_context->IASetIndexBuffer(_index_buffer, DXGI_FORMAT_R32_UINT, 0);
 	}
 }
