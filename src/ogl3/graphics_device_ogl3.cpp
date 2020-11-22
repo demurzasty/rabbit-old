@@ -247,7 +247,7 @@ void graphics_device_ogl3::draw_textured(topology topology, const span<const ver
 	glActiveTexture(GL_TEXTURE1);
 	glBindTexture(GL_TEXTURE_2D, std::static_pointer_cast<texture_ogl3>(texture)->id());
 
-	glDrawArrays(topologies.at(topology), 0, static_cast<GLsizei>(vertices.size()));
+	glDrawElements(topologies.at(topology), indices.size(), GL_UNSIGNED_INT, 0);
 }
 
 GLuint graphics_device_ogl3::compile_program(const char* vertex_shader_code, const char* fragment_shader_code) const {
