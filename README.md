@@ -21,7 +21,7 @@ To be able to use `RabBit`, users must provide a full-featured compiler that sup
 ☑️ DirectX 11  
 ⭕ DirectX 12  
 ⭕ OpenGL 2  
-⭕ OpenGL 3  
+☑️ OpenGL 3  
 ⭕ Vulkan  
 ⭕ Metal  
 ⭕ GNM  
