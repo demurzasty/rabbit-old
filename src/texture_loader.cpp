@@ -11,7 +11,6 @@ texture_loader::texture_loader(std::shared_ptr<graphics_device> graphics_device)
 
 std::shared_ptr<void> texture_loader::load(const std::string& filename) {
     auto image = image::from_file(filename);
-    assert(!image.pixels().empty());
 
     texture_desc desc;
     desc.data = image.pixels();

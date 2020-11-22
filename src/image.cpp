@@ -1,5 +1,6 @@
 #include <rabbit/image.hpp>
 #include <rabbit/enum.hpp>
+#include <rabbit/exception.hpp>
 
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
@@ -20,7 +21,9 @@ image image::from_file(const std::string& filename) {
     vec2i size;
     int components;
     auto pixels = storage{ stbi_load(filename.c_str(), &size.x, &size.y, &components, 4), &stbi_image_free };
-    assert(pixels);
+    if (!pixels) {
+        throw exception{ stbi_failure_reason() };
+    }
 
     return { std::move(pixels), size, image_format::rgba8 };
 }
