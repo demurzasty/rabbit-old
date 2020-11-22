@@ -2,6 +2,10 @@
 #include "standard_shaders_ogl3.hpp"
 #include "texture_ogl3.hpp"
 
+#include <rabbit/exception.hpp>
+
+#include <fmt/format.h>
+
 #include <map>
 
 using namespace rb;
@@ -183,7 +187,11 @@ void graphics_device_ogl3::set_clip_rect(const vec4i& rect) {
 }
 
 void graphics_device_ogl3::set_render_target(const std::shared_ptr<texture>& texture) {
-	// todo 	
+	if (texture) {
+		glBindFramebuffer(GL_FRAMEBUFFER, std::static_pointer_cast<texture_ogl3>(texture)->framebuffer_id());
+	} else {
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	}
 }
 
 void graphics_device_ogl3::draw(topology topology, const span<const vertex2d>& vertices) {
@@ -197,8 +205,37 @@ void graphics_device_ogl3::draw(topology topology, const span<const vertex2d>& v
 	glDrawArrays(topologies.at(topology), 0, static_cast<GLsizei>(vertices.size()));
 }
 
+void graphics_device_ogl3::draw(topology topology, const span<const vertex2d>& vertices, const span<const std::uint32_t>& indices) {
+	update_vertex_buffer(vertices);
+	update_index_buffer(indices);
+
+	glUseProgram(_solid_program);
+	glUniformMatrix4fv(glGetUniformLocation(_solid_program, "u_projection"), 1, GL_FALSE, &_projection[0]);
+	glUniformMatrix4fv(glGetUniformLocation(_solid_program, "u_view"), 1, GL_FALSE, &_view[0]);
+	glUniformMatrix4fv(glGetUniformLocation(_solid_program, "u_world"), 1, GL_FALSE, &_world[0]);
+
+	glDrawElements(topologies.at(topology), indices.size(), GL_UNSIGNED_INT, 0);
+}
+
 void graphics_device_ogl3::draw_textured(topology topology, const span<const vertex2d>& vertices, const std::shared_ptr<texture>& texture) {
 	update_vertex_buffer(vertices);
+
+	glUseProgram(_texture_program);
+
+	glUniform1i(glGetUniformLocation(_texture_program, "u_texture"), 1);
+	glUniformMatrix4fv(glGetUniformLocation(_texture_program, "u_projection"), 1, GL_FALSE, &_projection[0]);
+	glUniformMatrix4fv(glGetUniformLocation(_texture_program, "u_view"), 1, GL_FALSE, &_view[0]);
+	glUniformMatrix4fv(glGetUniformLocation(_texture_program, "u_world"), 1, GL_FALSE, &_world[0]);
+
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, std::static_pointer_cast<texture_ogl3>(texture)->id());
+
+	glDrawArrays(topologies.at(topology), 0, static_cast<GLsizei>(vertices.size()));
+}
+
+void graphics_device_ogl3::draw_textured(topology topology, const span<const vertex2d>& vertices, const span<const std::uint32_t>& indices, const std::shared_ptr<texture>& texture) {
+	update_vertex_buffer(vertices);
+	update_index_buffer(indices);
 
 	glUseProgram(_texture_program);
 
@@ -249,7 +286,7 @@ GLuint graphics_device_ogl3::compile_program(const char* vertex_shader_code, con
 		glDeleteShader(vertex_shader);
 		glDeleteShader(fragment_shader);
 
-		throw std::runtime_error("Cannot compile program: " + vertex_message + "\n" + fragment_message);
+		throw exception{ fmt::format("Cannot compile program: {}\n{}", vertex_message, fragment_message) };
 	}
 
 	const auto program = glCreateProgram();
@@ -276,7 +313,7 @@ GLuint graphics_device_ogl3::compile_program(const char* vertex_shader_code, con
 
 		glDeleteProgram(program);
 
-		throw std::runtime_error("Cannot link program: " + program_message);
+		throw exception{ fmt::format("Cannot link program: {}", program_message) };
 	}
 
 	return program;
@@ -290,11 +327,20 @@ void graphics_device_ogl3::update_vertex_buffer(const span<const vertex2d>& vert
 
 	if (vertices.size_bytes() <= current_size) {
 		glBufferSubData(GL_ARRAY_BUFFER, 0, vertices.size_bytes(), vertices.data());
-
-		//vertex2d* buffer = (vertex2d*)glMapBuffer(GL_ARRAY_BUFFER, GL_WRITE_ONLY);
-		//memcpy(buffer, vertices.get_data(), sizeof(vertex2d) * vertices.get_size());
-		//glUnmapBuffer(GL_ARRAY_BUFFER);
 	} else {
 		glBufferData(GL_ARRAY_BUFFER, vertices.size_bytes(), vertices.data(), GL_DYNAMIC_DRAW);
+	}
+}
+
+void graphics_device_ogl3::update_index_buffer(const span<const std::uint32_t>& indices) {
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _ibo);
+
+	GLint current_size;
+	glGetBufferParameteriv(GL_ELEMENT_ARRAY_BUFFER, GL_BUFFER_SIZE, &current_size);
+
+	if (indices.size_bytes() <= current_size) {
+		glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, indices.size_bytes(), indices.data());
+	} else {
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size_bytes(), indices.data(), GL_DYNAMIC_DRAW);
 	}
 }

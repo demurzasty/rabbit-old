@@ -7,7 +7,9 @@
 #include "mouse.hpp"
 #include "gamepad.hpp"
 #include "asset_manager.hpp"
+#include "state_manager.hpp"
 
+#include <map>
 #include <memory>
 
 namespace rb {
@@ -33,8 +35,12 @@ namespace rb {
 
         std::shared_ptr<asset_manager> asset_manager() const;
 
+        std::shared_ptr<state_manager> state_manager() const;
+
     protected:
         virtual void initialize();
+
+        virtual void release();
 
         virtual void update(float elapsed_time);
 
@@ -50,6 +56,7 @@ namespace rb {
         std::shared_ptr<rb::mouse> _mouse;
         std::shared_ptr<rb::gamepad> _gamepad;
         std::shared_ptr<rb::asset_manager> _asset_manager;
+        std::shared_ptr<rb::state_manager> _state_manager;
         bool _running = true;
     };
 }

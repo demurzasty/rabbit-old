@@ -52,7 +52,12 @@ texture_ogl3::texture_ogl3(const texture_desc& desc)
 
 	glTexImage2D(GL_TEXTURE_2D, 0, internal_formats.at(desc.format), desc.size.x, desc.size.y, 0, formats.at(desc.format), GL_UNSIGNED_BYTE, desc.data.data());
 
-	// todo: framebuffer
+	if (desc.is_render_target) {
+		glGenFramebuffers(1, &_framebuffer_id);
+		glBindFramebuffer(GL_FRAMEBUFFER, _framebuffer_id);
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, _id, 0);
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	}
 
 	glBindTexture(GL_TEXTURE_2D, 0);
 }

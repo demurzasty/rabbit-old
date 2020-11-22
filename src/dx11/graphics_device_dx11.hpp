@@ -40,14 +40,20 @@ namespace rb {
 
         void draw(topology topology, const span<const vertex2d>& vertices) override;
 
+        void draw(topology topology, const span<const vertex2d>& vertices, const span<const std::uint32_t>& indices) override;
+
         void draw_textured(topology topology, const span<const vertex2d>& vertices, const std::shared_ptr<texture>& texture) override;
-        
+
+        void draw_textured(topology topology, const span<const vertex2d>& vertices, const span<const std::uint32_t>& indices, const std::shared_ptr<texture>& texture) override;
+
         ID3D11Device* device() const;
 
         ID3D11DeviceContext1* device_context() const;
 
     private:
         void update_vertex_buffer(const span<const vertex2d>& vertices);
+
+        void update_index_buffer(const span<const std::uint32_t>& indices);
 
     private:
         struct vertex_shader_data {
@@ -64,6 +70,7 @@ namespace rb {
         ID3D11RenderTargetView* _render_target = nullptr;
         ID3D11RenderTargetView* _offscreen_render_target = nullptr;
         ID3D11Buffer* _vertex_buffer = nullptr;
+        ID3D11Buffer* _index_buffer = nullptr;
         ID3D11Buffer* _vertex_constant_buffer = nullptr;
         ID3D11VertexShader* _vertex_shader = nullptr;
         ID3D11PixelShader* _color_pixel_shader = nullptr;

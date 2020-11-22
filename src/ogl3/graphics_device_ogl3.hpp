@@ -39,12 +39,18 @@ namespace rb {
 
         void draw(topology topology, const span<const vertex2d>& vertices) override;
 
+        void draw(topology topology, const span<const vertex2d>& vertices, const span<const std::uint32_t>& indices) override;
+
         void draw_textured(topology topology, const span<const vertex2d>& vertices, const std::shared_ptr<texture>& texture) override;
+
+        void draw_textured(topology topology, const span<const vertex2d>& vertices, const span<const std::uint32_t>& indices, const std::shared_ptr<texture>& texture) override;
 
     private:
         GLuint compile_program(const char* vertex_shader_code, const char* fragment_shader_code) const;
 
         void update_vertex_buffer(const span<const vertex2d>& vertices);
+
+        void update_index_buffer(const span<const std::uint32_t>& indices);
 
     private:
         std::shared_ptr<window> _window;
@@ -60,6 +66,7 @@ namespace rb {
 
         GLuint _vao = 0;
         GLuint _vbo = 0;
+        GLuint _ibo = 0;
         GLuint _solid_program = 0;
         GLuint _texture_program = 0;
     };
