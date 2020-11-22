@@ -77,6 +77,7 @@ graphics_device_ogl3::graphics_device_ogl3(const config& config, std::shared_ptr
 
 	glGenVertexArrays(1, &_vao);
 	glGenBuffers(1, &_vbo);
+	glGenBuffers(1, &_ibo);
 
 	glBindVertexArray(_vao);
 
