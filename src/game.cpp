@@ -1,6 +1,7 @@
 #include <rabbit/game.hpp>
 #include <rabbit/clock.hpp>
 #include <rabbit/texture_loader.hpp>
+#include <rabbit/exception.hpp>
 
 #include <chrono>
 #include <iostream>

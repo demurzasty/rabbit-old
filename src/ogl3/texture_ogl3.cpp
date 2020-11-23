@@ -1,5 +1,7 @@
 #include "texture_ogl3.hpp"
 
+#include <map>
+
 using namespace rb;
 
 static std::map<texture_format, GLenum> formats = {

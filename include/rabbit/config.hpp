@@ -9,10 +9,10 @@ namespace rb {
 	enum class platform_backend : std::int8_t {
 		unknown = -1,
 
+		// @deprecated
 		win32,
-		x11,
-		cocoa,
-		nswitch,
+
+		sdl2,
 
 		count
 	};

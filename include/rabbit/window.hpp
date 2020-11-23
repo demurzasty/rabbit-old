@@ -5,7 +5,7 @@
 #include <string>
 #include <memory>
 
-#if RB_PLATFORM_BACKEND_WIN32
+#if RB_WINDOWS
 struct HWND__;
 namespace rb { typedef HWND__* window_handle; }
 #endif

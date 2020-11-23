@@ -9,6 +9,7 @@
 #include "config.hpp"
 #include "easing.hpp"
 #include "enum.hpp"
+#include "exception.hpp"
 #include "fnv1a.hpp"
 #include "game.hpp"
 #include "gamepad.hpp"

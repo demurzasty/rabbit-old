@@ -7,16 +7,16 @@ if (WIN32)
 elseif (UNIX AND NOT APPLE)
 	set (RB_LINUX TRUE)
 elseif (APPLE)
-	set (RB_MACOS TRUE)
+	set (RB_OSX TRUE)
 endif()
 
 set (RB_GRAPHICS_BACKEND_DIRECTX FALSE)
 set (RB_GRAPHICS_BACKEND_OPENGL FALSE)
+set (RB_GRAPHICS_BACKEND_GLES2 FALSE)
 set (RB_GRAPHICS_BACKEND_METAL FALSE)
 
-set (RB_PLATFORM_BACKEND_WIN32 FALSE)
-set (RB_PLATFORM_BACKEND_X11 FALSE)
-set (RB_PLATFORM_BACKEND_COCOA FALSE)
+set (RB_PLATFORM_BACKEND_WIN32 FALSE) # deprecated, use SDL2 instead
+set (RB_PLATFORM_BACKEND_SDL2 FALSE)
 
 set (RB_GAMEPAD_BACKEND_XINPUT FALSE)
 
@@ -29,16 +29,18 @@ if (RB_WINDOWS)
 	endif ()
 
 	set (RB_GRAPHICS_BACKEND_OPENGL TRUE)
+	set (RB_GRAPHICS_BACKEND_GLES2 TRUE)
 	set (RB_PLATFORM_BACKEND_WIN32 TRUE)
+	set (RB_PLATFORM_BACKEND_SDL2 TRUE)
 	set (RB_GAMEPAD_BACKEND_XINPUT TRUE)
 	set (RB_AUDIO_BACKEND_XAUDIO TRUE)
 elseif (RB_LINUX)
 	set (RB_GRAPHICS_BACKEND_OPENGL TRUE)
-	set (RB_PLATFORM_BACKEND_X11 TRUE)
+	set (RB_PLATFORM_BACKEND_SDL2 TRUE)
 	set (RB_AUDIO_BACKEND_OPENAL TRUE)
-elseif (RB_MACOX)
+elseif (RB_OSX)
 	set (RB_GRAPHICS_BACKEND_METAL TRUE)
-	set (RB_PLATFORM_BACKEND_COCOA TRUE)
+	set (RB_PLATFORM_BACKEND_SDL2 TRUE)
 	set (RB_AUDIO_BACKEND_OPENAL TRUE)
 endif ()
 
@@ -76,6 +78,15 @@ if (RB_PLATFORM_BACKEND_WIN32)
 	)
 endif ()
 
+if (RB_PLATFORM_BACKEND_SDL2)
+	set (SRC ${SRC}
+		"src/sdl2/window_sdl2.cpp"
+		"src/sdl2/keyboard_sdl2.cpp"
+		"src/sdl2/mouse_sdl2.cpp"
+		"src/sdl2/gamepad_sdl2.cpp"
+	)
+endif ()
+
 if (RB_GAMEPAD_BACKEND_XINPUT) 
 	set (SRC ${SRC}
 		"src/xinput/gamepad_xinput.cpp"
@@ -109,6 +120,10 @@ if (MSVC)
 	target_compile_definitions (rabbit PUBLIC NOMINMAX _CRT_SECURE_NO_WARNINGS)
 endif ()
 
+if (RB_PLATFORM_BACKEND_SDL2)
+	target_link_libraries (rabbit PUBLIC SDL2-static)
+endif ()
+
 if (RB_GRAPHICS_BACKEND_OPENGL) 
 	target_link_libraries (rabbit PRIVATE opengl32 glew)
 endif ()
@@ -119,8 +134,7 @@ target_compile_definitions (rabbit PUBLIC -DRB_MACOS=$<BOOL:${RB_MACOS}>)
 target_compile_definitions (rabbit PUBLIC -DRB_SWITCH=$<BOOL:${RB_SWITCH}>)
 
 target_compile_definitions (rabbit PUBLIC -DRB_PLATFORM_BACKEND_WIN32=$<BOOL:${RB_PLATFORM_BACKEND_WIN32}>)
-target_compile_definitions (rabbit PUBLIC -DRB_PLATFORM_BACKEND_X11=$<BOOL:${RB_PLATFORM_BACKEND_X11}>)
-target_compile_definitions (rabbit PUBLIC -DRB_PLATFORM_BACKEND_SWITCH=$<BOOL:${RB_PLATFORM_BACKEND_SWITCH}>)
+target_compile_definitions (rabbit PUBLIC -DRB_PLATFORM_BACKEND_SDL2=$<BOOL:${RB_PLATFORM_BACKEND_SDL2}>)
 
 target_compile_definitions (rabbit PUBLIC -DRB_GAMEPAD_BACKEND_XINPUT=$<BOOL:${RB_GAMEPAD_BACKEND_XINPUT}>)
 

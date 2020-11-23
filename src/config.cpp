@@ -4,6 +4,8 @@ using namespace rb;
 
 config::config() {
 #if RB_PLATFORM_BACKEND_WIN32
+    platform_backend = platform_backend::sdl2;
+#elif RB_PLATFORM_BACKEND_WIN32
     platform_backend = platform_backend::win32;
 #elif RB_PLATFORM_BACKEND_SWITCH
     platform_backend = platform_backend::nswitch;

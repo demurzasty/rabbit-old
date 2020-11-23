@@ -3,50 +3,57 @@
 using namespace rb;
 
 static const char* solid_pixel_shader = 
-R"(#version 450
-in vec2 v_texcoord;
-in vec4 v_color;
+"#version 120\n"
 
-layout(location = 0) out vec4 out_color;
+#ifdef __EMSCRIPTEN__
+"precision mediump float;\n"
+#endif
 
-void main() {
-	out_color = v_color;
-}
-)";
+"varying vec2 v_texcoord;\n"
+"varying vec4 v_color;\n"
+
+"void main() {\n"
+"	gl_FragColor = v_color;\n"
+"}"
+;
 
 static const char* texture_pixel_shader =
-R"(#version 450
-in vec2 v_texcoord;
-in vec4 v_color;
+"#version 120\n"
 
-uniform sampler2D u_texture;
+#ifdef __EMSCRIPTEN__
+"precision mediump float;\n"
+#endif
 
-layout(location = 0) out vec4 out_color;
+"varying vec2 v_texcoord;\n"
+"varying vec4 v_color;\n"
 
-void main() {
-	out_color = texture(u_texture, v_texcoord) * v_color;
-}
-)";
+"uniform sampler2D u_texture;\n"
+
+"void main() {\n"
+"	gl_FragColor = texture2D(u_texture, v_texcoord) * v_color;\n"
+"}\n"
+;
 
 static const char* vertex_shader = 
-R"(#version 450
-layout(location = 0) in vec3 in_position;
-layout(location = 1) in vec2 in_texcoord;
-layout(location = 2) in vec4 in_color;
+"#version 120\n"
 
-uniform mat4 u_projection;
-uniform mat4 u_view;
-uniform mat4 u_world;
+"attribute vec3 in_position;\n"
+"attribute vec2 in_texcoord;\n"
+"attribute vec4 in_color;\n"
 
-out vec2 v_texcoord;
-out vec4 v_color;
+"uniform mat4 u_projection;\n"
+"uniform mat4 u_view;\n"
+"uniform mat4 u_world;\n"
 
-void main() {
-	v_texcoord = in_texcoord;
-    v_color = in_color;
-	gl_Position = u_projection * u_view * u_world * vec4(in_position.x, in_position.y, in_position.z, 1.0);
-}
-)";
+"varying vec2 v_texcoord;\n"
+"varying vec4 v_color;\n"
+
+"void main() {\n"
+"	v_texcoord = in_texcoord;\n"
+"    v_color = in_color;\n"
+"	gl_Position = u_projection * u_view * u_world * vec4(in_position.x, in_position.y, in_position.z, 1.0);\n"
+"}\n"
+;
 
 const char* standard_shaders_ogl3::solid_pixel_shader() {
 	return ::solid_pixel_shader;
