@@ -1,6 +1,8 @@
 #include "graphics_device_dx11.hpp"
 #include "standard_shaders_dx11.hpp"
 #include "texture_dx11.hpp"
+#include "buffer_dx11.hpp"
+#include "utils_dx11.hpp"
 
 #include <rabbit/exception.hpp>
 
@@ -42,13 +44,6 @@ static std::map<blend, D3D11_BLEND> blends = {
 	{ blend::source_alpha_saturation, D3D11_BLEND_SRC_ALPHA_SAT }
 };
 
-template<typename T>
-void safe_release(T* ppt) {
-	if (ppt) {
-		ppt->Release();
-	}
-}
-
 graphics_device_dx11::graphics_device_dx11(const config& config, std::shared_ptr<window> window)
 	: _window(window) {
 	ID3D11DeviceContext* context;
@@ -68,12 +63,12 @@ graphics_device_dx11::graphics_device_dx11(const config& config, std::shared_ptr
 
 	HRESULT result = D3D11CreateDevice(nullptr, D3D_DRIVER_TYPE_HARDWARE, nullptr, flags, feature_levels, 7, D3D11_SDK_VERSION, &_device, &feature_level, &context);
 	if (FAILED(result)) {
-		throw exception{ "Cannot create d3d11 device" };
+		throw exception{ "[DX11] Cannot create d3d11 device" };
 	}
 
 	result = context->QueryInterface(__uuidof(ID3D11DeviceContext1), reinterpret_cast<void**>(&_device_context));
 	if (FAILED(result)) {
-		throw exception{ "Cannot query d3d11 device context" };
+		throw exception{ "[DX11] Cannot query d3d11 device context" };
 	}
 
 	const auto window_size = window->size();
@@ -81,24 +76,24 @@ graphics_device_dx11::graphics_device_dx11(const config& config, std::shared_ptr
 	IDXGIDevice2* dxgi_device;
 	result = _device->QueryInterface(__uuidof(IDXGIDevice2), reinterpret_cast<void**>(&dxgi_device));
 	if (FAILED(result)) {
-		throw exception{ "Cannot query dxgi device" };
+		throw exception{ "[DX11] Cannot query dxgi device" };
 	}
 
 	result = dxgi_device->SetMaximumFrameLatency(1);
 	if (FAILED(result)) {
-		throw exception{ "Cannot set maximum frame latency to 1" };
+		throw exception{ "[DX11] Cannot set maximum frame latency to 1" };
 	}
 
 	IDXGIAdapter* dxgi_adapter;
 	result = dxgi_device->GetParent(__uuidof(IDXGIAdapter*), reinterpret_cast<void**>(&dxgi_adapter));
 	if (FAILED(result)) {
-		throw exception{ "Cannot get dxgi adapter from dxgi device" };
+		throw exception{ "[DX11] Cannot get dxgi adapter from dxgi device" };
 	}
 
 	IDXGIFactory2* dxgi_factory;
 	result = dxgi_adapter->GetParent(__uuidof(IDXGIFactory*), reinterpret_cast<void**>(&dxgi_factory));
 	if (FAILED(result)) {
-		throw exception{ "Cannot get dxgi factory from dxgi adapter" };
+		throw exception{ "[DX11] Cannot get dxgi factory from dxgi adapter" };
 	}
 
 	DXGI_SWAP_CHAIN_DESC1 swap_chain_desc;
@@ -116,54 +111,83 @@ graphics_device_dx11::graphics_device_dx11(const config& config, std::shared_ptr
 
 	result = dxgi_factory->CreateSwapChainForHwnd(_device, window->native_handle(), &swap_chain_desc, nullptr, nullptr, &_swap_chain);
 	if (FAILED(result)) {
-		throw exception{ "Cannot create swap chain for window" };
+		throw exception{ "[DX11] Cannot create swap chain for window" };
 	}
 
 	result = dxgi_factory->MakeWindowAssociation(window->native_handle(), DXGI_MWA_NO_WINDOW_CHANGES);
 	if (FAILED(result)) {
-		throw exception{ "Cannot make window association" };
+		throw exception{ "[DX11] Cannot make window association" };
 	}
 
 	ID3D11Texture2D* back_buffer;
 	result = _swap_chain->GetBuffer(0, __uuidof(ID3D11Texture2D), reinterpret_cast<void**>(&back_buffer));
 	if (FAILED(result)) {
-		throw exception{ "Cannot get back buffer from swap chain" };
+		throw exception{ "[DX11] Cannot get back buffer from swap chain" };
 	}
 
 	result = _device->CreateRenderTargetView(back_buffer, nullptr, &_render_target);
 	if (FAILED(result)) {
-		throw exception{ "Cannot create render target view" };
+		throw exception{ "[DX11] Cannot create render target view" };
 	}
 
 	back_buffer->Release();
 
+	D3D11_TEXTURE2D_DESC depth_desc = {};
+	depth_desc.Width = window_size.x;
+	depth_desc.Height = window_size.y;
+	depth_desc.MipLevels = 1;
+	depth_desc.ArraySize = 1;
+	depth_desc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+	depth_desc.SampleDesc.Count = 1;
+	depth_desc.SampleDesc.Quality = 0;
+	depth_desc.Usage = D3D11_USAGE_DEFAULT;
+	depth_desc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
+	depth_desc.CPUAccessFlags = 0;
+	depth_desc.MiscFlags = 0;
+
+	result = _device->CreateTexture2D(&depth_desc, NULL, &_depth_stencil_texture);
+	if (FAILED(result)) {
+		throw exception{ "[DX11] Cannot create depth stencil texture" };
+	}
+
+	D3D11_DEPTH_STENCIL_VIEW_DESC depth_stencil_view_desc = {};
+
+	depth_stencil_view_desc.Format = depth_desc.Format;
+	depth_stencil_view_desc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2DMS;
+	depth_stencil_view_desc.Texture2D.MipSlice = 0;
+
+	result = _device->CreateDepthStencilView(_depth_stencil_texture, &depth_stencil_view_desc, &_depth_stencil_view);
+	if (FAILED(result)) {
+		throw exception{ "[DX11] Cannot create depth stencil view" };
+	}
+
 	const auto vertex_shader = standard_shaders_dx11::vertex_shader();
 	result = _device->CreateVertexShader(vertex_shader.data(), vertex_shader.size_bytes(), nullptr, &_vertex_shader);
 	if (FAILED(result)) {
-		throw exception{ "Cannot create vertex shader" };
+		throw exception{ "[DX11] Cannot create vertex shader" };
 	}
 
 	const D3D11_INPUT_ELEMENT_DESC vertex_desc[] = {
-		{ "POSITION", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 8, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-		{ "COLOR", 0, DXGI_FORMAT_R8G8B8A8_UNORM, 0, 16, D3D11_INPUT_PER_VERTEX_DATA, 0 }
+		{ "POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 },
+		{ "COLOR", 0, DXGI_FORMAT_R8G8B8A8_UNORM, 0, 20, D3D11_INPUT_PER_VERTEX_DATA, 0 }
 	};
 
 	result = _device->CreateInputLayout(vertex_desc, 3, vertex_shader.data(), vertex_shader.size_bytes(), &_input_layout);
 	if (FAILED(result)) {
-		throw exception{ "Cannot create input layout" };
+		throw exception{ "[DX11] Cannot create input layout" };
 	}
 
 	const auto solid_pixel_shader = standard_shaders_dx11::solid_pixel_shader();
 	result = _device->CreatePixelShader(solid_pixel_shader.data(), solid_pixel_shader.size_bytes(), nullptr, &_color_pixel_shader);
 	if (FAILED(result)) {
-		throw exception{ "Cannot create solid pixel shader" };
+		throw exception{ "[DX11] Cannot create solid pixel shader" };
 	}
 
 	const auto texture_pixel_shader = standard_shaders_dx11::texture_pixel_shader();
 	result = _device->CreatePixelShader(texture_pixel_shader.data(), texture_pixel_shader.size_bytes(), nullptr, &_texture_pixel_shader);
 	if (FAILED(result)) {
-		throw exception{ "Cannot create texture pixel shader" };
+		throw exception{ "[DX11] Cannot create texture pixel shader" };
 	}
 
 	D3D11_BUFFER_DESC constant_buffer_desc;
@@ -174,7 +198,7 @@ graphics_device_dx11::graphics_device_dx11(const config& config, std::shared_ptr
 
 	result = _device->CreateBuffer(&constant_buffer_desc, nullptr, &_vertex_constant_buffer);
 	if (FAILED(result)) {
-		throw exception{ "Cannot create constant buffer" };
+		throw exception{ "[DX11] Cannot create constant buffer" };
 	}
 
 	D3D11_RASTERIZER_DESC rasterizer_desc;
@@ -190,7 +214,7 @@ graphics_device_dx11::graphics_device_dx11(const config& config, std::shared_ptr
 	rasterizer_desc.SlopeScaledDepthBias = 0.0f;
 	result = _device->CreateRasterizerState(&rasterizer_desc, &_rasterizer_state);
 	if (FAILED(result)) {
-		throw exception{ "Cannot create rasterizer state" };
+		throw exception{ "[DX11] Cannot create rasterizer state" };
 	}
 
 	D3D11_VIEWPORT viewport = { 0 };
@@ -228,7 +252,7 @@ graphics_device_dx11::~graphics_device_dx11() {
 	safe_release(_device_context);
 	safe_release(_swap_chain);
 	safe_release(_render_target);
-	//safe_release(_vertex_buffer);
+	safe_release(_vertex_buffer);
 	safe_release(_vertex_constant_buffer);
 	safe_release(_vertex_shader);
 	safe_release(_color_pixel_shader);
@@ -241,6 +265,10 @@ std::shared_ptr<texture> graphics_device_dx11::make_texture(const texture_desc& 
 	return std::make_shared<texture_dx11>(_device, _device_context, texture_desc);
 }
 
+std::shared_ptr<buffer> graphics_device_dx11::make_buffer(const buffer_desc& buffer_desc) {
+	return std::make_shared<buffer_dx11>(_device, _device_context, buffer_desc);
+}
+
 void graphics_device_dx11::clear(const color& color) {
 	const auto rgba = color.to_vec4<float>();
 
@@ -248,7 +276,9 @@ void graphics_device_dx11::clear(const color& color) {
 		_device_context->ClearRenderTargetView(_offscreen_render_target, &rgba.x);
 	} else {
 		_device_context->ClearRenderTargetView(_render_target, &rgba.x);
+		_device_context->ClearDepthStencilView(_depth_stencil_view, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 	}
+
 }
 
 void graphics_device_dx11::present() {
@@ -294,6 +324,10 @@ void graphics_device_dx11::set_blend_state(const blend_state& blend_state) {
 	_device_context->OMSetBlendState(native_blend_state, blend_factor, 0xffffffff);
 }
 
+void graphics_device_dx11::set_depth_test(bool depth_test) {
+	_depth_test = depth_test;
+}
+
 void graphics_device_dx11::set_view_matrix(const mat4f& view) {
 	_vertex_shader_data.view = view;
 }
@@ -313,12 +347,45 @@ void graphics_device_dx11::set_backbuffer_size(const vec2i& size) {
 
 	ID3D11Texture2D* buffer;
 	_swap_chain->GetBuffer(0, __uuidof(ID3D11Texture2D), (void**)&buffer);
-	const auto result = _device->CreateRenderTargetView(buffer, NULL, &_render_target);
+	auto result = _device->CreateRenderTargetView(buffer, NULL, &_render_target);
 	if (FAILED(result)) {
-		throw exception{ "Cannot create render target view" };
+		throw exception{ "[DX11] Cannot create render target view" };
 	}
 
 	buffer->Release();
+
+	_depth_stencil_texture->Release();
+
+	D3D11_TEXTURE2D_DESC depth_desc = {};
+	depth_desc.Width = size.x;
+	depth_desc.Height = size.y;
+	depth_desc.MipLevels = 1;
+	depth_desc.ArraySize = 1;
+	depth_desc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+	depth_desc.SampleDesc.Count = 1;
+	depth_desc.SampleDesc.Quality = 0;
+	depth_desc.Usage = D3D11_USAGE_DEFAULT;
+	depth_desc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
+	depth_desc.CPUAccessFlags = 0;
+	depth_desc.MiscFlags = 0;
+
+	result = _device->CreateTexture2D(&depth_desc, NULL, &_depth_stencil_texture);
+	if (FAILED(result)) {
+		throw exception{ "[DX11] Cannot create depth stencil texture" };
+	}
+
+	_depth_stencil_view->Release();
+
+	D3D11_DEPTH_STENCIL_VIEW_DESC depth_stencil_view_desc = {};
+
+	depth_stencil_view_desc.Format = depth_desc.Format;
+	depth_stencil_view_desc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2DMS;
+	depth_stencil_view_desc.Texture2D.MipSlice = 0;
+
+	result = _device->CreateDepthStencilView(_depth_stencil_texture, &depth_stencil_view_desc, &_depth_stencil_view);
+	if (FAILED(result)) {
+		throw exception{ "[DX11] Cannot create depth stencil view" };
+	}
 
 	D3D11_VIEWPORT viewport = { 0 };
 	viewport.TopLeftX = 0;
@@ -384,11 +451,11 @@ void graphics_device_dx11::set_render_target(const std::shared_ptr<texture>& tex
 		viewport.MinDepth = 0.0f;
 		viewport.MaxDepth = 1.0f;
 		_device_context->RSSetViewports(1, &viewport); 
-		_device_context->OMSetRenderTargets(1, &_render_target, nullptr);
+		_device_context->OMSetRenderTargets(1, &_render_target, _depth_test ? _depth_stencil_view : nullptr);
 	}
 }
 
-void graphics_device_dx11::draw(topology topology, const span<const vertex2d>& vertices) {
+void graphics_device_dx11::draw(topology topology, const span<const vertex>& vertices) {
 	_device_context->RSSetState(_rasterizer_state);
 
 	update_vertex_buffer(vertices);
@@ -404,7 +471,68 @@ void graphics_device_dx11::draw(topology topology, const span<const vertex2d>& v
 	_device_context->Draw((UINT)vertices.size(), 0);
 }
 
-void graphics_device_dx11::draw(topology topology, const span<const vertex2d>& vertices, const span<const std::uint32_t>& indices) {
+void graphics_device_dx11::draw(topology topology, std::shared_ptr<buffer> vertex_buffer) {
+	if (!vertex_buffer) {
+		throw exception{ "[DX11] Buffer need to be provided" };
+	}
+
+	if (vertex_buffer->type() != buffer_type::vertex) {
+		throw exception{ "[DX11] Buffer need to be vertex type" };
+	}
+
+	_device_context->RSSetState(_rasterizer_state);
+	_device_context->UpdateSubresource(_vertex_constant_buffer, 0, nullptr, &_vertex_shader_data, 0, 0);
+	_device_context->VSSetConstantBuffers(0, 1, &_vertex_constant_buffer);
+
+	const UINT stride = static_cast<UINT>(vertex_buffer->stride());
+	const UINT offset = 0;
+	auto native_buffer = std::static_pointer_cast<buffer_dx11>(vertex_buffer)->buffer();
+
+	_device_context->IASetVertexBuffers(0, 1, &native_buffer, &stride, &offset);
+	_device_context->VSSetShader(_vertex_shader, nullptr, 0);
+	_device_context->IASetInputLayout(_input_layout);
+	_device_context->PSSetShader(_color_pixel_shader, nullptr, 0);
+
+	_device_context->IASetPrimitiveTopology(topologies.at(topology));
+	_device_context->Draw(static_cast<UINT>(vertex_buffer->count()), 0);
+}
+
+void graphics_device_dx11::draw(topology topology, std::shared_ptr<buffer> vertex_buffer, std::shared_ptr<buffer> index_buffer) {
+	if (!vertex_buffer) {
+		throw exception{ "[DX11] Vertex buffer need to be provided" };
+	}
+
+	if (vertex_buffer->type() != buffer_type::vertex) {
+		throw exception{ "[DX11] Vertex buffer need to be vertex type" };
+	}	
+	
+	if (!index_buffer) {
+		throw exception{ "[DX11] Index buffer need to be provided" };
+	}
+
+	if (index_buffer->type() != buffer_type::index) {
+		throw exception{ "[DX11] Index buffer to be index type" };
+	}
+
+	_device_context->RSSetState(_rasterizer_state);
+	_device_context->UpdateSubresource(_vertex_constant_buffer, 0, nullptr, &_vertex_shader_data, 0, 0);
+	_device_context->VSSetConstantBuffers(0, 1, &_vertex_constant_buffer);
+
+	const UINT stride = static_cast<UINT>(vertex_buffer->stride());
+	const UINT offset = 0;
+	const auto native_buffer = std::static_pointer_cast<buffer_dx11>(vertex_buffer)->buffer();
+
+	_device_context->IASetVertexBuffers(0, 1, &native_buffer, &stride, &offset);
+	_device_context->IASetIndexBuffer(std::static_pointer_cast<buffer_dx11>(index_buffer)->buffer(), DXGI_FORMAT_R32_UINT, 0);
+	_device_context->VSSetShader(_vertex_shader, nullptr, 0);
+	_device_context->IASetInputLayout(_input_layout);
+	_device_context->PSSetShader(_color_pixel_shader, nullptr, 0);
+
+	_device_context->IASetPrimitiveTopology(topologies.at(topology));
+	_device_context->DrawIndexed(static_cast<UINT>(index_buffer->count()), 0, 0);
+}
+
+void graphics_device_dx11::draw(topology topology, const span<const vertex>& vertices, const span<const std::uint32_t>& indices) {
 	_device_context->RSSetState(_rasterizer_state);
 
 	update_vertex_buffer(vertices);
@@ -421,7 +549,7 @@ void graphics_device_dx11::draw(topology topology, const span<const vertex2d>& v
 	_device_context->DrawIndexed(static_cast<UINT>(indices.size()), 0, 0);
 }
 
-void graphics_device_dx11::draw_textured(topology topology, const span<const vertex2d>& vertices, const std::shared_ptr<texture>& texture) {
+void graphics_device_dx11::draw_textured(topology topology, const span<const vertex>& vertices, const std::shared_ptr<texture>& texture) {
 	_device_context->RSSetState(_rasterizer_state);
 
 	update_vertex_buffer(vertices);
@@ -444,7 +572,40 @@ void graphics_device_dx11::draw_textured(topology topology, const span<const ver
 	_device_context->Draw(static_cast<UINT>(vertices.size()), 0);
 }
 
-void graphics_device_dx11::draw_textured(topology topology, const span<const vertex2d>& vertices, const span<const std::uint32_t>& indices, const std::shared_ptr<texture>& texture) {
+void graphics_device_dx11::draw_textured(topology topology, std::shared_ptr<buffer> vertex_buffer, const std::shared_ptr<texture>& texture) {
+	if (!vertex_buffer) {
+		throw exception{ "[DX11] Vertex buffer need to be provided" };
+	}
+
+	if (vertex_buffer->type() != buffer_type::vertex) {
+		throw exception{ "[DX11] Vertex buffer need to be vertex type" };
+	}
+
+	const auto native_texture = std::static_pointer_cast<texture_dx11>(texture);
+
+	ID3D11ShaderResourceView* shader_resource_view = native_texture->shader_resource_view();
+	ID3D11SamplerState* sampler_state = native_texture->sampler();
+
+	_device_context->RSSetState(_rasterizer_state);
+	_device_context->UpdateSubresource(_vertex_constant_buffer, 0, nullptr, &_vertex_shader_data, 0, 0);
+	_device_context->VSSetConstantBuffers(0, 1, &_vertex_constant_buffer);
+
+	const UINT stride = static_cast<UINT>(vertex_buffer->stride());
+	const UINT offset = 0;
+	const auto native_buffer = std::static_pointer_cast<buffer_dx11>(vertex_buffer)->buffer();
+
+	_device_context->IASetVertexBuffers(0, 1, &native_buffer, &stride, &offset);
+	_device_context->VSSetShader(_vertex_shader, nullptr, 0);
+	_device_context->IASetInputLayout(_input_layout);
+	_device_context->PSSetShader(_texture_pixel_shader, nullptr, 0);
+	_device_context->PSSetShaderResources(0, 1, &shader_resource_view);
+	_device_context->PSSetSamplers(0, 1, &sampler_state);
+
+	_device_context->IASetPrimitiveTopology(topologies.at(topology));
+	_device_context->Draw(static_cast<UINT>(vertex_buffer->count()), 0);
+}
+
+void graphics_device_dx11::draw_textured(topology topology, const span<const vertex>& vertices, const span<const std::uint32_t>& indices, const std::shared_ptr<texture>& texture) {
 	_device_context->RSSetState(_rasterizer_state);
 
 	update_vertex_buffer(vertices);
@@ -468,6 +629,48 @@ void graphics_device_dx11::draw_textured(topology topology, const span<const ver
 	_device_context->DrawIndexed(static_cast<UINT>(indices.size()), 0, 0);
 }
 
+void graphics_device_dx11::draw_textured(topology topology, std::shared_ptr<buffer> vertex_buffer, std::shared_ptr<buffer> index_buffer, const std::shared_ptr<texture>& texture) {
+	if (!vertex_buffer) {
+		throw exception{ "[DX11] Vertex buffer need to be provided" };
+	}
+
+	if (vertex_buffer->type() != buffer_type::vertex) {
+		throw exception{ "[DX11] Vertex buffer need to be vertex type" };
+	}
+
+	if (!index_buffer) {
+		throw exception{ "[DX11] Index buffer need to be provided" };
+	}
+
+	if (index_buffer->type() != buffer_type::index) {
+		throw exception{ "[DX11] Index buffer to be index type" };
+	}
+
+	const auto native_texture = std::static_pointer_cast<texture_dx11>(texture);
+
+	ID3D11ShaderResourceView* shader_resource_view = native_texture->shader_resource_view();
+	ID3D11SamplerState* sampler_state = native_texture->sampler();
+
+	_device_context->RSSetState(_rasterizer_state);
+	_device_context->UpdateSubresource(_vertex_constant_buffer, 0, nullptr, &_vertex_shader_data, 0, 0);
+	_device_context->VSSetConstantBuffers(0, 1, &_vertex_constant_buffer);
+
+	const UINT stride = static_cast<UINT>(vertex_buffer->stride());
+	const UINT offset = 0;
+	const auto native_buffer = std::static_pointer_cast<buffer_dx11>(vertex_buffer)->buffer();
+
+	_device_context->IASetVertexBuffers(0, 1, &native_buffer, &stride, &offset);
+	_device_context->IASetIndexBuffer(std::static_pointer_cast<buffer_dx11>(index_buffer)->buffer(), DXGI_FORMAT_R32_UINT, 0);
+	_device_context->VSSetShader(_vertex_shader, nullptr, 0);
+	_device_context->IASetInputLayout(_input_layout);
+	_device_context->PSSetShader(_texture_pixel_shader, nullptr, 0);
+	_device_context->PSSetShaderResources(0, 1, &shader_resource_view);
+	_device_context->PSSetSamplers(0, 1, &sampler_state);
+
+	_device_context->IASetPrimitiveTopology(topologies.at(topology));
+	_device_context->DrawIndexed(static_cast<UINT>(index_buffer->count()), 0, 0);
+}
+
 ID3D11Device* graphics_device_dx11::device() const {
 	return _device;
 }
@@ -476,7 +679,7 @@ ID3D11DeviceContext1* graphics_device_dx11::device_context() const {
 	return _device_context;
 }
 
-void graphics_device_dx11::update_vertex_buffer(const span<const vertex2d>& vertices) {
+void graphics_device_dx11::update_vertex_buffer(const span<const vertex>& vertices) {
 	D3D11_BUFFER_DESC desc;
 	if (_vertex_buffer) {
 		_vertex_buffer->GetDesc(&desc);
@@ -488,7 +691,7 @@ void graphics_device_dx11::update_vertex_buffer(const span<const vertex2d>& vert
 		D3D11_MAPPED_SUBRESOURCE mapped_resource;
 		const HRESULT result = _device_context->Map(_vertex_buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped_resource);
 		if (FAILED(result)) {
-			throw exception{ "Cannot map vertex buffer" };
+			throw exception{ "[DX11] Cannot map vertex buffer" };
 		}
 
 		memcpy(mapped_resource.pData, vertices.data(), vertices.size_bytes());
@@ -503,22 +706,19 @@ void graphics_device_dx11::update_vertex_buffer(const span<const vertex2d>& vert
 		desc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
 		desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
 
-		const UINT stride = sizeof(vertex2d);
-		const UINT offset = 0;
-
-		D3D11_SUBRESOURCE_DATA vertex_buffer_data;
-		ZeroMemory(&vertex_buffer_data, sizeof(D3D11_SUBRESOURCE_DATA));
+		D3D11_SUBRESOURCE_DATA vertex_buffer_data = {};
 		vertex_buffer_data.pSysMem = vertices.data();
-		vertex_buffer_data.SysMemPitch = 0;
-		vertex_buffer_data.SysMemSlicePitch = 0;
 
 		const HRESULT result = _device->CreateBuffer(&desc, &vertex_buffer_data, &_vertex_buffer);
 		if (FAILED(result)) {
-			throw exception{ "Cannot create vertex buffer" };
+			throw exception{ "[DX11] Cannot create vertex buffer" };
 		}
-
-		_device_context->IASetVertexBuffers(0, 1, &_vertex_buffer, &stride, &offset);
 	}
+
+	const UINT stride = sizeof(vertex);
+	const UINT offset = 0;
+
+	_device_context->IASetVertexBuffers(0, 1, &_vertex_buffer, &stride, &offset);
 }
 
 void graphics_device_dx11::update_index_buffer(const span<const std::uint32_t>& indices) {
@@ -534,7 +734,7 @@ void graphics_device_dx11::update_index_buffer(const span<const std::uint32_t>& 
 
 		const auto result = _device_context->Map(_index_buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped_resource);
 		if (FAILED(result)) {
-			throw exception{ "Cannot map index buffer" };
+			throw exception{ "[DX11] Cannot map index buffer" };
 		}
 
 		memcpy(mapped_resource.pData, indices.data(), indices.size_bytes());
@@ -557,9 +757,9 @@ void graphics_device_dx11::update_index_buffer(const span<const std::uint32_t>& 
 
 		const auto result = _device->CreateBuffer(&desc, &index_buffer_data, &_index_buffer);
 		if (FAILED(result)) {
-			throw exception{ "Cannot create index buffer" };
+			throw exception{ "[DX11] Cannot create index buffer" };
 		}
-
-		_device_context->IASetIndexBuffer(_index_buffer, DXGI_FORMAT_R32_UINT, 0);
 	}
+
+	_device_context->IASetIndexBuffer(_index_buffer, DXGI_FORMAT_R32_UINT, 0);
 }

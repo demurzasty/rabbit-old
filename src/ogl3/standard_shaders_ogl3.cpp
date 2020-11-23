@@ -30,7 +30,7 @@ void main() {
 
 static const char* vertex_shader = 
 R"(#version 450
-layout(location = 0) in vec2 in_position;
+layout(location = 0) in vec3 in_position;
 layout(location = 1) in vec2 in_texcoord;
 layout(location = 2) in vec4 in_color;
 
@@ -44,7 +44,7 @@ out vec4 v_color;
 void main() {
 	v_texcoord = in_texcoord;
     v_color = in_color;
-	gl_Position = u_projection * u_view * u_world * vec4(in_position, 0.0, 1.0);
+	gl_Position = u_projection * u_view * u_world * vec4(in_position.x, in_position.y, in_position.z, 1.0);
 }
 )";
 

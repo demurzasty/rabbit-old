@@ -57,6 +57,7 @@ set (SRC
 	"src/gamepad.cpp"
 	"src/game.cpp"
 	"src/texture.cpp"
+	"src/buffer.cpp"
 	"src/texture_loader.cpp"
 	"src/graphics_device.cpp"
 	"src/sprite_batch.cpp"
@@ -85,6 +86,7 @@ if (RB_GRAPHICS_BACKEND_DIRECTX)
 	set (SRC ${SRC}
 		"src/dx11/graphics_device_dx11.cpp"
 		"src/dx11/texture_dx11.cpp"
+		"src/dx11/buffer_dx11.cpp"
 		"src/dx11/standard_shaders_dx11.cpp"
 	)
 endif ()
@@ -93,6 +95,7 @@ if (RB_GRAPHICS_BACKEND_OPENGL)
 	set (SRC ${SRC}
 		"src/ogl3/graphics_device_ogl3.cpp"
 		"src/ogl3/texture_ogl3.cpp"
+		"src/ogl3/buffer_ogl3.cpp"
 		"src/ogl3/standard_shaders_ogl3.cpp"
 	)
 endif ()

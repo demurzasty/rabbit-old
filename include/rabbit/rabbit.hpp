@@ -2,6 +2,8 @@
 
 #include "asset_manager.hpp"
 #include "blend_state.hpp"
+#include "buffer.hpp"
+#include "buffer_type.hpp"
 #include "clock.hpp"
 #include "color.hpp"
 #include "config.hpp"

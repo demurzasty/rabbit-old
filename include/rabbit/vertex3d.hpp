@@ -1,13 +1,7 @@
 #pragma once 
 
-#include "vec2.hpp"
-#include "vec3.hpp"
-#include "color.hpp"
+#include "vertex.hpp"
 
 namespace rb {
-    struct vertex3d {
-        vec3f position;
-        vec2f texcoord;
-        color color;
-    };
+    using vertex3d = vertex;
 }

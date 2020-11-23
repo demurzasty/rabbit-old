@@ -17,11 +17,15 @@ namespace rb {
 
         std::shared_ptr<texture> make_texture(const texture_desc& desc) override;
 
+        std::shared_ptr<buffer> make_buffer(const buffer_desc& buffer_desc) override;
+
         void clear(const color& color) override;
 
         void present() override;
 
         void set_blend_state(const blend_state& blend_state) override;
+
+        void set_depth_test(bool depth_test) override;
 
         void set_view_matrix(const mat4f& view) override;
 
@@ -37,18 +41,26 @@ namespace rb {
 
         void set_render_target(const std::shared_ptr<texture>& render_target) override;
 
-        void draw(topology topology, const span<const vertex2d>& vertices) override;
+        void draw(topology topology, const span<const vertex>& vertices) override;
 
-        void draw(topology topology, const span<const vertex2d>& vertices, const span<const std::uint32_t>& indices) override;
+        void draw(topology topology, std::shared_ptr<buffer> buffer) override;
 
-        void draw_textured(topology topology, const span<const vertex2d>& vertices, const std::shared_ptr<texture>& texture) override;
+        void draw(topology topology, const span<const vertex>& vertices, const span<const std::uint32_t>& indices) override;
 
-        void draw_textured(topology topology, const span<const vertex2d>& vertices, const span<const std::uint32_t>& indices, const std::shared_ptr<texture>& texture) override;
+        void draw(topology topology, std::shared_ptr<buffer> vertex_buffer, std::shared_ptr<buffer> index_buffer) override;
+
+        void draw_textured(topology topology, const span<const vertex>& vertices, const std::shared_ptr<texture>& texture) override;
+
+        void draw_textured(topology topology, std::shared_ptr<buffer> vertex_buffer, const std::shared_ptr<texture>& texture) override;
+
+        void draw_textured(topology topology, const span<const vertex>& vertices, const span<const std::uint32_t>& indices, const std::shared_ptr<texture>& texture) override;
+
+        void draw_textured(topology topology, std::shared_ptr<buffer> vertex_buffer, std::shared_ptr<buffer> index_buffer, const std::shared_ptr<texture>& texture) override;
 
     private:
         GLuint compile_program(const char* vertex_shader_code, const char* fragment_shader_code) const;
 
-        void update_vertex_buffer(const span<const vertex2d>& vertices);
+        void update_vertex_buffer(const span<const vertex>& vertices);
 
         void update_index_buffer(const span<const std::uint32_t>& indices);
 

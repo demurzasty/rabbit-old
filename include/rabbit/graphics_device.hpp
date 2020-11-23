@@ -7,9 +7,10 @@
 #include "color.hpp"
 #include "topology.hpp"
 #include "blend_state.hpp"
-#include "vertex2d.hpp"
+#include "vertex.hpp"
 #include "texture.hpp"
 #include "window.hpp"
+#include "buffer.hpp"
 
 #include <memory>
 
@@ -29,7 +30,15 @@ namespace rb {
         virtual std::shared_ptr<texture> make_texture(const texture_desc& texture_desc) = 0;
 
         /**
+         * @brief Creates new buffer using buffer description.
+         *
+         * @return Newly created buffer.
+         */
+        virtual std::shared_ptr<buffer> make_buffer(const buffer_desc& buffer_desc) = 0;
+
+        /**
          * @brief Clears the viewport to a specified color.
+         *        It's also clear depth buffer if depth testing is enabled!
          * 
          * @param color Set this color value in the buffer.
          */
@@ -46,6 +55,11 @@ namespace rb {
          * @param blend_state A new blend state for the device.
          */
         virtual void set_blend_state(const blend_state& blend_state) = 0;
+
+        /**
+         * @brief Enables or disables depth testing.
+         */
+        virtual void set_depth_test(bool depth_test) = 0;
 
         /**
          * @brief Sets a new projection matrix for a graphics device.
@@ -103,7 +117,9 @@ namespace rb {
          * @param topology Describes the type of primitive to draw.
          * @param vertices Input data to draw from.
          */
-        virtual void draw(topology topology, const span<const vertex2d>& vertices) = 0;
+        virtual void draw(topology topology, const span<const vertex>& vertices) = 0;
+
+        virtual void draw(topology topology, std::shared_ptr<buffer> vertex_buffer) = 0;
 
         /**
          * @brief Draws a sequence of indexed geometric primitives of the specified type.
@@ -112,7 +128,9 @@ namespace rb {
          * @param vertices Input data to draw from.
          * @param indices Input data to index vertices.
          */
-        virtual void draw(topology topology, const span<const vertex2d>& vertices, const span<const std::uint32_t>& indices) = 0;
+        virtual void draw(topology topology, const span<const vertex>& vertices, const span<const std::uint32_t>& indices) = 0;
+
+        virtual void draw(topology topology, std::shared_ptr<buffer> vertex_buffer, std::shared_ptr<buffer> index_buffer) = 0;
 
         /**
          * @brief Draws a textured sequence of non-indexed geometric primitives of the specified type.
@@ -122,7 +140,9 @@ namespace rb {
          * @param vertices Input data to draw from.
          * @param texture Texture to be used.
          */
-        virtual void draw_textured(topology topology, const span<const vertex2d>& vertices, const std::shared_ptr<texture>& texture) = 0;
+        virtual void draw_textured(topology topology, const span<const vertex>& vertices, const std::shared_ptr<texture>& texture) = 0;
+
+        virtual void draw_textured(topology topology, std::shared_ptr<buffer> vertex_buffer, const std::shared_ptr<texture>& texture) = 0;
 
         /**
          * @brief Draws a textured sequence of indexed geometric primitives of the specified type.
@@ -133,8 +153,9 @@ namespace rb {
          * @param texture Texture to be used.
          * @param indices Input data to index vertices.
          */
-        virtual void draw_textured(topology topology, const span<const vertex2d>& vertices, const span<const std::uint32_t>& indices, const std::shared_ptr<texture>& texture) = 0;
+        virtual void draw_textured(topology topology, const span<const vertex>& vertices, const span<const std::uint32_t>& indices, const std::shared_ptr<texture>& texture) = 0;
 
+        virtual void draw_textured(topology topology, std::shared_ptr<buffer> vertex_buffer, std::shared_ptr<buffer> index_buffer, const std::shared_ptr<texture>& texture) = 0;
     };
 
     std::shared_ptr<graphics_device> make_graphics_device(const config& config, std::shared_ptr<window> window);

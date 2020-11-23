@@ -16,8 +16,6 @@ void example_game::initialize() {
 }
 
 void example_game::update(float elapsed_time) {
-    game::update(elapsed_time);
-
     if (gamepad()->is_button_pressed(rb::gamepad_player::first, rb::gamepad_button::back) ||
         keyboard()->is_key_pressed(rb::keycode::escape)) {
         exit();
@@ -32,8 +30,6 @@ void example_game::draw() {
     _sprite_batch->draw(_texture, { 0, 0, 480, 320 }, { 0.0f, 0.0f, 960.0f, 640.0f }, rb::color::white());
 
     _sprite_batch->end();
-
-    game::draw();
 }
 
 int main(int argc, char* argv[]) {

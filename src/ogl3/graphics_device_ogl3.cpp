@@ -1,6 +1,7 @@
 #include "graphics_device_ogl3.hpp"
 #include "standard_shaders_ogl3.hpp"
 #include "texture_ogl3.hpp"
+#include "buffer_ogl3.hpp"
 
 #include <rabbit/exception.hpp>
 
@@ -82,19 +83,19 @@ graphics_device_ogl3::graphics_device_ogl3(const config& config, std::shared_ptr
 	glBindVertexArray(_vao);
 
 	glBindBuffer(GL_ARRAY_BUFFER, _vbo);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertex2d) * 4, NULL, GL_DYNAMIC_DRAW);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertex) * 4, NULL, GL_DYNAMIC_DRAW);
 
 	glEnableVertexAttribArray(0);
 	glBindBuffer(GL_ARRAY_BUFFER, _vbo);
-	glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, sizeof(vertex2d), (void*)offsetof(vertex2d, position));
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(vertex), (void*)offsetof(vertex, position));
 
 	glEnableVertexAttribArray(1);
 	glBindBuffer(GL_ARRAY_BUFFER, _vbo);
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(vertex2d), (void*)offsetof(vertex2d, texcoord));
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(vertex), (void*)offsetof(vertex, texcoord));
 
 	glEnableVertexAttribArray(2);
 	glBindBuffer(GL_ARRAY_BUFFER, _vbo);
-	glVertexAttribPointer(2, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(vertex2d), (void*)offsetof(vertex2d, color));
+	glVertexAttribPointer(2, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(vertex), (void*)offsetof(vertex, color));
 
 	_solid_program = compile_program(standard_shaders_ogl3::vertex_shader(), standard_shaders_ogl3::solid_pixel_shader());
 	_texture_program = compile_program(standard_shaders_ogl3::vertex_shader(), standard_shaders_ogl3::texture_pixel_shader());
@@ -117,14 +118,18 @@ graphics_device_ogl3::~graphics_device_ogl3() {
 }
 
 std::shared_ptr<texture> graphics_device_ogl3::make_texture(const texture_desc& desc) {
-	return std::make_shared<texture_ogl3>( desc);
+	return std::make_shared<texture_ogl3>(desc);
+}
+
+std::shared_ptr<buffer> graphics_device_ogl3::make_buffer(const buffer_desc& buffer_desc) {
+	return std::make_shared<buffer_ogl3>(buffer_desc);
 }
 
 void graphics_device_ogl3::clear(const color& color) {
 	const auto rgba = color.to_vec4<float>();
 
 	glClearColor(rgba.x, rgba.y, rgba.z, rgba.w);
-	glClear(GL_COLOR_BUFFER_BIT);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 }
 
 void graphics_device_ogl3::present() {
@@ -151,6 +156,14 @@ void graphics_device_ogl3::set_blend_state(const blend_state& blend_state) {
 			blend_factors.at(blend_state.color_destination_blend),
 			blend_factors.at(blend_state.alpha_source_blend),
 			blend_factors.at(blend_state.alpha_destination_blend));
+	}
+}
+
+void graphics_device_ogl3::set_depth_test(bool depth_test) {
+	if (depth_test) {
+		glEnable(GL_DEPTH_TEST);
+	} else {
+		glDisable(GL_DEPTH_TEST);
 	}
 }
 
@@ -195,7 +208,7 @@ void graphics_device_ogl3::set_render_target(const std::shared_ptr<texture>& tex
 	}
 }
 
-void graphics_device_ogl3::draw(topology topology, const span<const vertex2d>& vertices) {
+void graphics_device_ogl3::draw(topology topology, const span<const vertex>& vertices) {
 	update_vertex_buffer(vertices);
 
 	glUseProgram(_solid_program);
@@ -206,7 +219,27 @@ void graphics_device_ogl3::draw(topology topology, const span<const vertex2d>& v
 	glDrawArrays(topologies.at(topology), 0, static_cast<GLsizei>(vertices.size()));
 }
 
-void graphics_device_ogl3::draw(topology topology, const span<const vertex2d>& vertices, const span<const std::uint32_t>& indices) {
+void graphics_device_ogl3::draw(topology topology, std::shared_ptr<buffer> vertex_buffer) {
+	glBindBuffer(GL_ARRAY_BUFFER, std::static_pointer_cast<buffer_ogl3>(vertex_buffer)->id());
+
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(vertex), (void*)offsetof(vertex, position));
+
+	glEnableVertexAttribArray(1);
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(vertex), (void*)offsetof(vertex, texcoord));
+
+	glEnableVertexAttribArray(2);
+	glVertexAttribPointer(2, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(vertex), (void*)offsetof(vertex, color));
+
+	glUseProgram(_solid_program);
+	glUniformMatrix4fv(glGetUniformLocation(_solid_program, "u_projection"), 1, GL_FALSE, &_projection[0]);
+	glUniformMatrix4fv(glGetUniformLocation(_solid_program, "u_view"), 1, GL_FALSE, &_view[0]);
+	glUniformMatrix4fv(glGetUniformLocation(_solid_program, "u_world"), 1, GL_FALSE, &_world[0]);
+
+	glDrawArrays(topologies.at(topology), 0, static_cast<GLsizei>(vertex_buffer->count()));
+}
+
+void graphics_device_ogl3::draw(topology topology, const span<const vertex>& vertices, const span<const std::uint32_t>& indices) {
 	update_vertex_buffer(vertices);
 	update_index_buffer(indices);
 
@@ -218,7 +251,28 @@ void graphics_device_ogl3::draw(topology topology, const span<const vertex2d>& v
 	glDrawElements(topologies.at(topology), indices.size(), GL_UNSIGNED_INT, 0);
 }
 
-void graphics_device_ogl3::draw_textured(topology topology, const span<const vertex2d>& vertices, const std::shared_ptr<texture>& texture) {
+void graphics_device_ogl3::draw(topology topology, std::shared_ptr<buffer> vertex_buffer, std::shared_ptr<buffer> index_buffer) {
+	glBindBuffer(GL_ARRAY_BUFFER, std::static_pointer_cast<buffer_ogl3>(vertex_buffer)->id());
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, std::static_pointer_cast<buffer_ogl3>(index_buffer)->id());
+
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(vertex), (void*)offsetof(vertex, position));
+
+	glEnableVertexAttribArray(1);
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(vertex), (void*)offsetof(vertex, texcoord));
+
+	glEnableVertexAttribArray(2);
+	glVertexAttribPointer(2, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(vertex), (void*)offsetof(vertex, color));
+	
+	glUseProgram(_solid_program);
+	glUniformMatrix4fv(glGetUniformLocation(_solid_program, "u_projection"), 1, GL_FALSE, &_projection[0]);
+	glUniformMatrix4fv(glGetUniformLocation(_solid_program, "u_view"), 1, GL_FALSE, &_view[0]);
+	glUniformMatrix4fv(glGetUniformLocation(_solid_program, "u_world"), 1, GL_FALSE, &_world[0]);
+
+	glDrawElements(topologies.at(topology), index_buffer->count(), GL_UNSIGNED_INT, 0);
+}
+
+void graphics_device_ogl3::draw_textured(topology topology, const span<const vertex>& vertices, const std::shared_ptr<texture>& texture) {
 	update_vertex_buffer(vertices);
 
 	glUseProgram(_texture_program);
@@ -234,7 +288,32 @@ void graphics_device_ogl3::draw_textured(topology topology, const span<const ver
 	glDrawArrays(topologies.at(topology), 0, static_cast<GLsizei>(vertices.size()));
 }
 
-void graphics_device_ogl3::draw_textured(topology topology, const span<const vertex2d>& vertices, const span<const std::uint32_t>& indices, const std::shared_ptr<texture>& texture) {
+void graphics_device_ogl3::draw_textured(topology topology, std::shared_ptr<buffer> vertex_buffer, const std::shared_ptr<texture>& texture) {
+	glBindBuffer(GL_ARRAY_BUFFER, std::static_pointer_cast<buffer_ogl3>(vertex_buffer)->id());
+
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(vertex), (void*)offsetof(vertex, position));
+
+	glEnableVertexAttribArray(1);
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(vertex), (void*)offsetof(vertex, texcoord));
+
+	glEnableVertexAttribArray(2);
+	glVertexAttribPointer(2, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(vertex), (void*)offsetof(vertex, color));
+
+	glUseProgram(_texture_program);
+
+	glUniform1i(glGetUniformLocation(_texture_program, "u_texture"), 1);
+	glUniformMatrix4fv(glGetUniformLocation(_texture_program, "u_projection"), 1, GL_FALSE, &_projection[0]);
+	glUniformMatrix4fv(glGetUniformLocation(_texture_program, "u_view"), 1, GL_FALSE, &_view[0]);
+	glUniformMatrix4fv(glGetUniformLocation(_texture_program, "u_world"), 1, GL_FALSE, &_world[0]);
+
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, std::static_pointer_cast<texture_ogl3>(texture)->id());
+
+	glDrawArrays(topologies.at(topology), 0, static_cast<GLsizei>(vertex_buffer->count()));
+}
+
+void graphics_device_ogl3::draw_textured(topology topology, const span<const vertex>& vertices, const span<const std::uint32_t>& indices, const std::shared_ptr<texture>& texture) {
 	update_vertex_buffer(vertices);
 	update_index_buffer(indices);
 
@@ -249,6 +328,32 @@ void graphics_device_ogl3::draw_textured(topology topology, const span<const ver
 	glBindTexture(GL_TEXTURE_2D, std::static_pointer_cast<texture_ogl3>(texture)->id());
 
 	glDrawElements(topologies.at(topology), indices.size(), GL_UNSIGNED_INT, 0);
+}
+
+void graphics_device_ogl3::draw_textured(topology topology, std::shared_ptr<buffer> vertex_buffer, std::shared_ptr<buffer> index_buffer, const std::shared_ptr<texture>& texture) {
+	glBindBuffer(GL_ARRAY_BUFFER, std::static_pointer_cast<buffer_ogl3>(vertex_buffer)->id());
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, std::static_pointer_cast<buffer_ogl3>(index_buffer)->id());
+
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(vertex), (void*)offsetof(vertex, position));
+
+	glEnableVertexAttribArray(1);
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(vertex), (void*)offsetof(vertex, texcoord));
+
+	glEnableVertexAttribArray(2);
+	glVertexAttribPointer(2, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(vertex), (void*)offsetof(vertex, color));
+
+	glUseProgram(_texture_program);
+
+	glUniform1i(glGetUniformLocation(_texture_program, "u_texture"), 1);
+	glUniformMatrix4fv(glGetUniformLocation(_texture_program, "u_projection"), 1, GL_FALSE, &_projection[0]);
+	glUniformMatrix4fv(glGetUniformLocation(_texture_program, "u_view"), 1, GL_FALSE, &_view[0]);
+	glUniformMatrix4fv(glGetUniformLocation(_texture_program, "u_world"), 1, GL_FALSE, &_world[0]);
+
+	glActiveTexture(GL_TEXTURE1);
+	glBindTexture(GL_TEXTURE_2D, std::static_pointer_cast<texture_ogl3>(texture)->id());
+
+	glDrawElements(topologies.at(topology), index_buffer->count(), GL_UNSIGNED_INT, 0);
 }
 
 GLuint graphics_device_ogl3::compile_program(const char* vertex_shader_code, const char* fragment_shader_code) const {
@@ -320,7 +425,7 @@ GLuint graphics_device_ogl3::compile_program(const char* vertex_shader_code, con
 	return program;
 }
 
-void graphics_device_ogl3::update_vertex_buffer(const span<const vertex2d>& vertices) {
+void graphics_device_ogl3::update_vertex_buffer(const span<const vertex>& vertices) {
 	glBindBuffer(GL_ARRAY_BUFFER, _vbo);
 
 	GLint current_size;

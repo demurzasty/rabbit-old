@@ -18,11 +18,15 @@ namespace rb {
 
         std::shared_ptr<texture> make_texture(const texture_desc& desc) override;
 
+        std::shared_ptr<buffer> make_buffer(const buffer_desc& buffer_desc) override;
+
         void clear(const color& color) override;
 
         void present() override;
 
         void set_blend_state(const blend_state& blend_state) override;
+
+        void set_depth_test(bool depth_test) override;
 
         void set_view_matrix(const mat4f& view) override;
 
@@ -38,20 +42,28 @@ namespace rb {
 
         void set_render_target(const std::shared_ptr<texture>& render_target) override;
 
-        void draw(topology topology, const span<const vertex2d>& vertices) override;
+        void draw(topology topology, const span<const vertex>& vertices) override;
 
-        void draw(topology topology, const span<const vertex2d>& vertices, const span<const std::uint32_t>& indices) override;
+        void draw(topology topology, std::shared_ptr<buffer> vertex_buffer) override;
 
-        void draw_textured(topology topology, const span<const vertex2d>& vertices, const std::shared_ptr<texture>& texture) override;
+        void draw(topology topology, const span<const vertex>& vertices, const span<const std::uint32_t>& indices) override;
 
-        void draw_textured(topology topology, const span<const vertex2d>& vertices, const span<const std::uint32_t>& indices, const std::shared_ptr<texture>& texture) override;
+        void draw(topology topology, std::shared_ptr<buffer> vertex_buffer, std::shared_ptr<buffer> index_buffer) override;
 
+        void draw_textured(topology topology, const span<const vertex>& vertices, const std::shared_ptr<texture>& texture) override;
+
+        void draw_textured(topology topology, std::shared_ptr<buffer> vertex_buffer, const std::shared_ptr<texture>& texture) override;
+
+        void draw_textured(topology topology, const span<const vertex>& vertices, const span<const std::uint32_t>& indices, const std::shared_ptr<texture>& texture) override;
+
+        void draw_textured(topology topology, std::shared_ptr<buffer> vertex_buffer, std::shared_ptr<buffer> index_buffer, const std::shared_ptr<texture>& texture) override;
+        
         ID3D11Device* device() const;
 
         ID3D11DeviceContext1* device_context() const;
 
     private:
-        void update_vertex_buffer(const span<const vertex2d>& vertices);
+        void update_vertex_buffer(const span<const vertex>& vertices);
 
         void update_index_buffer(const span<const std::uint32_t>& indices);
 
@@ -69,6 +81,8 @@ namespace rb {
         IDXGISwapChain1* _swap_chain = nullptr;
         ID3D11RenderTargetView* _render_target = nullptr;
         ID3D11RenderTargetView* _offscreen_render_target = nullptr;
+        ID3D11Texture2D* _depth_stencil_texture = nullptr;
+        ID3D11DepthStencilView* _depth_stencil_view = nullptr;
         ID3D11Buffer* _vertex_buffer = nullptr;
         ID3D11Buffer* _index_buffer = nullptr;
         ID3D11Buffer* _vertex_constant_buffer = nullptr;
@@ -79,5 +93,6 @@ namespace rb {
         ID3D11RasterizerState* _rasterizer_state = nullptr;
         vertex_shader_data _vertex_shader_data;
         std::map<uint64_t, ID3D11BlendState*> _blend_states;
+        bool _depth_test = false;
     };
 }

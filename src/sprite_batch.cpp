@@ -28,7 +28,7 @@ void sprite_batch::draw(std::shared_ptr<texture> texture, const vec4i& source, c
 
     const auto texture_size = static_cast<vec2f>(texture->size());
 
-    const vertex2d vertices[4] = {
+    const vertex vertices[4] = {
         {
             { destination.x, destination.y },
             { source.x / texture_size.x, source.y / texture_size.y },

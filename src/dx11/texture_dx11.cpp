@@ -1,4 +1,5 @@
 #include "texture_dx11.hpp"
+#include "utils_dx11.hpp"
 
 #include <cassert>
 #include <map>
@@ -120,21 +121,10 @@ texture_dx11::texture_dx11(ID3D11Device* device, ID3D11DeviceContext* context, c
 }
 
 texture_dx11::~texture_dx11() {
-	if (_render_target) {
-		_render_target->Release();
-	}
-
-	if (_sampler_state) {
-		_sampler_state->Release();
-	}
-
-	if (_shader_resource_view) {
-		_shader_resource_view->Release();
-	}
-
-	if (_texture) {
-		_texture->Release();
-	}
+	safe_release(_render_target);
+	safe_release(_sampler_state);
+	safe_release(_shader_resource_view);
+	safe_release(_texture);
 }
 
 void texture_dx11::update(const span<const std::uint8_t>& pixels, const vec4i& rect) {

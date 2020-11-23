@@ -28,6 +28,12 @@ namespace rb {
             , z(scalar) {
         }
 
+        constexpr vec3(T x, T y)
+            : x(x)
+            , y(y)
+            , z(0) {
+        }
+
         constexpr vec3(T x, T y, T z)
             : x(x)
             , y(y)

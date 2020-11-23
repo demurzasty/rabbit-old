@@ -20,7 +20,7 @@ namespace rb {
 
     private:
         std::shared_ptr<graphics_device> _graphics_device;
-        std::vector<vertex2d> _vertices;
+        std::vector<vertex> _vertices;
         std::shared_ptr<texture> _current_texture;
     };
 }
