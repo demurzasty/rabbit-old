@@ -50,7 +50,6 @@ add_subdirectory ("lib")
 
 set (SRC 
 	"src/exception.cpp"
-	"src/config.cpp"
 	"src/uuid.cpp"
 	"src/clock.cpp"
 	"src/window.cpp"
