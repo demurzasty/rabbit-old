@@ -34,7 +34,7 @@ void example_game::draw() {
 
 int main(int argc, char* argv[]) {
     rb::config config;
-    config.window_title = "Draw Texture Example";
-    config.window_size = { 960, 640 };
+    config.window.title = "Draw Texture Example";
+    config.window.size = { 960, 640 };
     example_game{ config }.run();
 }

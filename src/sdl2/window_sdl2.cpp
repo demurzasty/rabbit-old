@@ -13,15 +13,15 @@ window_sdl2::window_sdl2(config& config) {
 
     Uint32 flags = SDL_WINDOW_SHOWN;
 
-    if (config.window_resizable) { 
+    if (config.window.resizable) { 
         flags |= SDL_WINDOW_RESIZABLE;
     }
 
-    if (config.window_borderless) {
+    if (config.window.borderless) {
         flags |= SDL_WINDOW_BORDERLESS;
     }
 
-    _window = SDL_CreateWindow(config.window_title.c_str(), SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, config.window_size.x, config.window_size.y, flags);
+    _window = SDL_CreateWindow(config.window.title.c_str(), SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, config.window.size.x, config.window.size.y, flags);
     if (!_window) {
         throw exception{ fmt::format("Cannot create window: {}", SDL_GetError()) };
     }

@@ -28,7 +28,7 @@ void example_game::draw() {
 
 int main(int argc, char* argv[]) {
     rb::config config;
-    config.window_title = "State Manager Example";
-    config.window_size = { 960, 640 };
+    config.window.title = "State Manager Example";
+    config.window.size = { 960, 640 };
     example_game{ config }.run();
 }

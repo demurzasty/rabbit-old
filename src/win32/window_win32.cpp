@@ -14,26 +14,26 @@ window_win32::window_win32(config& config) {
 	RegisterClass(&wc);
 
 	HDC screenDC = GetDC(NULL);
-	const int left = (GetDeviceCaps(screenDC, HORZRES) - config.window_size.x) / 2;
-	const int top = (GetDeviceCaps(screenDC, VERTRES) - config.window_size.y) / 2;
+	const int left = (GetDeviceCaps(screenDC, HORZRES) - config.window.size.x) / 2;
+	const int top = (GetDeviceCaps(screenDC, VERTRES) - config.window.size.y) / 2;
 	ReleaseDC(NULL, screenDC);
 
 	RECT rect;
 	rect.left = rect.top = 0;
-	rect.right = config.window_size.x;
-	rect.bottom = config.window_size.y;
+	rect.right = config.window.size.x;
+	rect.bottom = config.window.size.y;
 
 	const DWORD style = WS_CAPTION | WS_MINIMIZEBOX | WS_THICKFRAME | WS_MAXIMIZEBOX | WS_SYSMENU | WS_VISIBLE;
 
-	auto width = config.window_size.x;
-	auto height = config.window_size.y;
+	auto width = config.window.size.x;
+	auto height = config.window.size.y;
 
 	if (AdjustWindowRect(&rect, style, FALSE)) {
 		width = rect.right - rect.left;
 		height = rect.bottom - rect.top;
 	}
 
-	_hwnd = CreateWindow("RabBit", config.window_title.c_str(), style, left, top, width, height, NULL, NULL, GetModuleHandle(NULL), this);
+	_hwnd = CreateWindow("RabBit", config.window.title.c_str(), style, left, top, width, height, NULL, NULL, GetModuleHandle(NULL), this);
 	assert(_hwnd);
 }
 

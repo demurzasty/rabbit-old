@@ -101,7 +101,7 @@ void example_game::draw() {
 
 int main(int argc, char* argv[]) {
     rb::config config;
-    config.window_title = "Draw Cube 3D Example";
-    config.window_size = { 1280, 720 };
+    config.window.title = "Draw Cube 3D Example";
+    config.window.size = { 1280, 720 };
     example_game{ config }.run();
 }
