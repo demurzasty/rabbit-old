@@ -1,5 +1,7 @@
 #pragma once 
 
+#include <rabbit/json_fwd.hpp>
+
 #include <string>
 #include <memory>
 
@@ -15,9 +17,9 @@ namespace rb {
         /**
          * @brief
          */
-        virtual std::shared_ptr<void> load(const std::string& filename) = 0;
+        virtual std::shared_ptr<void> load(const std::string& filename, const json& metadata) = 0;
 
-        asset_manager* asset_manager() const;
+        rb::asset_manager* asset_manager() const;
 
     private:
         rb::asset_manager* _asset_manager = nullptr;

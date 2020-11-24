@@ -8,7 +8,7 @@ namespace rb {
     public:
         texture_loader(std::shared_ptr<graphics_device> graphics_device);
 
-        virtual std::shared_ptr<void> load(const std::string& filename) override;
+        virtual std::shared_ptr<void> load(const std::string& filename, const json& metadata) override;
 
     private:
         std::shared_ptr<graphics_device> _graphics_device;

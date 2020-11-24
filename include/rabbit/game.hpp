@@ -21,21 +21,21 @@ namespace rb {
 
         void exit();
 
-        const config& config() const;
+        const rb::config& config() const;
 
-        std::shared_ptr<window> window() const;
+        std::shared_ptr<rb::window> window() const;
 
-        std::shared_ptr<graphics_device> graphics_device() const;
+        std::shared_ptr<rb::graphics_device> graphics_device() const;
 
-        std::shared_ptr<keyboard> keyboard() const;
+        std::shared_ptr<rb::keyboard> keyboard() const;
 
-        std::shared_ptr<mouse> mouse() const;
+        std::shared_ptr<rb::mouse> mouse() const;
 
-        std::shared_ptr<gamepad> gamepad() const;
+        std::shared_ptr<rb::gamepad> gamepad() const;
 
-        std::shared_ptr<asset_manager> asset_manager() const;
+        std::shared_ptr<rb::asset_manager> asset_manager() const;
 
-        std::shared_ptr<state_manager> state_manager() const;
+        std::shared_ptr<rb::state_manager> state_manager() const;
 
     protected:
         virtual void initialize();

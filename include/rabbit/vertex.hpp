@@ -6,8 +6,8 @@
 
 namespace rb {
     struct vertex {
-        vec3f position;
-        vec2f texcoord;
-        color color;
+        rb::vec3f position;
+        rb::vec2f texcoord;
+        rb::color color;
     };
 }

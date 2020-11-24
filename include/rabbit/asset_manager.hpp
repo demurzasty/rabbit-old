@@ -24,13 +24,15 @@ namespace rb {
                 return std::static_pointer_cast<Asset>(asset.lock());
             }
 
-            auto loader = _loaders.at(typeid(Asset));
-            auto loaded_asset = loader->load(filename);
+            auto loaded_asset = load(typeid(Asset), filename);
             asset = loaded_asset;
             return std::static_pointer_cast<Asset>(loaded_asset);
         }
 
         std::string filename(std::shared_ptr<void> asset) const;
+
+    private:
+        std::shared_ptr<void> load(std::type_index asset_id, const std::string& filename);
 
     private:
         std::unordered_map<std::type_index, std::shared_ptr<loader>> _loaders; // todo: should we use unique_ptr instead?

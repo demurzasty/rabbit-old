@@ -78,31 +78,31 @@ const config& game::config() const {
     return _config;
 }
 
-std::shared_ptr<window> game::window() const {
+std::shared_ptr<rb::window> game::window() const {
     return _window;
 }
 
-std::shared_ptr<graphics_device> game::graphics_device() const {
+std::shared_ptr<rb::graphics_device> game::graphics_device() const {
     return _graphics_device;
 }
 
-std::shared_ptr<keyboard> game::keyboard() const {
+std::shared_ptr<rb::keyboard> game::keyboard() const {
     return _keyboard;
 }
 
-std::shared_ptr<mouse> game::mouse() const {
+std::shared_ptr<rb::mouse> game::mouse() const {
     return _mouse;
 }
 
-std::shared_ptr<gamepad> game::gamepad() const {
+std::shared_ptr<rb::gamepad> game::gamepad() const {
     return _gamepad;
 }
 
-std::shared_ptr<asset_manager> game::asset_manager() const {
+std::shared_ptr<rb::asset_manager> game::asset_manager() const {
     return _asset_manager;
 }
 
-std::shared_ptr<state_manager> game::state_manager() const {
+std::shared_ptr<rb::state_manager> game::state_manager() const {
     return _state_manager;
 }
 

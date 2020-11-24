@@ -18,7 +18,6 @@
 #include "graphics_device.hpp"
 #include "image.hpp"
 #include "image_format.hpp"
-#include "json.hpp"
 #include "json_fwd.hpp"
 #include "keyboard.hpp"
 #include "keycode.hpp"
