@@ -20,7 +20,7 @@ namespace rb {
         virtual void draw();
 
     protected:
-        state_manager* state_manager() const;
+        rb::state_manager* state_manager() const;
 
     private:
         rb::state_manager* _state_manager = nullptr;

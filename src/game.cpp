@@ -74,7 +74,7 @@ void game::exit() {
     _running = false;
 }
 
-const config& game::config() const {
+const rb::config& game::config() const {
     return _config;
 }
 
