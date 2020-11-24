@@ -60,7 +60,7 @@ namespace rb {
 
         static vec4<T> normalize(const vec4<T>& vec) {
             const auto inv_length = 1 / length(vec);
-            return { x * inv_length, y * inv_length, z * inv_length, w * inv_length };
+            return { vec.x * inv_length, vec.y * inv_length, vec.z * inv_length, vec.w * inv_length };
         }
 
         static constexpr T dot(const vec4<T>& a, const vec4<T>& b) {
