@@ -13,14 +13,13 @@ To be able to use `RabBit`, users must provide a full-featured compiler that sup
 ### Platforms
 ☑️ Windows  
 ⭕ UWP (Universal Windows, Xbox One)  
-⭕ Linux  
+☑️ Linux  
 ⭕ OSX  
 ⭕ Android  
 ⭕ iOS
 ### Graphics
 ☑️ DirectX 11  
 ⭕ DirectX 12  
-⭕ OpenGL 2  
 ☑️ OpenGL 3  
 ⭕ Vulkan  
 ⭕ Metal  
