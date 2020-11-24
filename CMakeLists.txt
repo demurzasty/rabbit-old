@@ -124,11 +124,11 @@ if (MSVC)
 	target_compile_definitions (rabbit PUBLIC NOMINMAX _CRT_SECURE_NO_WARNINGS)
 endif ()
 
-if (RB_PLATFORM_BACKEND_SDL2)
+if (NOT RB_EMSCRIPTEN AND RB_PLATFORM_BACKEND_SDL2)
 	target_link_libraries (rabbit PUBLIC SDL2-static)
 endif ()
 
-if (RB_GRAPHICS_BACKEND_OPENGL) 
+if (NOT RB_EMSCRIPTEN AND RB_GRAPHICS_BACKEND_OPENGL) 
 	target_link_libraries (rabbit PRIVATE opengl32 glew)
 endif ()
 
@@ -154,4 +154,8 @@ target_compile_definitions (rabbit PUBLIC -DRB_PROD_BUILD=$<BOOL:${RB_PROD_BUILD
 
 if (CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
 	add_subdirectory ("examples")
+endif ()
+
+if (RB_EMSCRIPTEN)
+	set_target_properties(rabbit PROPERTIES LINK_FLAGS "-s USE_SDL=2")
 endif ()
