@@ -116,8 +116,10 @@ graphics_device_ogl3::graphics_device_ogl3(const config& config, std::shared_ptr
 }
 
 graphics_device_ogl3::~graphics_device_ogl3() {
+#if RB_WINDOWS
 	wglDeleteContext(_context);
 	ReleaseDC(_window->native_handle(), _hdc);
+#endif
 }
 
 std::shared_ptr<texture> graphics_device_ogl3::make_texture(const texture_desc& desc) {
@@ -136,7 +138,9 @@ void graphics_device_ogl3::clear(const color& color) {
 }
 
 void graphics_device_ogl3::present() {
+#if RB_WINDOWS
 	SwapBuffers(_hdc);
+#endif
 }
 
 void graphics_device_ogl3::set_blend_state(const blend_state& blend_state) {
