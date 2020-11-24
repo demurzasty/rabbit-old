@@ -128,7 +128,13 @@ if (NOT RB_EMSCRIPTEN AND RB_PLATFORM_BACKEND_SDL2)
 endif ()
 
 if (NOT RB_EMSCRIPTEN AND RB_GRAPHICS_BACKEND_OPENGL) 
-	target_link_libraries (rabbit PRIVATE opengl32 glew)
+	target_link_libraries (rabbit PRIVATE glew)
+
+	if (RB_WINDOWS)
+		target_link_libraries (rabbit PRIVATE opengl32)
+	elseif (RB_LINUX)
+		target_link_libraries (rabbit PRIVATE GL)
+	endif ()
 endif ()
 
 target_compile_definitions (rabbit PUBLIC -DRB_EMSCRIPTEN=$<BOOL:${RB_EMSCRIPTEN}>)
