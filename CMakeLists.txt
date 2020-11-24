@@ -26,7 +26,6 @@ set (RB_AUDIO_BACKEND_XAUDIO FALSE)
 set (RB_AUDIO_BACKEND_OPENAL FALSE)
 
 if (RB_EMSCRIPTEN)
-	set (RB_PLATFORM_BACKEND_SDL2 TRUE)
 	set (RB_GRAPHICS_BACKEND_OPENGL TRUE)
 elseif (RB_WINDOWS)
 	if (MSVC)
@@ -154,8 +153,4 @@ target_compile_definitions (rabbit PUBLIC -DRB_PROD_BUILD=$<BOOL:${RB_PROD_BUILD
 
 if (CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
 	add_subdirectory ("examples")
-endif ()
-
-if (RB_EMSCRIPTEN)
-	set_target_properties(rabbit PROPERTIES LINK_FLAGS "-s USE_SDL=2 -s \"EXPORTED_FUNCTIONS=['_SDL_CreateWindow', '_SDL_GL_CreateWindow', '_SDL_GetWindowTitle', '_SDL_GetWindowWMInfo', '_SDL_MaximizeWindow', '_SDL_memcpy']\"")
 endif ()
