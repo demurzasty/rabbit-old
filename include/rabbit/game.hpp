@@ -15,7 +15,7 @@
 namespace rb {
     class game {
     public:
-        game(config& config);
+        game(rb::config& config);
 
         void run();
 
