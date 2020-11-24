@@ -67,6 +67,7 @@ set (SRC
 	"src/image.cpp"
 	"src/state.cpp"
 	"src/state_manager.cpp"
+	"src/dummy/gamepad_dummy.cpp"
 )
 
 if (RB_PLATFORM_BACKEND_WIN32) 
