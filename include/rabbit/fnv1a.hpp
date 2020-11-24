@@ -16,7 +16,7 @@ namespace rb {
         return fnv1a(str, N - 1);
     }
 
-    constexpr fnv1a_result_t fnv1a(const std::string& str) {
+    inline fnv1a_result_t fnv1a(const std::string& str) {
         return fnv1a(str.c_str(), str.size());
     }
 
