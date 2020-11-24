@@ -7,7 +7,7 @@
 
 #if RB_WINDOWS
 struct HWND__;
-namespace rb { typedef HWND__* window_handle; }
+namespace rb { using window_handle = HWND__*; }
 #else
 namespace rb { using window_handle = void*; }
 #endif
@@ -33,6 +33,11 @@ namespace rb {
 		 * @return Native window handle.
 		 */
 		virtual window_handle native_handle() const = 0;
+
+		/**
+		 * @brief Swap buffers if OpenGL is implemented.
+		 */
+		virtual void swap_buffers() = 0;
 
 		/**
 		 * @brief Poll window events.

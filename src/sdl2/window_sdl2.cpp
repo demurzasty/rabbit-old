@@ -8,7 +8,7 @@ using namespace rb;
 
 window_sdl2::window_sdl2(config& config) {
     if (SDL_Init(SDL_INIT_EVERYTHING) < 0) {
-        throw exception{ fmt::format("Cannot initialize SDL2: {}", SDL_GetError()) };
+        throw exception{ SDL_GetError() };
     }
 
     Uint32 flags = SDL_WINDOW_SHOWN;
@@ -21,10 +21,23 @@ window_sdl2::window_sdl2(config& config) {
         flags |= SDL_WINDOW_BORDERLESS;
     }
 
+#if RB_GRAPHICS_BACKEND_OPENGL
+    flags |= SDL_WINDOW_OPENGL;
+#endif
+
     _window = SDL_CreateWindow(config.window.title.c_str(), SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, config.window.size.x, config.window.size.y, flags);
     if (!_window) {
-        throw exception{ fmt::format("Cannot create window: {}", SDL_GetError()) };
+        throw exception{ SDL_GetError() };
     }
+
+#if RB_GRAPHICS_BACKEND_OPENGL
+    _context = SDL_GL_CreateContext(_window);
+    if (!_context) {
+        throw exception{ SDL_GetError() };
+    }
+
+    SDL_GL_MakeCurrent(_window, _context);
+#endif
 }
 
 window_sdl2::~window_sdl2() {
@@ -50,6 +63,12 @@ window_handle window_sdl2::native_handle() const {
     return info.info.uikit.window;
 #else 
     return 0;
+#endif
+}
+
+void window_sdl2::swap_buffers() {
+#if RB_GRAPHICS_BACKEND_OPENGL
+    SDL_GL_SwapWindow(_window);
 #endif
 }
 

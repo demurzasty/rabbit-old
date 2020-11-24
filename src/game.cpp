@@ -4,6 +4,7 @@
 #include <rabbit/exception.hpp>
 
 #include <chrono>
+#include <thread>
 #include <iostream>
 
 using namespace rb;
@@ -62,6 +63,8 @@ void game::run() {
             _state_manager->draw();
 
             _graphics_device->present();
+        } else {
+            std::this_thread::sleep_for(std::chrono::milliseconds{ 1 });
         }
     }
 

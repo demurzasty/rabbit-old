@@ -43,36 +43,6 @@ static std::map<blend, GLenum> blend_factors = {
 };
 graphics_device_ogl3::graphics_device_ogl3(const config& config, std::shared_ptr<window> window)
 	: _window(window) {
-
-#if RB_WINDOWS
-	PIXELFORMATDESCRIPTOR pfd =
-	{
-		sizeof(PIXELFORMATDESCRIPTOR),
-		1,
-		PFD_DRAW_TO_WINDOW | PFD_SUPPORT_OPENGL | PFD_DOUBLEBUFFER,    //Flags
-		PFD_TYPE_RGBA,        // The kind of framebuffer. RGBA or palette.
-		32,                   // Colordepth of the framebuffer.
-		0, 0, 0, 0, 0, 0,
-		0,
-		0,
-		0,
-		0, 0, 0, 0,
-		24,                   // Number of bits for the depthbuffer
-		8,                    // Number of bits for the stencilbuffer
-		0,                    // Number of Aux buffers in the framebuffer.
-		PFD_MAIN_PLANE,
-		0,
-		0, 0, 0
-	};
-
-	_hdc = GetDC(window->native_handle());
-
-	SetPixelFormat(_hdc, ChoosePixelFormat(_hdc, &pfd), &pfd);
-
-	_context = wglCreateContext(_hdc);
-	wglMakeCurrent(_hdc, _context);
-#endif
-
 	glewInit();
 
 #if RB_WINDOWS
@@ -116,10 +86,6 @@ graphics_device_ogl3::graphics_device_ogl3(const config& config, std::shared_ptr
 }
 
 graphics_device_ogl3::~graphics_device_ogl3() {
-#if RB_WINDOWS
-	wglDeleteContext(_context);
-	ReleaseDC(_window->native_handle(), _hdc);
-#endif
 }
 
 std::shared_ptr<texture> graphics_device_ogl3::make_texture(const texture_desc& desc) {
@@ -138,9 +104,7 @@ void graphics_device_ogl3::clear(const color& color) {
 }
 
 void graphics_device_ogl3::present() {
-#if RB_WINDOWS
-	SwapBuffers(_hdc);
-#endif
+	_window->swap_buffers();
 }
 
 void graphics_device_ogl3::set_blend_state(const blend_state& blend_state) {

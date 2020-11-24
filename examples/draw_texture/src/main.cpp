@@ -38,4 +38,3 @@ int main(int argc, char* argv[]) {
     config.window.size = { 960, 640 };
     example_game{ config }.run();
 }
-

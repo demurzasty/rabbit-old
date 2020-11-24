@@ -67,11 +67,6 @@ namespace rb {
     private:
         std::shared_ptr<window> _window;
 
-#if RB_WINDOWS
-        HDC _hdc;
-        HGLRC _context;
-#endif
-
         mat4f _view = mat4f::identity();
         mat4f _projection = mat4f::identity();
         mat4f _world = mat4f::identity();

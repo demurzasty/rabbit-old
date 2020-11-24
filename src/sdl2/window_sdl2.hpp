@@ -16,6 +16,8 @@ namespace rb {
 
 		window_handle native_handle() const override;
 
+		void swap_buffers() override;
+
 		void poll_events() override;
 
 		vec2i size() const override;
@@ -35,5 +37,9 @@ namespace rb {
 	private:
 		SDL_Window* _window = nullptr;
 		bool _open = true;
+
+#if RB_GRAPHICS_BACKEND_OPENGL
+		SDL_GLContext _context = nullptr;
+#endif
 	};
 }
