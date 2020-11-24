@@ -13,7 +13,11 @@ namespace rb {
 
         GLuint id() const;
 
+    protected:
+        void update(const void* data, std::size_t size) override;
+
     private:
         GLuint _id;
+        GLenum _type;
     };
 }

@@ -13,6 +13,9 @@ namespace rb {
 
         ID3D11Buffer* buffer() const;
 
+    protected:
+        void update(const void* data, std::size_t size) override;
+
     private:
         ID3D11Device* _device;
         ID3D11DeviceContext* _context;

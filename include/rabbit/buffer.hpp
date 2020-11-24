@@ -18,6 +18,11 @@ namespace rb {
     public:
         virtual ~buffer() = default;
 
+        template<typename T>
+        void update(const span<T>& data) {
+            update(data.data(), data.size_bytes());
+        }
+
         buffer_type type() const;
 
         std::size_t size() const;
@@ -30,6 +35,8 @@ namespace rb {
 
     protected:
         buffer(const buffer_desc& desc);
+
+        virtual void update(const void* data, std::size_t size) = 0;
 
     private:
         buffer_type _type;
