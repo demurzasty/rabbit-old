@@ -26,7 +26,10 @@ window_sdl2::window_sdl2(config& config) {
         throw exception{ fmt::format("Cannot create window: {}", SDL_GetError()) };
     }
 
-    SDL_GL_CreateContext(_window);
+#ifdef RB_EMSCRIPTEN
+    auto context = SDL_GL_CreateContext(_window);
+    SDL_GL_MakeCurrent(_window, context);
+#endif
 }
 
 window_sdl2::~window_sdl2() {
@@ -76,13 +79,13 @@ void window_sdl2::maximize() {
 }
 
 void window_sdl2::set_resizable(bool resizable) const {
-#ifndef __EMSCRIPTEN__
+#ifndef RB_EMSCRIPTEN
     SDL_SetWindowResizable(_window, static_cast<SDL_bool>(resizable));
 #endif
 }
 
 bool window_sdl2::is_resizable() const {
-#ifndef __EMSCRIPTEN__
+#ifndef RB_EMSCRIPTEN
     return SDL_GetWindowFlags(_window) & SDL_WINDOW_RESIZABLE;
 #else
     return false;

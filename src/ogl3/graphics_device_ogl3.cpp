@@ -43,6 +43,8 @@ static std::map<blend, GLenum> blend_factors = {
 };
 graphics_device_ogl3::graphics_device_ogl3(const config& config, std::shared_ptr<window> window)
 	: _window(window) {
+
+#if RB_WINDOWS
 	PIXELFORMATDESCRIPTOR pfd =
 	{
 		sizeof(PIXELFORMATDESCRIPTOR),
@@ -69,6 +71,7 @@ graphics_device_ogl3::graphics_device_ogl3(const config& config, std::shared_ptr
 
 	_context = wglCreateContext(_hdc);
 	wglMakeCurrent(_hdc, _context);
+#endif
 
 	glewInit();
 
