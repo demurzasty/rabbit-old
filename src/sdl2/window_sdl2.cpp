@@ -50,6 +50,8 @@ window_handle window_sdl2::native_handle() const {
     return info.info.cocoa.window;
 #elif RB_IOS
     return info.info.uikit.window;
+#else 
+    return 0;
 #endif
 }
 

@@ -8,6 +8,8 @@
 #if RB_WINDOWS
 struct HWND__;
 namespace rb { typedef HWND__* window_handle; }
+#else
+namespace rb { using window_handle = void*; }
 #endif
 
 namespace rb {
