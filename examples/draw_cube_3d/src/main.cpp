@@ -1,6 +1,6 @@
 #include "main.hpp"
 
-#include <rabbit/vertex3d.hpp>
+#include <rabbit/vertex.hpp>
 
 example_game::example_game(rb::config& config)
     : rb::game(config) {
@@ -12,7 +12,7 @@ void example_game::initialize() {
     // Load texture from file.
     _texture = asset_manager()->load<rb::texture>("data/texture.png");
 
-    rb::vertex3d vertices[24] = {
+    rb::vertex vertices[24] = {
         { { -1.0f, 1.0f, -1.0f }, { 0.0f, 0.0f }, rb::color::white() },
         { { 1.0f, 1.0f, -1.0f }, { 1.0f, 0.0f }, rb::color::white() },
         { { -1.0f, -1.0f, -1.0f }, { 0.0f, 1.0f }, rb::color::white() },

@@ -39,5 +39,5 @@
 #include "vec2.hpp"
 #include "vec3.hpp"
 #include "vec4.hpp"
-#include "vertex2d.hpp"
+#include "vertex.hpp"
 #include "window.hpp"
