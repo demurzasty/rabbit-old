@@ -45,7 +45,8 @@ static std::map<blend, D3D11_BLEND> blends = {
 };
 
 graphics_device_dx11::graphics_device_dx11(const config& config, std::shared_ptr<window> window)
-	: _window(window) {
+	: _window(window)
+	, _vsync(config.graphics.vsync) {
 	ID3D11DeviceContext* context;
 
 	D3D_FEATURE_LEVEL feature_levels[] = {
@@ -282,7 +283,7 @@ void graphics_device_dx11::clear(const color& color) {
 }
 
 void graphics_device_dx11::present() {
-	_swap_chain->Present(1, 0);
+	_swap_chain->Present(_vsync ? 1 : 0, 0);
 }
 
 void graphics_device_dx11::set_blend_state(const blend_state& blend_state) {

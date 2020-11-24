@@ -111,7 +111,7 @@ graphics_device_ogl3::graphics_device_ogl3(const config& config, std::shared_ptr
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 #if RB_WINDOWS
-	wglSwapIntervalEXT(1);
+	wglSwapIntervalEXT(config.graphics.vsync ? 1 : 0);
 #endif
 }
 

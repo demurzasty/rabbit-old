@@ -15,6 +15,10 @@ namespace rb {
 			bool resizable = false;
 		} window;
 
+		struct {
+			bool vsync = true;
+		} graphics;
+
 		long double fixed_time_step = 1.0L / 60.0L;
 	};
 }

@@ -94,5 +94,6 @@ namespace rb {
         vertex_shader_data _vertex_shader_data;
         std::map<uint64_t, ID3D11BlendState*> _blend_states;
         bool _depth_test = false;
+        bool _vsync;
     };
 }
