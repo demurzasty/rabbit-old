@@ -157,5 +157,5 @@ if (CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
 endif ()
 
 if (RB_EMSCRIPTEN)
-	set_target_properties(rabbit PROPERTIES LINK_FLAGS "-s USE_SDL=2")
+	set_target_properties(rabbit PROPERTIES LINK_FLAGS "-s USE_SDL=2 -s \"EXPORTED_FUNCTIONS=['_SDL_CreateWindow', '_SDL_GL_CreateWindow', '_SDL_GetWindowTitle', '_SDL_GetWindowWMInfo', '_SDL_MaximizeWindow', '_SDL_memcpy']\"")
 endif ()
