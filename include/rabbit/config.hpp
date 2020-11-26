@@ -13,6 +13,7 @@ namespace rb {
 			bool fullscreen = false;
 			bool borderless = false;
 			bool resizable = false;
+			bool hide_cursor = false;
 		} window;
 
 		struct {

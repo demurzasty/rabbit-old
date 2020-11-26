@@ -38,6 +38,8 @@ window_sdl2::window_sdl2(config& config) {
 
     SDL_GL_MakeCurrent(_window, _context);
 #endif
+
+    show_cursor(!config.window.hide_cursor);
 }
 
 window_sdl2::~window_sdl2() {
