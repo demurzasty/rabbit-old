@@ -27,33 +27,17 @@ vec2i mouse_sdl2::position() {
 }
 
 bool mouse_sdl2::is_button_down(mouse_button button) {
-    if (button == mouse_button::unknown || button == mouse_button::count) {
-        throw exception{ fmt::format("Incorrect mouse button: {}", button) };
-    }
-
     return _state & flags[enum_size(button)];
 }
 
 bool mouse_sdl2::is_button_up(mouse_button button) {
-    if (button == mouse_button::unknown || button == mouse_button::count) {
-        throw exception{ fmt::format("Incorrect mouse button: {}", button) };
-    }
-
     return (_state & flags[enum_size(button)]) == 0;
 }
 
 bool mouse_sdl2::is_button_pressed(mouse_button button) {
-    if (button == mouse_button::unknown || button == mouse_button::count) {
-        throw exception{ fmt::format("Incorrect mouse button: {}", button) };
-    }
-
     return (_state & flags[enum_size(button)]) && ((_last_state & flags[enum_size(button)]) == 0);
 }
 
 bool mouse_sdl2::is_button_released(mouse_button button) {
-    if (button == mouse_button::unknown || button == mouse_button::count) {
-        throw exception{ fmt::format("Incorrect mouse button: {}", button) };
-    }
-
     return ((_state & flags[enum_size(button)]) == 0) && (_last_state & flags[enum_size(button)]);
 }

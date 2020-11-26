@@ -1,7 +1,10 @@
 #pragma once 
 
+#include "enum.hpp"
+
 namespace rb {
-	enum class texture_filter {
+	RB_ENUM(texture_filter, std::uint8_t, "nearest", "linear")
+	enum class texture_filter : std::uint8_t {
 		nearest,
 		linear
 	};

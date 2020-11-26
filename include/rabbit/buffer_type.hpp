@@ -1,11 +1,10 @@
 #pragma once 
 
-#include <cstdint>
+#include "enum.hpp"
 
 namespace rb {
-    enum class buffer_type : std::int8_t {
-        unknown = -1,
-
+	RB_ENUM(buffer_type, std::uint8_t, "vertex", "index")
+    enum class buffer_type : std::uint8_t {
         vertex,
         index
     };

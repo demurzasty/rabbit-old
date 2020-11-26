@@ -1,22 +1,19 @@
 #pragma once 
 
+#include "enum.hpp"
 #include "config.hpp"
 #include "gamepad_button.hpp"
 #include "gamepad_axis.hpp"
 
 #include <memory>
-#include <cstdint>
 
 namespace rb {
-    enum class gamepad_player : std::int8_t {
-        unknown = -1,
-
+    RB_ENUM(gamepad_player, std::uint8_t, "first", "second", "third", "fourth")
+    enum class gamepad_player : std::uint8_t {
         first,
         second,
         third,
-        fourth,
-
-        count
+        fourth
     };
 
     class gamepad {

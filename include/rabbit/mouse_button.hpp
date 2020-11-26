@@ -1,15 +1,12 @@
 #pragma once 
 
-#include <cstdint>
+#include "enum.hpp"
 
 namespace rb {
-	enum class mouse_button : std::int8_t {
-		unknown = -1,
-
+	RB_ENUM(mouse_button, std::uint8_t, "left", "middle", "right")
+	enum class mouse_button : std::uint8_t {
 		left,
 		middle,
-		right,
-
-		count
+		right
 	};
 }

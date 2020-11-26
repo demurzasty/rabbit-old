@@ -56,7 +56,7 @@ window_handle window_sdl2::native_handle() const {
 #if RB_WINDOWS
     return info.info.win.window;
 #elif RB_LINUX
-    // todo: fix compilation on windows
+    // todo: fix compilation on linux
     return 0; // info.info.x11.window;
 #elif RB_OSX
     return info.info.cocoa.window;

@@ -1,18 +1,15 @@
 #pragma once 
 
-#include <cstdint>
+#include "enum.hpp"
 
 namespace rb {
-	enum class gamepad_axis : std::int8_t {
-		unknown = -1,
-
+	RB_ENUM(gamepad_axis, std::uint8_t, "left_x", "left_y", "right_x", "right_y", "left_trigger", "right_trigger")
+	enum class gamepad_axis : std::uint8_t {
 		left_x,
 		left_y,
 		right_x,
 		right_y,
 		left_trigger,
-		right_trigger,
-
-		count
+		right_trigger
 	};
 }

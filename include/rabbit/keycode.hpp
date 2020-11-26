@@ -1,11 +1,10 @@
 #pragma once 
 
-#include <cstdint>
+#include "enum.hpp"
 
 namespace rb {
-	enum class keycode : std::int8_t {
-		unknown = -1,
-
+	// todo: enum definition
+	enum class keycode : std::uint8_t {
 		a,
 		b,
 		c,
@@ -118,8 +117,6 @@ namespace rb {
 		f14,
 		f15,
 
-		pause,
-
-		count
+		pause
 	};
 }

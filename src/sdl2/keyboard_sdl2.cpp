@@ -101,12 +101,12 @@ static std::unordered_map<keycode, int> key_map = {
 };
 
 keyboard_sdl2::keyboard_sdl2()
-    : _last_state() {
-    _state = SDL_GetKeyboardState(0);
+    : _last_state(), _state() {
 }
 
 void keyboard_sdl2::refresh() {
     SDL_memcpy(_last_state, _state, sizeof(_last_state));
+    SDL_memcpy(_state, SDL_GetKeyboardState(0), sizeof(_state));
 }
 
 bool keyboard_sdl2::is_key_down(keycode key) {

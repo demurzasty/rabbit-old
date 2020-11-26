@@ -21,6 +21,6 @@ namespace rb {
 
     private:
         Uint8 _last_state[SDL_NUM_SCANCODES];
-        const Uint8* _state = nullptr;
+        Uint8 _state[SDL_NUM_SCANCODES];
     };
 }

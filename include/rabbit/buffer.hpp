@@ -8,7 +8,7 @@
 
 namespace rb {
     struct buffer_desc {
-        buffer_type type = buffer_type::unknown;
+        buffer_type type = buffer_type::vertex;
         std::size_t size = 0;
         const void* data = nullptr;
         bool is_mutable = false;

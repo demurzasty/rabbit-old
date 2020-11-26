@@ -1,7 +1,10 @@
 #pragma once
 
+#include "enum.hpp"
+
 namespace rb {
-	enum class texture_format {
+	RB_ENUM(texture_format, std::uint8_t, "r8", "rg8", "rgba8", "d24s8")
+	enum class texture_format : std::uint8_t {
 		r8,
 		rg8,
 		rgba8,

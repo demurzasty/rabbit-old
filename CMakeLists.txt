@@ -21,6 +21,7 @@ set (RB_PLATFORM_BACKEND_WIN32 FALSE) # deprecated, use SDL2 instead
 set (RB_PLATFORM_BACKEND_SDL2 FALSE)
 
 set (RB_GAMEPAD_BACKEND_XINPUT FALSE)
+set (RB_GAMEPAD_BACKEND_SDL2 FALSE)
 
 set (RB_AUDIO_BACKEND_XAUDIO FALSE)
 set (RB_AUDIO_BACKEND_OPENAL FALSE)
@@ -35,15 +36,17 @@ elseif (RB_WINDOWS)
 	endif ()
 
 	set (RB_PLATFORM_BACKEND_SDL2 TRUE)
-	set (RB_GAMEPAD_BACKEND_XINPUT TRUE)
+	set (RB_GAMEPAD_BACKEND_SDL2 TRUE)
 	set (RB_AUDIO_BACKEND_XAUDIO TRUE)
 elseif (RB_LINUX)
 	set (RB_GRAPHICS_BACKEND_OPENGL TRUE)
 	set (RB_PLATFORM_BACKEND_SDL2 TRUE)
+	set (RB_GAMEPAD_BACKEND_SDL2 TRUE)
 	set (RB_AUDIO_BACKEND_OPENAL TRUE)
 elseif (RB_OSX)
 	set (RB_GRAPHICS_BACKEND_METAL TRUE)
 	set (RB_PLATFORM_BACKEND_SDL2 TRUE)
+	set (RB_GAMEPAD_BACKEND_SDL2 TRUE)
 	set (RB_AUDIO_BACKEND_OPENAL TRUE)
 endif ()
 
@@ -87,6 +90,7 @@ if (RB_PLATFORM_BACKEND_SDL2)
 		"src/sdl2/keyboard_sdl2.cpp"
 		"src/sdl2/mouse_sdl2.cpp"
 		"src/sdl2/gamepad_sdl2.cpp"
+		"src/sdl2/gamecontrollerdb_sdl2.cpp"
 	)
 endif ()
 
@@ -146,6 +150,7 @@ target_compile_definitions (rabbit PUBLIC -DRB_SWITCH=$<BOOL:${RB_SWITCH}>)
 target_compile_definitions (rabbit PUBLIC -DRB_PLATFORM_BACKEND_WIN32=$<BOOL:${RB_PLATFORM_BACKEND_WIN32}>)
 target_compile_definitions (rabbit PUBLIC -DRB_PLATFORM_BACKEND_SDL2=$<BOOL:${RB_PLATFORM_BACKEND_SDL2}>)
 
+target_compile_definitions (rabbit PUBLIC -DRB_GAMEPAD_BACKEND_SDL2=$<BOOL:${RB_GAMEPAD_BACKEND_SDL2}>)
 target_compile_definitions (rabbit PUBLIC -DRB_GAMEPAD_BACKEND_XINPUT=$<BOOL:${RB_GAMEPAD_BACKEND_XINPUT}>)
 
 target_compile_definitions (rabbit PUBLIC -DRB_GRAPHICS_BACKEND_DIRECTX=$<BOOL:${RB_GRAPHICS_BACKEND_DIRECTX}>)

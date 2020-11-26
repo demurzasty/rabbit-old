@@ -1,10 +1,13 @@
 ﻿#pragma once 
 
+#include "enum.hpp"
 #include "color.hpp"
 
 #include <cstdint>
 
 namespace rb {
+	RB_ENUM(blend, std::uint8_t, "one", "zero", "source_color", "inverse_source_color", "source_alpha", "inverse_source_alpha",
+		"destination_color", "inverse_destination_color", "blend_factor", "inverse_blend_factor", "source_alpha_saturation")
 	enum class blend : std::uint8_t {
 		// Each component of the color is multiplied by (1, 1, 1, 1).
 		one,
@@ -60,6 +63,7 @@ namespace rb {
 		source_alpha_saturation
 	};
 
+	RB_ENUM(blend_function, std::uint8_t, "add", "subtract", "reverse_subtract", "min", "max")
 	enum class blend_function : std::uint8_t {
 		// result = (source color * source blend) + (destination color * destination blend) 
 		add,

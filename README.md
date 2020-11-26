@@ -52,8 +52,8 @@ void hello_world::draw() {
 
 int main(int argc, char* argv[]) {
     rb::config config;
-    config.window_title = "Hello World";
-    config.window_size = { 1280, 720 };
+    config.window.title = "Hello World";
+    config.window.size = { 1280, 720 };
     hello_world{ config }.run();
 }
 ```

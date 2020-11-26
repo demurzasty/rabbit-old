@@ -2,6 +2,8 @@
 #include <rabbit/image.hpp>
 #include <rabbit/json.hpp>
 
+#include <map>
+#include <string>
 #include <fstream>
 #include <cassert>
 
@@ -18,9 +20,7 @@ std::shared_ptr<void> texture_loader::load(const std::string& filename, const js
     desc.data = image.pixels();
     desc.size = image.size();
 
-    if (metadata.contains("filter")) {
-        desc.filter = metadata["filter"] == "linear" ? texture_filter::linear : texture_filter::nearest;
-    }
+    desc.filter = json_utils::member_or(metadata, "filter", texture_filter::nearest);
     
     return _graphics_device->make_texture(desc);
 }
