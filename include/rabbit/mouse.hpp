@@ -16,6 +16,8 @@ namespace rb {
 
         virtual vec2i position() = 0;
 
+        virtual float wheel() = 0;
+
         virtual bool is_button_down(mouse_button button) = 0;
 
         virtual bool is_button_up(mouse_button button) = 0;

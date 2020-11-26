@@ -1,4 +1,5 @@
 #include "mouse_sdl2.hpp"
+#include "window_sdl2.hpp"
 
 #include <rabbit/enum.hpp>
 #include <rabbit/exception.hpp>
@@ -24,6 +25,10 @@ void mouse_sdl2::refresh() {
 
 vec2i mouse_sdl2::position() {
     return _mouse_position;
+}
+
+float mouse_sdl2::wheel() {
+    return std::static_pointer_cast<window_sdl2>(_window)->mouse_wheel();
 }
 
 bool mouse_sdl2::is_button_down(mouse_button button) {

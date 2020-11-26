@@ -81,6 +81,8 @@ void window_sdl2::poll_events() {
     while (SDL_PollEvent(&event)) {
         if (event.type == SDL_QUIT) {
             _open = false;
+        } else if (event.type == SDL_MOUSEWHEEL) {
+            _mouse_wheel = event.wheel.y < 0 ? -1.0f : 1.0f;
         }
     }
 }
@@ -121,4 +123,8 @@ void window_sdl2::show_cursor(bool enable) {
 
 bool window_sdl2::is_cursor_visible() const {
     return SDL_ShowCursor(-1) == 1;
+}
+
+float window_sdl2::mouse_wheel() const {
+    return _mouse_wheel;
 }

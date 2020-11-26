@@ -38,9 +38,12 @@ namespace rb {
 
 		bool is_cursor_visible() const override;
 
+		float mouse_wheel() const;
+
 	private:
 		SDL_Window* _window = nullptr;
 		bool _open = true;
+		float _mouse_wheel = 0.0f;
 
 #if RB_GRAPHICS_BACKEND_OPENGL
 		SDL_GLContext _context = nullptr;

@@ -13,6 +13,8 @@ namespace rb {
 
         vec2i position() override;
 
+        float wheel() override;
+
         bool is_button_down(mouse_button button) override;
 
         bool is_button_up(mouse_button button) override;
