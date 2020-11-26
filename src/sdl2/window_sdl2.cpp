@@ -112,3 +112,11 @@ void window_sdl2::set_title(const std::string& title) {
 std::string window_sdl2::title() const {
     return SDL_GetWindowTitle(_window);
 }
+
+void window_sdl2::show_cursor(bool enable) {
+    SDL_ShowCursor(enable ? 1 : 0);
+}
+
+bool window_sdl2::is_cursor_visible() const {
+    return SDL_ShowCursor(-1) == 1;
+}

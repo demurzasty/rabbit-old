@@ -78,6 +78,10 @@ namespace rb {
 		virtual void set_title(const std::string& title) = 0;
 
 		virtual std::string title() const = 0;
+
+		virtual void show_cursor(bool enable) = 0;
+
+		virtual bool is_cursor_visible() const = 0;
     };
 
 	/**

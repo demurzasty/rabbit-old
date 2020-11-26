@@ -34,6 +34,10 @@ namespace rb {
 
 		std::string title() const override;
 
+		void show_cursor(bool enable) override;
+
+		bool is_cursor_visible() const override;
+
 	private:
 		SDL_Window* _window = nullptr;
 		bool _open = true;
