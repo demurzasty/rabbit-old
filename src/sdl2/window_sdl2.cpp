@@ -77,6 +77,7 @@ void window_sdl2::swap_buffers() {
 
 void window_sdl2::poll_events() {
     SDL_Event event;
+    _mouse_wheel = 0.0f;
 
     while (SDL_PollEvent(&event)) {
         if (event.type == SDL_QUIT) {
