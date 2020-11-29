@@ -18,6 +18,10 @@ namespace rb {
     public:
         virtual ~buffer() = default;
 
+        virtual void* map() = 0;
+
+        virtual void unmap() = 0;
+
         template<typename T>
         void update(const span<T>& data) {
             update(data.data(), data.size_bytes());

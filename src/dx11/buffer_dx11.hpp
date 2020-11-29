@@ -11,6 +11,10 @@ namespace rb {
 
         ~buffer_dx11();
 
+        void* map() override;
+
+        void unmap() override;
+
         ID3D11Buffer* buffer() const;
 
     protected:

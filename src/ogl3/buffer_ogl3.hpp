@@ -11,6 +11,10 @@ namespace rb {
 
         ~buffer_ogl3();
 
+        void* map() override;
+
+        void unmap() override;
+
         GLuint id() const;
 
     protected:

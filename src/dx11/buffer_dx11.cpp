@@ -39,6 +39,24 @@ ID3D11Buffer* buffer_dx11::buffer() const {
     return _buffer;
 }
 
+void* buffer_dx11::map() {
+    if (!is_mutable()) {
+        throw exception{ "[DX11] Buffer need to be mutable to update content" };
+    }
+
+    D3D11_MAPPED_SUBRESOURCE mapped_resource;
+    const auto result = _context->Map(_buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped_resource);
+    if (FAILED(result)) {
+        throw exception{ "[DX11] Cannot map buffer" };
+    }
+
+    return mapped_resource.pData;
+}
+
+void buffer_dx11::unmap() {
+    _context->Unmap(_buffer, 0);
+}
+
 void buffer_dx11::update(const void* data, std::size_t size) {
     if (!is_mutable()) {
         throw exception{ "[DX11] Buffer need to be mutable to update content" };
