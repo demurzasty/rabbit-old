@@ -97,7 +97,7 @@ void window_sdl2::maximize() {
 }
 
 void window_sdl2::set_resizable(bool resizable) const {
-#if RB_EMSCRIPTEN
+#if !RB_EMSCRIPTEN
     SDL_SetWindowResizable(_window, static_cast<SDL_bool>(resizable));
 #endif
 }
