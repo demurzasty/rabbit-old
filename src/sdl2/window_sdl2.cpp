@@ -5,7 +5,7 @@
 using namespace rb;
 
 window_sdl2::window_sdl2(config& config) {
-    if (SDL_Init(SDL_INIT_VIDEO | SDL_INIT_EVENTS) < 0) {
+    if (SDL_Init(SDL_INIT_VIDEO) < 0) {
         throw exception{ SDL_GetError() };
     }
 
