@@ -97,11 +97,17 @@ void window_sdl2::maximize() {
 }
 
 void window_sdl2::set_resizable(bool resizable) const {
+#if RB_EMSCRIPTEN
     SDL_SetWindowResizable(_window, static_cast<SDL_bool>(resizable));
+#endif
 }
 
 bool window_sdl2::is_resizable() const {
+#if RB_EMSCRIPTEN
     return SDL_GetWindowFlags(_window) & SDL_WINDOW_RESIZABLE;
+#else
+    return false;
+#endif
 }
 
 bool window_sdl2::is_focused() const {
