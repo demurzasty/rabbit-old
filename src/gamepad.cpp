@@ -1,6 +1,6 @@
 #include <rabbit/gamepad.hpp>
 
-#if RB_GAMEPAD_BACKEND_SDL2
+#if RB_GAMEPAD_BACKEND_SDL2 && !RB_EMSCRIPTEN
 #include "sdl2/gamepad_sdl2.hpp"
 namespace rb { using gamepad_impl = gamepad_sdl2; }
 #elif RB_GAMEPAD_BACKEND_XINPUT
