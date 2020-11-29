@@ -7,10 +7,19 @@
 #include <thread>
 #include <iostream>
 
+#ifdef __EMSCRIPTEN__
+#include <emscripten.h>
+#include <emscripten/html5.h>
+#endif
+
 using namespace rb;
+
+static game* instance = nullptr;
 
 game::game(rb::config& config)
     : _config(config) {
+    instance = this;
+
     _window = make_window(config);
     _keyboard = make_keyboard(config);
     _mouse = make_mouse(config, _window);
@@ -22,9 +31,46 @@ game::game(rb::config& config)
     _asset_manager->add_loader<texture>(std::make_shared<texture_loader>(_graphics_device));
 }
 
+void game_loop(void* user_data) {
+    auto game = static_cast<rb::game*>(user_data);
+
+    game->window()->poll_events();
+    if (game->window()->is_focused()) {
+        game->keyboard()->refresh();
+        game->mouse()->refresh();
+        game->gamepad()->refresh();
+    }
+
+    game->update(1.0f / 60.0f);
+
+    game->state_manager()->update(1.0f / 60.0f);
+
+    game->fixed_update(1.0f / 60.0f);
+
+    game->state_manager()->fixed_update(1.0f / 60.0f);
+
+    if (game->window()->is_focused()) {
+        if (game->window()->size() != game->graphics_device()->backbuffer_size()) {
+            game->graphics_device()->set_backbuffer_size(game->window()->size());
+        }
+
+        game->graphics_device()->set_render_target(nullptr);
+
+        game->draw();
+
+        game->state_manager()->draw();
+
+        game->graphics_device()->present();
+    }
+}
+
+
 void game::run() {
     initialize();
 
+#ifdef __EMSCRIPTEN__
+    emscripten_set_main_loop_arg(&game_loop, this, 0, 1);
+#else
     clock clock;
     long double acc = 0.0L;
     while (_window->is_open() && _running) {
@@ -67,6 +113,7 @@ void game::run() {
             std::this_thread::sleep_for(std::chrono::milliseconds{ 1 });
         }
     }
+#endif
 
     _state_manager->release();
 

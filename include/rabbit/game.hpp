@@ -37,7 +37,7 @@ namespace rb {
 
         std::shared_ptr<rb::state_manager> state_manager() const;
 
-    protected:
+    public:
         virtual void initialize();
 
         virtual void release();
