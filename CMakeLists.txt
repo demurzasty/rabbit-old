@@ -90,6 +90,11 @@ if (RB_PLATFORM_BACKEND_SDL2)
 		"src/sdl2/window_sdl2.cpp"
 		"src/sdl2/keyboard_sdl2.cpp"
 		"src/sdl2/mouse_sdl2.cpp"
+	)
+endif ()
+
+if (RB_GAMEPAD_BACKEND_SDL2) 
+	set (SRC ${SRC}
 		"src/sdl2/gamepad_sdl2.cpp"
 		"src/sdl2/gamecontrollerdb_sdl2.cpp"
 	)
