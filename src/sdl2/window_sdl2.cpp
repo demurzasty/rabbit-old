@@ -2,8 +2,6 @@
 
 #include <rabbit/exception.hpp>
 
-#include <fmt/format.h>
-
 using namespace rb;
 
 window_sdl2::window_sdl2(config& config) {

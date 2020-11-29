@@ -1,5 +1,7 @@
 #include "keyboard_sdl2.hpp"
 
+#include <unordered_map>
+
 using namespace rb;
 
 static std::unordered_map<keycode, int> key_map = {
@@ -101,7 +103,8 @@ static std::unordered_map<keycode, int> key_map = {
 };
 
 keyboard_sdl2::keyboard_sdl2()
-    : _last_state(), _state() {
+    : _last_state()
+    , _state() {
 }
 
 void keyboard_sdl2::refresh() {

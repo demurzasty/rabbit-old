@@ -4,37 +4,38 @@
 #include <rabbit/enum.hpp>
 #include <rabbit/exception.hpp>
 
+#include <map>
 #include <algorithm>
 
 using namespace rb;
 
-static SDL_GameControllerAxis axes[] = {
-    SDL_CONTROLLER_AXIS_LEFTX,
-    SDL_CONTROLLER_AXIS_LEFTY,
-    SDL_CONTROLLER_AXIS_RIGHTX,
-    SDL_CONTROLLER_AXIS_RIGHTY,
-    SDL_CONTROLLER_AXIS_TRIGGERLEFT,
-    SDL_CONTROLLER_AXIS_TRIGGERRIGHT,
+static std::map<gamepad_axis, SDL_GameControllerAxis> axes = {
+    { gamepad_axis::left_x, SDL_CONTROLLER_AXIS_LEFTX },
+    { gamepad_axis::left_y, SDL_CONTROLLER_AXIS_LEFTY },
+    { gamepad_axis::right_x, SDL_CONTROLLER_AXIS_RIGHTX },
+    { gamepad_axis::right_y, SDL_CONTROLLER_AXIS_RIGHTY },
+    { gamepad_axis::left_trigger, SDL_CONTROLLER_AXIS_TRIGGERLEFT },
+    { gamepad_axis::right_trigger, SDL_CONTROLLER_AXIS_TRIGGERRIGHT },
 };
 
-static SDL_GameControllerButton buttons[] = {
-    SDL_CONTROLLER_BUTTON_A,
-    SDL_CONTROLLER_BUTTON_B,
-    SDL_CONTROLLER_BUTTON_X,
-    SDL_CONTROLLER_BUTTON_Y,
+static std::map<gamepad_button, SDL_GameControllerButton> buttons = {
+    { gamepad_button::a, SDL_CONTROLLER_BUTTON_A },
+    { gamepad_button::b, SDL_CONTROLLER_BUTTON_B },
+    { gamepad_button::x, SDL_CONTROLLER_BUTTON_X },
+    { gamepad_button::y, SDL_CONTROLLER_BUTTON_Y },
 
-    SDL_CONTROLLER_BUTTON_LEFTSHOULDER,
-    SDL_CONTROLLER_BUTTON_RIGHTSHOULDER,
-    SDL_CONTROLLER_BUTTON_LEFTSTICK,
-    SDL_CONTROLLER_BUTTON_RIGHTSTICK,
+    { gamepad_button::left_bumper, SDL_CONTROLLER_BUTTON_LEFTSHOULDER },
+    { gamepad_button::right_bumper, SDL_CONTROLLER_BUTTON_RIGHTSHOULDER },
+    { gamepad_button::left_thumb, SDL_CONTROLLER_BUTTON_LEFTSTICK },
+    { gamepad_button::right_thumb, SDL_CONTROLLER_BUTTON_RIGHTSTICK },
 
-    SDL_CONTROLLER_BUTTON_BACK,
-    SDL_CONTROLLER_BUTTON_START,
+    { gamepad_button::back, SDL_CONTROLLER_BUTTON_BACK },
+    { gamepad_button::start, SDL_CONTROLLER_BUTTON_START },
 
-    SDL_CONTROLLER_BUTTON_DPAD_UP,
-    SDL_CONTROLLER_BUTTON_DPAD_RIGHT,
-    SDL_CONTROLLER_BUTTON_DPAD_DOWN,
-    SDL_CONTROLLER_BUTTON_DPAD_LEFT,
+    { gamepad_button::dpad_up, SDL_CONTROLLER_BUTTON_DPAD_UP },
+    { gamepad_button::dpad_right, SDL_CONTROLLER_BUTTON_DPAD_RIGHT },
+    { gamepad_button::dpad_down, SDL_CONTROLLER_BUTTON_DPAD_DOWN },
+    { gamepad_button::dpad_left, SDL_CONTROLLER_BUTTON_DPAD_LEFT },
 };
 
 gamepad_sdl2::gamepad_sdl2()
@@ -65,8 +66,8 @@ void gamepad_sdl2::refresh() {
             SDL_memcpy(_last_state, _state, sizeof(_last_state));
 
             // Get current state of controller
-            for (auto button : buttons) {
-                _state[i][button] = SDL_GameControllerGetButton(_controllers[i], button);
+            for (auto [button, id] : buttons) {
+                _state[i][id] = SDL_GameControllerGetButton(_controllers[i], id);
             }
         }
     }
@@ -75,7 +76,7 @@ void gamepad_sdl2::refresh() {
 bool gamepad_sdl2::is_button_down(gamepad_player player, gamepad_button button) {
     auto controller = _controllers[enum_size(player)];
     if (controller) {
-        return _state[enum_size(player)][buttons[enum_size(button)]];
+        return _state[enum_size(player)][buttons.at(button)];
     }
     return false;
 }
@@ -83,7 +84,7 @@ bool gamepad_sdl2::is_button_down(gamepad_player player, gamepad_button button) 
 bool gamepad_sdl2::is_button_up(gamepad_player player, gamepad_button button) {
     auto controller = _controllers[enum_size(player)];
     if (controller) {
-        return !_state[enum_size(player)][buttons[enum_size(button)]];
+        return !_state[enum_size(player)][buttons.at(button)];
     }
     return true;
 }
@@ -91,8 +92,8 @@ bool gamepad_sdl2::is_button_up(gamepad_player player, gamepad_button button) {
 bool gamepad_sdl2::is_button_pressed(gamepad_player player, gamepad_button button) {
     auto controller = _controllers[enum_size(player)];
     if (controller) {
-        return _state[enum_size(player)][buttons[enum_size(button)]] &&
-            !_last_state[enum_size(player)][buttons[enum_size(button)]];
+        return _state[enum_size(player)][buttons.at(button)] &&
+            !_last_state[enum_size(player)][buttons.at(button)];
     }
     return false;
 }
@@ -100,8 +101,8 @@ bool gamepad_sdl2::is_button_pressed(gamepad_player player, gamepad_button butto
 bool gamepad_sdl2::is_button_released(gamepad_player player, gamepad_button button) {
     auto controller = _controllers[enum_size(player)];
     if (controller) {
-        return !_state[enum_size(player)][buttons[enum_size(button)]] &&
-            _last_state[enum_size(player)][buttons[enum_size(button)]];
+        return !_state[enum_size(player)][buttons.at(button)] &&
+            _last_state[enum_size(player)][buttons.at(button)];
     }
     return false;
 }
@@ -109,7 +110,7 @@ bool gamepad_sdl2::is_button_released(gamepad_player player, gamepad_button butt
 float gamepad_sdl2::axis(gamepad_player player, gamepad_axis axis) {
     auto controller = _controllers[enum_size(player)];
     if (controller) {
-        return SDL_GameControllerGetAxis(controller, axes[enum_size(axis)]) / 32767.0f;
+        return SDL_GameControllerGetAxis(controller, axes.at(axis)) / 32767.0f;
     }
     return 0.0f;
 }

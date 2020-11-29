@@ -2,16 +2,15 @@
 #include "window_sdl2.hpp"
 
 #include <rabbit/enum.hpp>
-#include <rabbit/exception.hpp>
 
-#include <fmt/format.h>
+#include <map>
 
 using namespace rb;
 
-static Uint32 flags[] = {
-    SDL_BUTTON_LEFT,
-    SDL_BUTTON_MIDDLE,
-    SDL_BUTTON_RIGHT
+static std::map<mouse_button, Uint32> flags = {
+    { mouse_button::left, SDL_BUTTON_LEFT },
+    { mouse_button::middle, SDL_BUTTON_MIDDLE },
+    { mouse_button::right, SDL_BUTTON_RIGHT }
 };
 
 mouse_sdl2::mouse_sdl2(std::shared_ptr<window> window)
@@ -32,17 +31,17 @@ float mouse_sdl2::wheel() {
 }
 
 bool mouse_sdl2::is_button_down(mouse_button button) {
-    return _state & flags[enum_size(button)];
+    return _state & flags.at(button);
 }
 
 bool mouse_sdl2::is_button_up(mouse_button button) {
-    return (_state & flags[enum_size(button)]) == 0;
+    return (_state & flags.at(button)) == 0;
 }
 
 bool mouse_sdl2::is_button_pressed(mouse_button button) {
-    return (_state & flags[enum_size(button)]) && ((_last_state & flags[enum_size(button)]) == 0);
+    return (_state & flags.at(button)) && ((_last_state & flags.at(button)) == 0);
 }
 
 bool mouse_sdl2::is_button_released(mouse_button button) {
-    return ((_state & flags[enum_size(button)]) == 0) && (_last_state & flags[enum_size(button)]);
+    return ((_state & flags.at(button)) == 0) && (_last_state & flags.at(button));
 }
