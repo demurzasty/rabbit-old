@@ -9,24 +9,13 @@
 ## Requirements
 To be able to use `RabBit`, users must provide a full-featured compiler that supports at least `C++17` and `CMake` version 3.16 or later.. 
 
-## Backends implementations progress
-### Platforms
-☑️ Windows  
-⭕ UWP (Universal Windows, Xbox One)  
-☑️ Linux  
-⭕ OSX  
-⭕ Android  
-⭕ iOS
-### Graphics
-☑️ DirectX 11  
-⭕ DirectX 12  
-☑️ OpenGL 3  
-⭕ Vulkan  
-⭕ Metal  
-⭕ GNM  
-### Input
-☑️ Windows  
-☑️ XInput
+## Supported Platforms
+* ✔️ Windows (OpenGL & DirectX)
+* ✔️ Linux (OpenGL)
+* ⚠️ Mac OSX (OpenGL)
+* ❌ Nintendo Switch
+* ❌ PlayStation 5
+* ❌ Xbox Series S/X
 
 ## Code Example
 ```cpp
