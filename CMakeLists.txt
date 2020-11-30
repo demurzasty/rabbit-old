@@ -74,6 +74,8 @@ set (SRC
 	"src/state.cpp"
 	"src/state_manager.cpp"
 	"src/dummy/gamepad_dummy.cpp"
+	"src/dummy/keyboard_dummy.cpp"
+	"src/dummy/mouse_dummy.cpp"
 )
 
 if (RB_PLATFORM_BACKEND_WIN32) 
