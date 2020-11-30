@@ -63,11 +63,11 @@ float gamepad_xinput::axis(gamepad_player player, gamepad_axis axis) {
 		case gamepad_axis::left_x:
 			return _state[enum_size(player)].Gamepad.sThumbLX / 32768.0f;
 		case gamepad_axis::left_y:
-			return _state[enum_size(player)].Gamepad.sThumbLY / 32768.0f;
+			return -_state[enum_size(player)].Gamepad.sThumbLY / 32768.0f;
 		case gamepad_axis::right_x:
 			return _state[enum_size(player)].Gamepad.sThumbRX / 32768.0f;
 		case gamepad_axis::right_y:
-			return _state[enum_size(player)].Gamepad.sThumbRY / 32768.0f;
+			return -_state[enum_size(player)].Gamepad.sThumbRY / 32768.0f;
 		case gamepad_axis::left_trigger:
 			return _state[enum_size(player)].Gamepad.bLeftTrigger / 255.0f;
 		case gamepad_axis::right_trigger:
