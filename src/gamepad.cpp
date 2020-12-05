@@ -1,4 +1,5 @@
 #include <rabbit/gamepad.hpp>
+#include <rabbit/injector.hpp>
 
 #if RB_GAMEPAD_BACKEND_SDL2
 #include "sdl2/gamepad_sdl2.hpp"
@@ -13,6 +14,6 @@ namespace rb { using gamepad_impl = gamepad_dummy; }
 
 using namespace rb;
 
-std::shared_ptr<gamepad> rb::make_gamepad(const config& config) {
-    return std::make_shared<gamepad_impl>();
+std::shared_ptr<gamepad> gamepad::resolve(dependency_container& container) {
+    return container.resolve<gamepad_impl>();
 }

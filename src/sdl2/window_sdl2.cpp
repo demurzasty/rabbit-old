@@ -4,18 +4,18 @@
 
 using namespace rb;
 
-window_sdl2::window_sdl2(config& config) {
+window_sdl2::window_sdl2(std::shared_ptr<config> config) {
     if (SDL_Init(SDL_INIT_EVERYTHING) < 0) {
         throw exception{ SDL_GetError() };
     }
 
     Uint32 flags = SDL_WINDOW_SHOWN;
 
-    if (config.window.resizable) { 
+    if (config->window.resizable) { 
         flags |= SDL_WINDOW_RESIZABLE;
     }
 
-    if (config.window.borderless) {
+    if (config->window.borderless) {
         flags |= SDL_WINDOW_BORDERLESS;
     }
 
@@ -23,7 +23,7 @@ window_sdl2::window_sdl2(config& config) {
     flags |= SDL_WINDOW_OPENGL;
 #endif
 
-    _window = SDL_CreateWindow(config.window.title.c_str(), SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, config.window.size.x, config.window.size.y, flags);
+    _window = SDL_CreateWindow(config->window.title.c_str(), SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, config->window.size.x, config->window.size.y, flags);
     if (!_window) {
         throw exception{ SDL_GetError() };
     }
@@ -37,7 +37,7 @@ window_sdl2::window_sdl2(config& config) {
     SDL_GL_MakeCurrent(_window, _context);
 #endif
 
-    show_cursor(!config.window.hide_cursor);
+    show_cursor(!config->window.hide_cursor);
 }
 
 window_sdl2::~window_sdl2() {

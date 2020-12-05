@@ -1,4 +1,5 @@
 #include <rabbit/keyboard.hpp>
+#include <rabbit/injector.hpp>
 
 #if RB_PLATFORM_BACKEND_SDL2
 #include "sdl2/keyboard_sdl2.hpp"
@@ -10,6 +11,6 @@ namespace rb { using keyboard_impl = keyboard_dummy; }
 
 using namespace rb;
 
-std::shared_ptr<keyboard> rb::make_keyboard(const config& config) {
-    return std::make_shared<keyboard_impl>();
+std::shared_ptr<keyboard> keyboard::resolve(dependency_container& container) {
+    return container.resolve<keyboard_impl>();
 }

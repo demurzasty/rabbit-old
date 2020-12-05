@@ -8,6 +8,7 @@
 #include "gamepad.hpp"
 #include "asset_manager.hpp"
 #include "state_manager.hpp"
+#include "injector.hpp"
 
 #include <map>
 #include <memory>
@@ -15,13 +16,13 @@
 namespace rb {
     class game {
     public:
-        game(rb::config& config);
+        game(std::shared_ptr<rb::config> config);
 
         void run();
 
         void exit();
 
-        const rb::config& config() const;
+        std::shared_ptr<rb::config> config() const;
 
         std::shared_ptr<rb::window> window() const;
 
@@ -49,14 +50,7 @@ namespace rb {
         virtual void draw();
 
     private:
-        rb::config& _config;
-        std::shared_ptr<rb::window> _window;
-        std::shared_ptr<rb::graphics_device> _graphics_device;
-        std::shared_ptr<rb::keyboard> _keyboard;
-        std::shared_ptr<rb::mouse> _mouse;
-        std::shared_ptr<rb::gamepad> _gamepad;
-        std::shared_ptr<rb::asset_manager> _asset_manager;
-        std::shared_ptr<rb::state_manager> _state_manager;
+        mutable dependency_container _container;
         bool _running = true;
     };
 }

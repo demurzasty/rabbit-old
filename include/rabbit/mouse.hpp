@@ -8,8 +8,15 @@
 #include <memory>
 
 namespace rb {
+    class dependency_container;
+
     class mouse {
     public:
+        /**
+         * @brief Makes new instance of platform independent mouse.
+         */
+        static std::shared_ptr<mouse> resolve(dependency_container& container);
+
         virtual ~mouse() = default;
 
         virtual void refresh() = 0;

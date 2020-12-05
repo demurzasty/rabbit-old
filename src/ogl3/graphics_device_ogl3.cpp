@@ -41,7 +41,8 @@ static std::map<blend, GLenum> blend_factors = {
 	{ blend::source_alpha_saturation, GL_SRC_ALPHA_SATURATE },
 	{ blend::source_color, GL_SRC_COLOR }
 };
-graphics_device_ogl3::graphics_device_ogl3(const config& config, std::shared_ptr<window> window)
+
+graphics_device_ogl3::graphics_device_ogl3(std::shared_ptr<config> config, std::shared_ptr<window> window)
 	: _window(window) {
 	glewInit();
 

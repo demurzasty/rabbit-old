@@ -2,7 +2,7 @@
 
 // Texture used: https://opengameart.org/content/micro-character-bases-basics
 
-example_game::example_game(rb::config& config)
+example_game::example_game(std::shared_ptr<rb::config> config)
     : rb::game(config) {
 }
 
@@ -38,8 +38,8 @@ void example_game::draw() {
 }
 
 int main(int argc, char* argv[]) {
-    rb::config config;
-    config.window.title = "Gamepad Example";
-    config.window.size = { 1280, 720 };
+    auto config = std::make_shared<rb::config>();
+    config->window.title = "Gamepad Example";
+    config->window.size = { 1280, 720 };
     example_game{ config }.run();
 }

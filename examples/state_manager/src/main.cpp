@@ -1,7 +1,7 @@
 #include "main.hpp"
 #include "test_state.hpp"
 
-example_game::example_game(rb::config& config)
+example_game::example_game(std::shared_ptr<rb::config> config)
     : rb::game(config) {
 }
 
@@ -27,8 +27,8 @@ void example_game::draw() {
 }
 
 int main(int argc, char* argv[]) {
-    rb::config config;
-    config.window.title = "State Manager Example";
-    config.window.size = { 960, 640 };
+    auto config = std::make_shared<rb::config>();
+    config->window.title = "State Manager Example";
+    config->window.size = { 960, 640 };
     example_game{ config }.run();
 }

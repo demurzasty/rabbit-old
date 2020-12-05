@@ -13,8 +13,15 @@ namespace rb { using window_handle = void*; }
 #endif
 
 namespace rb {
+	class dependency_container;
+
     class window {
     public:
+		/**
+		 * @brief Makes new instance of platform independent window.
+		 */
+		static std::shared_ptr<window> resolve(dependency_container& container);
+
 		/**
 		 * @brief Default virtual destructor.
 		 */
@@ -83,9 +90,4 @@ namespace rb {
 
 		virtual bool is_cursor_visible() const = 0;
     };
-
-	/**
-	 * @brief Makes new instance of platform independent window.
-	 */
-	std::shared_ptr<window> make_window(config& config);
 }

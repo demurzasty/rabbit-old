@@ -11,7 +11,7 @@
 namespace rb {
     class graphics_device_ogl3 : public graphics_device {
     public:
-        graphics_device_ogl3(const config& config, std::shared_ptr<window> window);
+        graphics_device_ogl3(std::shared_ptr<config> config, std::shared_ptr<window> window);
 
         ~graphics_device_ogl3();
 

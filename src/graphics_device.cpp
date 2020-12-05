@@ -1,4 +1,5 @@
 #include <rabbit/graphics_device.hpp>
+#include <rabbit/injector.hpp>
 
 #if RB_GRAPHICS_BACKEND_DIRECTX
 #include "dx11/graphics_device_dx11.hpp"
@@ -10,6 +11,6 @@ namespace rb { using graphics_device_impl = graphics_device_ogl3; }
 
 using namespace rb;
 
-std::shared_ptr<graphics_device> rb::make_graphics_device(const config& config, std::shared_ptr<window> window) {
-    return std::make_shared<graphics_device_impl>(config, window);
+std::shared_ptr<graphics_device> graphics_device::resolve(dependency_container& container) {
+    return container.resolve<graphics_device_impl>();
 }

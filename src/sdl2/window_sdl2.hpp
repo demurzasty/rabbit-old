@@ -8,7 +8,7 @@
 namespace rb {
 	class window_sdl2 : public window {
 	public:
-		window_sdl2(config& config);
+		window_sdl2(std::shared_ptr<config> config);
 
 		~window_sdl2();
 

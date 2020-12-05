@@ -6,8 +6,15 @@
 #include <memory>
 
 namespace rb {
+    class dependency_container;
+
     class keyboard {
     public:
+        /**
+         * @brief Makes new instance of platform independent keyboard.
+         */
+        static std::shared_ptr<keyboard> resolve(dependency_container& container);
+
         virtual ~keyboard() = default;
 
         virtual void refresh() = 0;

@@ -15,8 +15,15 @@
 #include <memory>
 
 namespace rb {
+    class dependency_container;
+
     class graphics_device {
     public:
+        /**
+         * @brief Makes new instance of platform independent mouse.
+         */
+        static std::shared_ptr<graphics_device> resolve(dependency_container& container);
+
         /**
          * @brief Default virtual constructor.
          */

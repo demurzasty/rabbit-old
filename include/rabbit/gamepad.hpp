@@ -8,6 +8,8 @@
 #include <memory>
 
 namespace rb {
+    class dependency_container;
+
     RB_ENUM(gamepad_player, std::uint8_t, "first", "second", "third", "fourth")
     enum class gamepad_player : std::uint8_t {
         first,
@@ -18,6 +20,11 @@ namespace rb {
 
     class gamepad {
     public:
+        /**
+         * @brief Makes new instance of platform independent mouse.
+         */
+        static std::shared_ptr<gamepad> resolve(dependency_container& container);
+
         virtual ~gamepad() = default;
 
         virtual void refresh() = 0;

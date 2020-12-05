@@ -1,4 +1,5 @@
 #include <rabbit/window.hpp>
+#include <rabbit/injector.hpp>
 
 #if RB_PLATFORM_BACKEND_SDL2
 #include "sdl2/window_sdl2.hpp"
@@ -10,6 +11,6 @@ namespace rb { using window_impl = window_win32; }
 
 using namespace rb;
 
-std::shared_ptr<window> rb::make_window(config& config) {
-    return std::make_shared<window_impl>(config);
+std::shared_ptr<window> window::resolve(dependency_container& container) {
+    return container.resolve<window_impl>();
 }

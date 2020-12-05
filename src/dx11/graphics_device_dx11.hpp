@@ -12,7 +12,7 @@
 namespace rb {
     class graphics_device_dx11 : public graphics_device {
     public:
-        graphics_device_dx11(const config& config, std::shared_ptr<window> window);
+        graphics_device_dx11(std::shared_ptr<config> config, std::shared_ptr<window> window);
 
         ~graphics_device_dx11();
 
