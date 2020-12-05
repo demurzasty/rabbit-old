@@ -21,8 +21,6 @@ To be able to use `RabBit`, users must provide a full-featured compiler that sup
 ```cpp
 #include <rabbit/rabbit.hpp>
 
-using namespace rb;
-
 class example_game : public rb::game {
 public:
     example_game(rb::config& config)
