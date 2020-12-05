@@ -1,9 +1,9 @@
 #include <rabbit/graphics_device.hpp>
 
-#if RB_GRAPHICS_BACKEND_DIRECTX
+#if RB_GRAPHICS_BACKEND_DIRECTX11
 #include "dx11/graphics_device_dx11.hpp"
 namespace rb { using graphics_device_impl = graphics_device_dx11; }
-#elif RB_GRAPHICS_BACKEND_OPENGL
+#elif RB_GRAPHICS_BACKEND_OPENGL3
 #include "ogl3/graphics_device_ogl3.hpp"
 namespace rb { using graphics_device_impl = graphics_device_ogl3; }
 #endif
