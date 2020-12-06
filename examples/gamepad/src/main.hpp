@@ -16,5 +16,5 @@ protected:
 private:
     std::shared_ptr<rb::sprite_batch> _sprite_batch;
     std::shared_ptr<rb::texture> _texture;
-    rb::vec2f _troll_position = { 610.0f, 330.0f };
+    rb::vec2f _troll_position = { 150.0f, 80.0f };
 };

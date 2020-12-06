@@ -9,7 +9,7 @@ namespace rb {
     public:
         sprite_batch(std::shared_ptr<graphics_device> graphics_device);
 
-        void begin();
+        void begin(const vec2i& canvas_size);
 
         void draw(std::shared_ptr<texture> texture, const vec4i& source, const vec4f& destination, const color& color);
 
