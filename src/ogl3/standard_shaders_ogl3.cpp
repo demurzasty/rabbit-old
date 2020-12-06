@@ -3,7 +3,7 @@
 using namespace rb;
 
 static const char* solid_pixel_shader = 
-"#version 120\n"
+"#version 100\n"
 
 #ifdef __EMSCRIPTEN__
 "precision mediump float;\n"
@@ -18,7 +18,7 @@ static const char* solid_pixel_shader =
 ;
 
 static const char* texture_pixel_shader =
-"#version 120\n"
+"#version 100\n"
 
 #ifdef __EMSCRIPTEN__
 "precision mediump float;\n"
@@ -35,7 +35,7 @@ static const char* texture_pixel_shader =
 ;
 
 static const char* vertex_shader = 
-"#version 120\n"
+"#version 100\n"
 
 "attribute vec3 in_position;\n"
 "attribute vec2 in_texcoord;\n"

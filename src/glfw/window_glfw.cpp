@@ -2,9 +2,8 @@
 
 #if RB_WINDOWS
 #define GLFW_EXPOSE_NATIVE_WIN32
-#endif
-
 #include <GLFW/glfw3native.h>
+#endif
 
 #include <rabbit/exception.hpp>
 
@@ -78,7 +77,11 @@ bool window_glfw::is_resizable() const {
 }
 
 bool window_glfw::is_focused() const {
+#if RB_EMSCRIPTEN
+    return true;
+#else
     return glfwGetWindowAttrib(_window, GLFW_FOCUSED) != 0;
+#endif
 }
 
 void window_glfw::set_title(const std::string& title) {
@@ -90,7 +93,6 @@ std::string window_glfw::title() const {
 }
 
 void window_glfw::show_cursor(bool enable) {
-    
 }
 
 bool window_glfw::is_cursor_visible() const {
