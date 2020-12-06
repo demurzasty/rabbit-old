@@ -5,7 +5,7 @@
 #include <cstdint>
 
 namespace rb {
-    class standard_shaders_ogl3 {
+    class standard_shaders_vk {
     public:
         static const char* solid_pixel_shader();
 

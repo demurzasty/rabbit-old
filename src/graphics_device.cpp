@@ -1,6 +1,9 @@
 #include <rabbit/graphics_device.hpp>
 
-#if RB_GRAPHICS_BACKEND_DIRECTX
+#if RB_GRAPHICS_BACKEND_VULKAN
+#include "vulkan/graphics_device_vk.hpp"
+namespace rb { using graphics_device_impl = graphics_device_vk; }
+#elif RB_GRAPHICS_BACKEND_DIRECTX
 #include "dx11/graphics_device_dx11.hpp"
 namespace rb { using graphics_device_impl = graphics_device_dx11; }
 #elif RB_GRAPHICS_BACKEND_OPENGL

@@ -2,18 +2,14 @@
 
 #include <rabbit/graphics_device.hpp>
 
-#include <GL/glew.h>
-
-#if RB_WINDOWS
-#include <GL/wglew.h>
-#endif
+#include <volk.h>
 
 namespace rb {
-    class graphics_device_ogl3 : public graphics_device {
+    class graphics_device_vk : public graphics_device {
     public:
-        graphics_device_ogl3(const config& config, std::shared_ptr<window> window);
+        graphics_device_vk(const config& config, std::shared_ptr<window> window);
 
-        ~graphics_device_ogl3();
+        ~graphics_device_vk();
 
         std::shared_ptr<texture> make_texture(const texture_desc& desc) override;
 
@@ -58,8 +54,6 @@ namespace rb {
         void draw_textured(topology topology, std::shared_ptr<buffer> vertex_buffer, std::shared_ptr<buffer> index_buffer, const std::shared_ptr<texture>& texture) override;
 
     private:
-        GLuint compile_program(const char* vertex_shader_code, const char* fragment_shader_code) const;
-
         void update_vertex_buffer(const span<const vertex>& vertices);
 
         void update_index_buffer(const span<const std::uint32_t>& indices);
@@ -71,10 +65,6 @@ namespace rb {
         mat4f _projection = mat4f::identity();
         mat4f _world = mat4f::identity();
 
-        GLuint _vao = 0;
-        GLuint _vbo = 0;
-        GLuint _ibo = 0;
-        GLuint _solid_program = 0;
-        GLuint _texture_program = 0;
+        VkInstance _instance;
     };
 }

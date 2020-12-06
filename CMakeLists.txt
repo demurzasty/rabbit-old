@@ -15,6 +15,7 @@ endif()
 set (RB_GRAPHICS_BACKEND_DIRECTX FALSE)
 set (RB_GRAPHICS_BACKEND_OPENGL FALSE)
 set (RB_GRAPHICS_BACKEND_METAL FALSE)
+set (RB_GRAPHICS_BACKEND_VULKAN FALSE)
 
 set (RB_PLATFORM_BACKEND_SDL2 FALSE)
 
@@ -27,6 +28,8 @@ set (RB_AUDIO_BACKEND_OPENAL FALSE)
 if (RB_EMSCRIPTEN)
 	set (RB_GRAPHICS_BACKEND_OPENGL TRUE)
 elseif (RB_WINDOWS)
+	set (RB_GRAPHICS_BACKEND_VULKAN TRUE)
+
 	if (MSVC)
 		set (RB_GRAPHICS_BACKEND_DIRECTX TRUE)
 	else ()
@@ -118,6 +121,15 @@ if (RB_GRAPHICS_BACKEND_OPENGL)
 	)
 endif ()
 
+if (RB_GRAPHICS_BACKEND_VULKAN) 
+	set (SRC ${SRC}
+		"src/vulkan/graphics_device_vk.cpp"
+		"src/vulkan/texture_vk.cpp"
+		"src/vulkan/buffer_vk.cpp"
+		"src/vulkan/standard_shaders_vk.cpp"
+	)
+endif ()
+
 add_library (rabbit STATIC ${SRC})
 target_compile_features (rabbit PUBLIC cxx_std_17)
 target_include_directories (rabbit PUBLIC "include")
@@ -141,6 +153,11 @@ if (NOT RB_EMSCRIPTEN AND RB_GRAPHICS_BACKEND_OPENGL)
 	endif ()
 endif ()
 
+if (RB_GRAPHICS_BACKEND_VULKAN) 
+	find_package(Vulkan REQUIRED FATAL_ERROR)
+	target_link_libraries (rabbit PRIVATE volk)
+endif ()
+
 target_compile_definitions (rabbit PUBLIC -DRB_EMSCRIPTEN=$<BOOL:${RB_EMSCRIPTEN}>)
 target_compile_definitions (rabbit PUBLIC -DRB_WINDOWS=$<BOOL:${RB_WINDOWS}>)
 target_compile_definitions (rabbit PUBLIC -DRB_LINUX=$<BOOL:${RB_LINUX}>)
@@ -156,6 +173,7 @@ target_compile_definitions (rabbit PUBLIC -DRB_GAMEPAD_BACKEND_XINPUT=$<BOOL:${R
 target_compile_definitions (rabbit PUBLIC -DRB_GRAPHICS_BACKEND_DIRECTX=$<BOOL:${RB_GRAPHICS_BACKEND_DIRECTX}>)
 target_compile_definitions (rabbit PUBLIC -DRB_GRAPHICS_BACKEND_OPENGL=$<BOOL:${RB_GRAPHICS_BACKEND_OPENGL}>)
 target_compile_definitions (rabbit PUBLIC -DRB_GRAPHICS_BACKEND_METAL=$<BOOL:${RB_GRAPHICS_BACKEND_METAL}>)
+target_compile_definitions (rabbit PUBLIC -DRB_GRAPHICS_BACKEND_VULKAN=$<BOOL:${RB_GRAPHICS_BACKEND_VULKAN}>)
 
 target_compile_definitions (rabbit PUBLIC -DRB_AUDIO_BACKEND_XAUDIO=$<BOOL:${RB_AUDIO_BACKEND_XAUDIO}>)
 target_compile_definitions (rabbit PUBLIC -DRB_AUDIO_BACKEND_OPENAL=$<BOOL:${RB_AUDIO_BACKEND_OPENAL}>)

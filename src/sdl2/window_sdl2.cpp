@@ -19,7 +19,9 @@ window_sdl2::window_sdl2(config& config) {
         flags |= SDL_WINDOW_BORDERLESS;
     }
 
-#if RB_GRAPHICS_BACKEND_OPENGL
+#if RB_GRAPHICS_BACKEND_VULKAN
+    flags |= SDL_WINDOW_VULKAN;
+#elif RB_GRAPHICS_BACKEND_OPENGL
     flags |= SDL_WINDOW_OPENGL;
 #endif
 

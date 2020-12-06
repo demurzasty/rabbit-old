@@ -1,4 +1,4 @@
-#include "standard_shaders_ogl3.hpp"
+#include "standard_shaders_vk.hpp"
 
 using namespace rb;
 
@@ -55,14 +55,14 @@ static const char* vertex_shader =
 "}\n"
 ;
 
-const char* standard_shaders_ogl3::solid_pixel_shader() {
+const char* standard_shaders_vk::solid_pixel_shader() {
 	return ::solid_pixel_shader;
 }
 
-const char* standard_shaders_ogl3::texture_pixel_shader() {
+const char* standard_shaders_vk::texture_pixel_shader() {
 	return ::texture_pixel_shader;
 }
 
-const char* standard_shaders_ogl3::vertex_shader() {
+const char* standard_shaders_vk::vertex_shader() {
 	return ::vertex_shader;
 }

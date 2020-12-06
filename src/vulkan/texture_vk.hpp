@@ -2,23 +2,13 @@
 
 #include <rabbit/texture.hpp>
 
-#include <GL/glew.h>
-
 namespace rb {
-    class texture_ogl3 : public texture {
+    class texture_vk : public texture {
     public:
-		texture_ogl3(const texture_desc& desc);
+		texture_vk(const texture_desc& desc);
 
-		~texture_ogl3();
+		~texture_vk();
 
 		void update(const span<const std::uint8_t>& pixels, const vec4i& rect) override;
-
-		GLuint id() const;
-
-		GLuint framebuffer_id() const;
-
-	private:
-		GLuint _id = 0;
-		GLuint _framebuffer_id = 0;
     };
 }

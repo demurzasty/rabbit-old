@@ -2,26 +2,18 @@
 
 #include <rabbit/buffer.hpp>
 
-#include <GL/glew.h>
-
 namespace rb {
-    class buffer_ogl3 : public buffer {
+    class buffer_vk : public buffer {
     public:
-        buffer_ogl3(const buffer_desc& desc);
+        buffer_vk(const buffer_desc& desc);
 
-        ~buffer_ogl3();
+        ~buffer_vk();
 
         void* map() override;
 
         void unmap() override;
 
-        GLuint id() const;
-
     protected:
         void update(const void* data, std::size_t size) override;
-
-    private:
-        GLuint _id;
-        GLenum _type;
     };
 }
