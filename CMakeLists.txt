@@ -37,7 +37,7 @@ elseif (RB_WINDOWS)
 	else ()
 	endif ()
 	
-		set (RB_GRAPHICS_BACKEND_OPENGL TRUE)
+	set (RB_GRAPHICS_BACKEND_OPENGL TRUE)
 	# set (RB_PLATFORM_BACKEND_SDL2 TRUE)
 	set (RB_PLATFORM_BACKEND_GLFW TRUE)
 	# set (RB_GAMEPAD_BACKEND_SDL2 TRUE)
@@ -81,6 +81,8 @@ set (SRC
 	"src/state.cpp"
 	"src/state_manager.cpp"
 	"src/dummy/gamepad_dummy.cpp"
+	"src/dummy/keyboard_dummy.cpp"
+	"src/dummy/mouse_dummy.cpp"
 )
 
 if (RB_PLATFORM_BACKEND_WIN32) 
