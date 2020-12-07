@@ -94,6 +94,7 @@ endif ()
 if (RB_PLATFORM_BACKEND_GLFW)
 	set (SRC ${SRC}
 		"src/glfw/window_glfw.cpp"
+		"src/glfw/keyboard_glfw.cpp"
 	)
 endif ()
 

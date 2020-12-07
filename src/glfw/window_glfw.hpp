@@ -37,6 +37,8 @@ namespace rb {
 
 		bool is_cursor_visible() const override;
 
+		GLFWwindow* window() const;
+
     private:
         GLFWwindow* _window;
     };

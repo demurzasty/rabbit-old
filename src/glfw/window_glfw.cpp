@@ -98,3 +98,7 @@ void window_glfw::show_cursor(bool enable) {
 bool window_glfw::is_cursor_visible() const {
     return true;
 }
+
+GLFWwindow* window_glfw::window() const {
+    return _window;
+}
