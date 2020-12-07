@@ -11,6 +11,8 @@ namespace rb {
 
         void begin(const vec2i& canvas_size);
 
+        void begin(const mat4f& projection_matrix, const mat4f& view_matrix);
+
         void draw(std::shared_ptr<texture> texture, const vec4i& source, const vec4f& destination, const color& color);
 
         void end();

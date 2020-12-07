@@ -14,8 +14,12 @@ void sprite_batch::begin(const vec2i& canvas_size) {
     assert(!_current_texture);
 
     const auto backbuffer_size = static_cast<vec2f>(canvas_size);
-    _graphics_device->set_projection_matrix(rb::mat4f::orthographic(0.0f, backbuffer_size.x, backbuffer_size.y, 0.0f, -1.0f, 1.0f));
-    _graphics_device->set_view_matrix(rb::mat4f::identity());
+    begin(rb::mat4f::orthographic(0.0f, backbuffer_size.x, backbuffer_size.y, 0.0f, -1.0f, 1.0f), rb::mat4f::identity());
+}
+
+void sprite_batch::begin(const mat4f& projection_matrix, const mat4f& view_matrix) {
+    _graphics_device->set_projection_matrix(projection_matrix);
+    _graphics_device->set_view_matrix(view_matrix);
     _graphics_device->set_world_matrix(rb::mat4f::identity());
 }
 
