@@ -25,7 +25,7 @@ void example_game::update(float elapsed_time) {
 void example_game::draw() {
     graphics_device()->clear(rb::color::cornflower_blue());
 
-    _sprite_batch->begin();
+    _sprite_batch->begin(graphics_device()->backbuffer_size());
 
     _sprite_batch->draw(_texture, { 0, 0, 480, 320 }, { 0.0f, 0.0f, 960.0f, 640.0f }, rb::color::white());
 

@@ -10,11 +10,11 @@
 
 using namespace rb;
 
-static std::size_t bytes_per_pixels[] = {
-    1,
-    2,
-    3,
-    4
+static std::map<image_format, std::uint8_t> bytes_per_pixels = {
+    { image_format::r8, 1 },
+    { image_format::rg8, 2 },
+    { image_format::rgb8, 3 },
+    { image_format::rgba8, 4 },
 };
 
 image image::from_file(const std::string& filename) {
@@ -33,7 +33,7 @@ image::image(storage&& pixels, const vec2i& size, image_format format)
 }
 
 span<const std::uint8_t> image::pixels() const {
-    return { _pixels.get(), static_cast<std::size_t>(_size.x) * _size.y * bytes_per_pixels[enum_size(_format)] };
+    return { _pixels.get(), static_cast<std::size_t>(_size.x) * _size.y * bytes_per_pixels.at(_format) };
 }
 
 const vec2i& image::size() const {

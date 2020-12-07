@@ -3,7 +3,7 @@
 #include <rabbit/enum.hpp>
 
 #include <cstring>
-#include <unordered_map>
+#include <map>
 
 #include <objbase.h>
 
@@ -11,7 +11,7 @@
 
 using namespace rb;
 
-static std::unordered_map<gamepad_button, WORD> gamepad_button_map = {
+static std::map<gamepad_button, WORD> gamepad_button_map = {
 	{ gamepad_button::dpad_up, XINPUT_GAMEPAD_DPAD_UP },
 	{ gamepad_button::dpad_down, XINPUT_GAMEPAD_DPAD_DOWN },
 	{ gamepad_button::dpad_left, XINPUT_GAMEPAD_DPAD_LEFT },
@@ -63,11 +63,11 @@ float gamepad_xinput::axis(gamepad_player player, gamepad_axis axis) {
 		case gamepad_axis::left_x:
 			return _state[enum_size(player)].Gamepad.sThumbLX / 32768.0f;
 		case gamepad_axis::left_y:
-			return _state[enum_size(player)].Gamepad.sThumbLY / 32768.0f;
+			return -_state[enum_size(player)].Gamepad.sThumbLY / 32768.0f;
 		case gamepad_axis::right_x:
 			return _state[enum_size(player)].Gamepad.sThumbRX / 32768.0f;
 		case gamepad_axis::right_y:
-			return _state[enum_size(player)].Gamepad.sThumbRY / 32768.0f;
+			return -_state[enum_size(player)].Gamepad.sThumbRY / 32768.0f;
 		case gamepad_axis::left_trigger:
 			return _state[enum_size(player)].Gamepad.bLeftTrigger / 255.0f;
 		case gamepad_axis::right_trigger:

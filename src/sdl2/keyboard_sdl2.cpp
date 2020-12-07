@@ -4,7 +4,7 @@
 
 using namespace rb;
 
-static std::unordered_map<keycode, int> key_map = {
+static std::unordered_map<keycode, int> keys = {
     { keycode::left_system, SDL_SCANCODE_APPLICATION },
     { keycode::right_system, SDL_SCANCODE_APPLICATION },
     { keycode::menu, SDL_SCANCODE_MENU },
@@ -113,19 +113,19 @@ void keyboard_sdl2::refresh() {
 }
 
 bool keyboard_sdl2::is_key_down(keycode key) {
-    return _state[key_map[key]];
+    return _state[keys[key]];
 }
 
 bool keyboard_sdl2::is_key_up(keycode key) {
-    return !_state[key_map[key]];
+    return !_state[keys[key]];
 }
 
 bool keyboard_sdl2::is_key_pressed(keycode key) {
-    const auto index = key_map[key];
+    const auto index = keys[key];
     return _state[index] && !_last_state[index];
 }
 
 bool keyboard_sdl2::is_key_released(keycode key) {
-    const auto index = key_map[key];
+    const auto index = keys[key];
     return !_state[index] && _last_state[index];
 }
