@@ -5,9 +5,7 @@ using namespace rb;
 static const char* solid_pixel_shader = 
 "#version 100\n"
 
-#ifdef __EMSCRIPTEN__
 "precision mediump float;\n"
-#endif
 
 "varying vec2 v_texcoord;\n"
 "varying vec4 v_color;\n"
@@ -20,9 +18,7 @@ static const char* solid_pixel_shader =
 static const char* texture_pixel_shader =
 "#version 100\n"
 
-#ifdef __EMSCRIPTEN__
 "precision mediump float;\n"
-#endif
 
 "varying vec2 v_texcoord;\n"
 "varying vec4 v_color;\n"
