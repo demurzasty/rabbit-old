@@ -2,6 +2,7 @@
 
 #include "config.hpp"
 #include "keycode.hpp"
+#include "window.hpp"
 
 #include <memory>
 
@@ -21,5 +22,5 @@ namespace rb {
         virtual bool is_key_released(keycode key) = 0;
     };
 
-    std::shared_ptr<keyboard> make_keyboard(const config& config);
+    std::shared_ptr<keyboard> make_keyboard(const config& config, std::shared_ptr<window> window);
 }
