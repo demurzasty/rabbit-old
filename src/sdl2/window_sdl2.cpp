@@ -2,7 +2,19 @@
 
 #include <rabbit/exception.hpp>
 
+#include <map>
+
 using namespace rb;
+
+#if RB_GRAPHICS_BACKEND_OPENGL
+static std::map<msaa, UINT> samples = {
+    { msaa::none, 0 },
+    { msaa::x2, 2 },
+    { msaa::x4, 4 },
+    { msaa::x8, 8 },
+    { msaa::x16, 16 },
+};
+#endif
 
 window_sdl2::window_sdl2(config& config) {
     if (SDL_Init(SDL_INIT_EVERYTHING) < 0) {
@@ -21,6 +33,13 @@ window_sdl2::window_sdl2(config& config) {
 
 #if RB_GRAPHICS_BACKEND_OPENGL
     flags |= SDL_WINDOW_OPENGL;
+
+    if (config.window.msaa != msaa::none) {
+        SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
+        SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, samples.at(config.window.msaa));
+    } else {
+        SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 0);
+    }
 #endif
 
     _window = SDL_CreateWindow(config.window.title.c_str(), SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, config.window.size.x, config.window.size.y, flags);

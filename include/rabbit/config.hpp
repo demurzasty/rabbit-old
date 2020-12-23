@@ -6,6 +6,14 @@
 #include <string>
 
 namespace rb {
+	enum class msaa : std::uint8_t {
+		none = 1,
+		x2 = 2,
+		x4 = 4,
+		x8 = 8,
+		x16 = 16
+	};
+
 	struct config {
 		struct {
 			std::string title = "RabBit";
@@ -14,6 +22,7 @@ namespace rb {
 			bool borderless = false;
 			bool resizable = false;
 			bool hide_cursor = false;
+			msaa msaa = msaa::none;
 		} window;
 
 		struct {

@@ -1,5 +1,7 @@
 #pragma once 
 
+#include <cmath>
+
 namespace rb {
     template<typename T>
     constexpr T pi() noexcept {
@@ -35,5 +37,4 @@ namespace rb {
     constexpr T lerp(const T a, const T b, const T factor) noexcept {
         return a + (b - a) * factor;
     }
-
 }

@@ -91,6 +91,8 @@ namespace rb {
         ID3D11PixelShader* _texture_pixel_shader = nullptr;
         ID3D11InputLayout* _input_layout = nullptr;
         ID3D11RasterizerState* _rasterizer_state = nullptr;
+        D3D11_TEXTURE2D_DESC _depth_desc = {};
+        D3D11_DEPTH_STENCIL_VIEW_DESC _depth_stencil_view_desc = {};
         vertex_shader_data _vertex_shader_data;
         std::map<uint64_t, ID3D11BlendState*> _blend_states;
         bool _depth_test = false;

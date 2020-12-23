@@ -44,6 +44,14 @@ static std::map<blend, D3D11_BLEND> blends = {
 	{ blend::source_alpha_saturation, D3D11_BLEND_SRC_ALPHA_SAT }
 };
 
+static std::map<msaa, UINT> samples = {
+	{ msaa::none, 1 },
+	{ msaa::x2, 2 },
+	{ msaa::x4, 4 },
+	{ msaa::x8, 8 },
+	{ msaa::x16, 8 },
+};
+
 graphics_device_dx11::graphics_device_dx11(const config& config, std::shared_ptr<window> window)
 	: _window(window)
 	, _vsync(config.graphics.vsync) {
@@ -104,10 +112,15 @@ graphics_device_dx11::graphics_device_dx11(const config& config, std::shared_ptr
 	swap_chain_desc.BufferCount = 2;
 	swap_chain_desc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
 	swap_chain_desc.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-	swap_chain_desc.SampleDesc.Count = 1;
+	swap_chain_desc.SampleDesc.Count = samples.at(config.window.msaa);
 	swap_chain_desc.SampleDesc.Quality = 0;
-	swap_chain_desc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL;
-	swap_chain_desc.Scaling = DXGI_SCALING_NONE;
+	if (config.window.msaa != msaa::none) {
+		swap_chain_desc.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
+		swap_chain_desc.Scaling = DXGI_SCALING_STRETCH;
+	} else {
+		swap_chain_desc.SwapEffect = DXGI_SWAP_EFFECT_FLIP_SEQUENTIAL;
+		swap_chain_desc.Scaling = DXGI_SCALING_NONE;
+	}
 	swap_chain_desc.Flags = 0;
 
 	result = dxgi_factory->CreateSwapChainForHwnd(_device, window->native_handle(), &swap_chain_desc, nullptr, nullptr, &_swap_chain);
@@ -133,31 +146,28 @@ graphics_device_dx11::graphics_device_dx11(const config& config, std::shared_ptr
 
 	back_buffer->Release();
 
-	D3D11_TEXTURE2D_DESC depth_desc = {};
-	depth_desc.Width = window_size.x;
-	depth_desc.Height = window_size.y;
-	depth_desc.MipLevels = 1;
-	depth_desc.ArraySize = 1;
-	depth_desc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
-	depth_desc.SampleDesc.Count = 1;
-	depth_desc.SampleDesc.Quality = 0;
-	depth_desc.Usage = D3D11_USAGE_DEFAULT;
-	depth_desc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
-	depth_desc.CPUAccessFlags = 0;
-	depth_desc.MiscFlags = 0;
+	_depth_desc.Width = window_size.x;
+	_depth_desc.Height = window_size.y;
+	_depth_desc.MipLevels = 1;
+	_depth_desc.ArraySize = 1;
+	_depth_desc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
+	_depth_desc.SampleDesc.Count = samples.at(config.window.msaa);
+	_depth_desc.SampleDesc.Quality = 0;
+	_depth_desc.Usage = D3D11_USAGE_DEFAULT;
+	_depth_desc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
+	_depth_desc.CPUAccessFlags = 0;
+	_depth_desc.MiscFlags = 0;
 
-	result = _device->CreateTexture2D(&depth_desc, NULL, &_depth_stencil_texture);
+	result = _device->CreateTexture2D(&_depth_desc, NULL, &_depth_stencil_texture);
 	if (FAILED(result)) {
 		throw exception{ "[DX11] Cannot create depth stencil texture" };
 	}
 
-	D3D11_DEPTH_STENCIL_VIEW_DESC depth_stencil_view_desc = {};
+	_depth_stencil_view_desc.Format = _depth_desc.Format;
+	_depth_stencil_view_desc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2DMS;
+	_depth_stencil_view_desc.Texture2D.MipSlice = 0;
 
-	depth_stencil_view_desc.Format = depth_desc.Format;
-	depth_stencil_view_desc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2DMS;
-	depth_stencil_view_desc.Texture2D.MipSlice = 0;
-
-	result = _device->CreateDepthStencilView(_depth_stencil_texture, &depth_stencil_view_desc, &_depth_stencil_view);
+	result = _device->CreateDepthStencilView(_depth_stencil_texture, &_depth_stencil_view_desc, &_depth_stencil_view);
 	if (FAILED(result)) {
 		throw exception{ "[DX11] Cannot create depth stencil view" };
 	}
@@ -210,7 +220,7 @@ graphics_device_dx11::graphics_device_dx11(const config& config, std::shared_ptr
 	rasterizer_desc.DepthClipEnable = TRUE;
 	rasterizer_desc.FillMode = D3D11_FILL_SOLID;
 	rasterizer_desc.FrontCounterClockwise = FALSE;
-	rasterizer_desc.MultisampleEnable = FALSE;
+	rasterizer_desc.MultisampleEnable = config.window.msaa != msaa::none ? TRUE : FALSE;
 	rasterizer_desc.ScissorEnable = TRUE;
 	rasterizer_desc.SlopeScaledDepthBias = 0.0f;
 	result = _device->CreateRasterizerState(&rasterizer_desc, &_rasterizer_state);
@@ -357,33 +367,17 @@ void graphics_device_dx11::set_backbuffer_size(const vec2i& size) {
 
 	_depth_stencil_texture->Release();
 
-	D3D11_TEXTURE2D_DESC depth_desc = {};
-	depth_desc.Width = size.x;
-	depth_desc.Height = size.y;
-	depth_desc.MipLevels = 1;
-	depth_desc.ArraySize = 1;
-	depth_desc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
-	depth_desc.SampleDesc.Count = 1;
-	depth_desc.SampleDesc.Quality = 0;
-	depth_desc.Usage = D3D11_USAGE_DEFAULT;
-	depth_desc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
-	depth_desc.CPUAccessFlags = 0;
-	depth_desc.MiscFlags = 0;
+	_depth_desc.Width = size.x;
+	_depth_desc.Height = size.y;
 
-	result = _device->CreateTexture2D(&depth_desc, NULL, &_depth_stencil_texture);
+	result = _device->CreateTexture2D(&_depth_desc, NULL, &_depth_stencil_texture);
 	if (FAILED(result)) {
 		throw exception{ "[DX11] Cannot create depth stencil texture" };
 	}
 
 	_depth_stencil_view->Release();
 
-	D3D11_DEPTH_STENCIL_VIEW_DESC depth_stencil_view_desc = {};
-
-	depth_stencil_view_desc.Format = depth_desc.Format;
-	depth_stencil_view_desc.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2DMS;
-	depth_stencil_view_desc.Texture2D.MipSlice = 0;
-
-	result = _device->CreateDepthStencilView(_depth_stencil_texture, &depth_stencil_view_desc, &_depth_stencil_view);
+	result = _device->CreateDepthStencilView(_depth_stencil_texture, &_depth_stencil_view_desc, &_depth_stencil_view);
 	if (FAILED(result)) {
 		throw exception{ "[DX11] Cannot create depth stencil view" };
 	}
