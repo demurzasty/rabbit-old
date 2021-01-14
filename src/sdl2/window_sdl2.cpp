@@ -95,12 +95,15 @@ void window_sdl2::swap_buffers() {
 void window_sdl2::poll_events() {
     SDL_Event event;
     _mouse_wheel = 0.0f;
+    _input_text.clear();
 
     while (SDL_PollEvent(&event)) {
         if (event.type == SDL_QUIT) {
             _open = false;
         } else if (event.type == SDL_MOUSEWHEEL) {
             _mouse_wheel = event.wheel.y < 0 ? -1.0f : 1.0f;
+        } else if (event.type == SDL_TEXTINPUT) {
+            _input_text += event.text.text;
         }
     }
 }
@@ -145,4 +148,8 @@ bool window_sdl2::is_cursor_visible() const {
 
 float window_sdl2::mouse_wheel() const {
     return _mouse_wheel;
+}
+
+const std::string& window_sdl2::input_text() const {
+    return _input_text;
 }

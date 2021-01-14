@@ -2,8 +2,10 @@
 
 #include "config.hpp"
 #include "keycode.hpp"
+#include "window.hpp"
 
 #include <memory>
+#include <string>
 
 namespace rb {
     class keyboard {
@@ -19,7 +21,9 @@ namespace rb {
         virtual bool is_key_pressed(keycode key) = 0;
 
         virtual bool is_key_released(keycode key) = 0;
+
+        virtual const std::string& input_text() const = 0;
     };
 
-    std::shared_ptr<keyboard> make_keyboard(const config& config);
+    std::shared_ptr<keyboard> make_keyboard(const config& config, std::shared_ptr<window> window);
 }

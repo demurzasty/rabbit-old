@@ -40,10 +40,13 @@ namespace rb {
 
 		float mouse_wheel() const;
 
+		const std::string& input_text() const;
+
 	private:
 		SDL_Window* _window = nullptr;
 		bool _open = true;
 		float _mouse_wheel = 0.0f;
+		std::string _input_text;
 
 #if RB_GRAPHICS_BACKEND_OPENGL
 		SDL_GLContext _context = nullptr;

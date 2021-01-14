@@ -12,7 +12,7 @@ using namespace rb;
 game::game(rb::config& config)
     : _config(config) {
     _window = make_window(config);
-    _keyboard = make_keyboard(config);
+    _keyboard = make_keyboard(config, _window);
     _mouse = make_mouse(config, _window);
     _graphics_device = make_graphics_device(config, _window);
     _gamepad = make_gamepad(config);
