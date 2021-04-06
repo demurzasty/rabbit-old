@@ -43,7 +43,7 @@ gamepad_sdl2::gamepad_sdl2()
     , _last_state()
     , _state() {
     if (SDL_GameControllerAddMapping(gamecontrollerdb::mapping()) < 0) {
-        throw exception{ SDL_GetError() };
+        throw make_exception(SDL_GetError());
     }
 }
 

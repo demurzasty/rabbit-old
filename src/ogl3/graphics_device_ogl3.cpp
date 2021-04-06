@@ -363,7 +363,7 @@ GLuint graphics_device_ogl3::compile_program(const char* vertex_shader_code, con
 		glDeleteShader(vertex_shader);
 		glDeleteShader(fragment_shader);
 
-		throw exception{ fmt::format("Cannot compile program: {}\n{}", vertex_message, fragment_message) };
+		throw make_exception("Cannot compile program: {}\n{}", vertex_message, fragment_message);
 	}
 
 	const auto program = glCreateProgram();
@@ -390,7 +390,7 @@ GLuint graphics_device_ogl3::compile_program(const char* vertex_shader_code, con
 
 		glDeleteProgram(program);
 
-		throw exception{ fmt::format("Cannot link program: {}", program_message) };
+		throw make_exception("Cannot link program: {}", program_message);
 	}
 
 	return program;

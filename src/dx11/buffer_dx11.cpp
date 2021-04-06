@@ -27,7 +27,7 @@ buffer_dx11::buffer_dx11(ID3D11Device* device, ID3D11DeviceContext* context, con
     buffer_data.pSysMem = desc.data;
     const auto result = _device->CreateBuffer(&buffer_desc, desc.data ? &buffer_data : nullptr, &_buffer);
     if (FAILED(result)) {
-        throw exception{ "[DX11] Cannot create buffer" };
+        throw make_exception("[DX11] Cannot create buffer");
     }
 }
 
@@ -41,13 +41,13 @@ ID3D11Buffer* buffer_dx11::buffer() const {
 
 void* buffer_dx11::map() {
     if (!is_mutable()) {
-        throw exception{ "[DX11] Buffer need to be mutable to update content" };
+        throw make_exception("[DX11] Buffer need to be mutable to update content");
     }
 
     D3D11_MAPPED_SUBRESOURCE mapped_resource;
     const auto result = _context->Map(_buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped_resource);
     if (FAILED(result)) {
-        throw exception{ "[DX11] Cannot map buffer" };
+        throw make_exception("[DX11] Cannot map buffer");
     }
 
     return mapped_resource.pData;
@@ -59,17 +59,17 @@ void buffer_dx11::unmap() {
 
 void buffer_dx11::update(const void* data, std::size_t size) {
     if (!is_mutable()) {
-        throw exception{ "[DX11] Buffer need to be mutable to update content" };
+        throw make_exception("[DX11] Buffer need to be mutable to update content");
     }
 
     if (size > this->size()) {
-        throw exception{ "[DX11] Overflow data" };
+        throw make_exception("[DX11] Overflow data");
     }
 
     D3D11_MAPPED_SUBRESOURCE mapped_resource;
     const auto result = _context->Map(_buffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mapped_resource);
     if (FAILED(result)) {
-        throw exception{ "[DX11] Cannot map buffer" };
+        throw make_exception("[DX11] Cannot map buffer");
     }
 
     std::memcpy(mapped_resource.pData, data, size);

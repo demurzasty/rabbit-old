@@ -22,7 +22,7 @@ image image::from_file(const std::string& filename) {
     int components;
     auto pixels = storage{ stbi_load(filename.c_str(), &size.x, &size.y, &components, 4), &stbi_image_free };
     if (!pixels) {
-        throw exception{ stbi_failure_reason() };
+        throw make_exception(stbi_failure_reason());
     }
 
     return { std::move(pixels), size, image_format::rgba8 };

@@ -18,7 +18,7 @@ static std::map<msaa, UINT> samples = {
 
 window_sdl2::window_sdl2(config& config) {
     if (SDL_Init(SDL_INIT_EVERYTHING) < 0) {
-        throw exception{ SDL_GetError() };
+        throw make_exception(SDL_GetError());
     }
 
     Uint32 flags = SDL_WINDOW_SHOWN;
@@ -44,13 +44,13 @@ window_sdl2::window_sdl2(config& config) {
 
     _window = SDL_CreateWindow(config.window.title.c_str(), SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, config.window.size.x, config.window.size.y, flags);
     if (!_window) {
-        throw exception{ SDL_GetError() };
+        throw make_exception(SDL_GetError());
     }
 
 #if RB_GRAPHICS_BACKEND_OPENGL
     _context = SDL_GL_CreateContext(_window);
     if (!_context) {
-        throw exception{ SDL_GetError() };
+        throw make_exception(SDL_GetError());
     }
 
     SDL_GL_MakeCurrent(_window, _context);

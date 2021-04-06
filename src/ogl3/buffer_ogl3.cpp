@@ -36,7 +36,7 @@ GLuint buffer_ogl3::id() const {
 
 void* buffer_ogl3::map() {
     if (!is_mutable()) {
-        throw exception{ "[OGL3] Buffer need to be mutable to update content" };
+        throw make_exception("[OGL3] Buffer need to be mutable to update content");
     }
 
     glBindBuffer(_type, _id);
@@ -49,11 +49,11 @@ void buffer_ogl3::unmap() {
 
 void buffer_ogl3::update(const void* data, std::size_t size) {
     if (!is_mutable()) {
-        throw exception{ "[OGL3] Buffer need to be mutable to update content" };
+        throw make_exception("[OGL3] Buffer need to be mutable to update content");
     }
 
     if (size > this->size()) {
-        throw exception{ "[OGL3] Overflow data" };
+        throw make_exception("[OGL3] Overflow data");
     }
 
     glBindBuffer(_type, _id);
