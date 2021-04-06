@@ -7,6 +7,7 @@
 #include "clock.hpp"
 #include "color.hpp"
 #include "config.hpp"
+#include "container.hpp"
 #include "easing.hpp"
 #include "entity.hpp"
 #include "enum.hpp"
