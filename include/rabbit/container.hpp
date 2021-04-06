@@ -73,11 +73,11 @@ namespace rb {
         }
 
         template<typename Interface, typename Func>
-        container& install(Func func) {
+        container& install(Func factory) {
             _beans.emplace(type_id<Interface>().hash(), bean{
                 nullptr,
-                [func](container& container) {
-                    return func(container);
+                [factory](container& container) {
+                    return factory(container);
                 }
             });
             return *this;
@@ -107,7 +107,7 @@ namespace rb {
         [[nodiscard]] void invoke(Func func) {
             using resolver = resolver<void>;
 
-            resolver r;
+            resolver r{ *this };
             if constexpr (std::is_invocable_v<Func>) {
                 func();
             } else if constexpr (std::is_invocable_v<Func, resolver>) {
@@ -123,13 +123,18 @@ namespace rb {
             throw make_exception("No suitable invocation found");
         }
 
-        template<typename T>
+        template<typename T, std::enable_if_t<!std::is_same_v<std::decay_t<T>, container>, int> = 0>
         [[nodiscard]] T& get() {
             auto& bean = _beans.at(type_id<T>().hash());
             if (!bean.instance) {
                 bean.instance = bean.factory(*this);
             }
             return *std::static_pointer_cast<T>(bean.instance);
+        }
+
+        template<typename T, std::enable_if_t<std::is_same_v<std::decay_t<T>, container>, int> = 0>
+        [[nodiscard]] T& get() {
+            return *this;
         }
 
     private:
