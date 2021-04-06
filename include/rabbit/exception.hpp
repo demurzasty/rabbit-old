@@ -4,7 +4,7 @@
 #include <stdexcept>
 
 namespace rb {
-    class exception : public std::logic_error {
+    class exception : public std::runtime_error {
     public:
         exception(const std::string& message);
     };

@@ -5,5 +5,5 @@
 using namespace rb;
 
 exception::exception(const std::string& message)
-    : logic_error(message) {
+    : runtime_error(message) {
 }
