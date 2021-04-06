@@ -121,7 +121,7 @@ endif ()
 add_library (rabbit STATIC ${SRC})
 target_compile_features (rabbit PUBLIC cxx_std_17)
 target_include_directories (rabbit PUBLIC "include")
-target_link_libraries (rabbit PUBLIC fmt stb json gsl)
+target_link_libraries (rabbit PUBLIC entt fmt stb json gsl)
 
 if (MSVC) 
 	target_compile_definitions (rabbit PUBLIC NOMINMAX _CRT_SECURE_NO_WARNINGS)
