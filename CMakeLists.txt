@@ -70,6 +70,7 @@ set (SRC
 	"src/loader.cpp"
 	"src/image.cpp"
 	"src/state.cpp"
+	"src/system.cpp"
 	"src/state_manager.cpp"
 	"src/dummy/gamepad_dummy.cpp"
 	"src/dummy/keyboard_dummy.cpp"
