@@ -1,4 +1,5 @@
 {
+    "glsllint.glslangValidatorPath": "C:/VulkanSDK/1.2.170.0/Bin/glslangValidator.exe",
     "files.associations": {
         "memory": "cpp",
         "type_traits": "cpp",
