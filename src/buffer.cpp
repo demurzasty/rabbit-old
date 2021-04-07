@@ -12,6 +12,9 @@ buffer::buffer(const buffer_desc& desc)
     if (desc.size == 0) {
         throw make_exception("Buffer size cannot be 0");
     }
+    if (desc.stride == 0) {
+        throw make_exception("Buffer stride cannot be 0");
+    }
 }
 
 buffer_type buffer::type() const {
