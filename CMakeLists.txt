@@ -143,6 +143,7 @@ endif ()
 if (RB_GRAPHICS_BACKEND_OPENGL) 
 	set (SRC ${SRC}
 		"src/ogl3/buffer_ogl3.cpp"
+		"src/ogl3/builtin_shaders_ogl3.cpp"
 		"src/ogl3/graphics_device_ogl3.cpp"
 		"src/ogl3/shader_ogl3.cpp"
 		"src/ogl3/standard_shaders_ogl3.cpp"
@@ -153,6 +154,7 @@ endif ()
 add_library (rabbit STATIC ${SRC})
 target_compile_features (rabbit PUBLIC cxx_std_17)
 target_include_directories (rabbit PUBLIC "include" "generated")
+target_include_directories (rabbit PRIVATE "generated")
 target_link_libraries (rabbit PUBLIC entt fmt stb json gsl)
 add_dependencies (rabbit shaders)
 
