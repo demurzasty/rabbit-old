@@ -10,6 +10,7 @@ namespace rb {
     struct buffer_desc {
         buffer_type type = buffer_type::vertex;
         std::size_t size = 0;
+        std::size_t stride = 0;
         const void* data = nullptr;
         bool is_mutable = false;
     };
@@ -45,6 +46,7 @@ namespace rb {
     private:
         buffer_type _type;
         std::size_t _size;
+        std::size_t _stride;
         bool _is_mutable;
     };
 }
