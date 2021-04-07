@@ -52,6 +52,28 @@ option (RB_PROD_BUILD "Enable production build" OFF)
 
 add_subdirectory ("lib")
 
+if (${CMAKE_HOST_SYSTEM_PROCESSOR} STREQUAL "AMD64")
+	set(GLSL_VALIDATOR "$ENV{VULKAN_SDK}/Bin/glslangValidator.exe")
+else()
+	set(GLSL_VALIDATOR "$ENV{VULKAN_SDK}/Bin32/glslangValidator.exe")
+endif()
+
+file (GLOB_RECURSE GLSL_SOURCE_FILES "data/shaders/*.vert" "data/shaders/*.frag")
+
+foreach (GLSL ${GLSL_SOURCE_FILES})
+	get_filename_component (FILE_NAME ${GLSL} NAME)
+	set (SPIRV "${CMAKE_CURRENT_SOURCE_DIR}/generated/shaders/${FILE_NAME}.spv")
+	add_custom_command (
+		OUTPUT ${SPIRV}
+		COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_CURRENT_SOURCE_DIR}/generated/shaders/"
+		COMMAND ${GLSL_VALIDATOR} -V ${GLSL} -o ${SPIRV}
+		DEPENDS ${GLSL}
+	)
+	list (APPEND SPIRV_BINARY_FILES ${SPIRV})
+endforeach (GLSL)
+
+add_custom_target (shaders DEPENDS ${SPIRV_BINARY_FILES})
+
 set (SRC 
 	"src/asset_manager.cpp"
 	"src/buffer.cpp"
@@ -121,8 +143,9 @@ endif ()
 
 add_library (rabbit STATIC ${SRC})
 target_compile_features (rabbit PUBLIC cxx_std_17)
-target_include_directories (rabbit PUBLIC "include")
+target_include_directories (rabbit PUBLIC "include" "generated")
 target_link_libraries (rabbit PUBLIC entt fmt stb json gsl)
+add_dependencies (rabbit shaders)
 
 if (MSVC) 
 	target_compile_definitions (rabbit PUBLIC NOMINMAX _CRT_SECURE_NO_WARNINGS)
