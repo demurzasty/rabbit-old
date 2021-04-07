@@ -52,11 +52,7 @@ option (RB_PROD_BUILD "Enable production build" OFF)
 
 add_subdirectory ("lib")
 
-if (${CMAKE_HOST_SYSTEM_PROCESSOR} STREQUAL "AMD64")
-	set(GLSL_VALIDATOR "$ENV{VULKAN_SDK}/Bin/glslangValidator.exe")
-else()
-	set(GLSL_VALIDATOR "$ENV{VULKAN_SDK}/Bin32/glslangValidator.exe")
-endif()
+set(GLSL_VALIDATOR "${CMAKE_CURRENT_SOURCE_DIR}/bin/glslangValidator.exe")
 
 file (GLOB_RECURSE GLSL_SOURCE_FILES "data/shaders/*.vert" "data/shaders/*.frag")
 
