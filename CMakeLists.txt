@@ -56,7 +56,6 @@ find_package (Python COMPONENTS Interpreter)
 
 set (GLSL_VALIDATOR "${CMAKE_CURRENT_SOURCE_DIR}/bin/glslangValidator.exe")
 set (SPIRV_CROSS "${CMAKE_CURRENT_SOURCE_DIR}/bin/spirv-cross.exe")
-set (XXD "${CMAKE_CURRENT_SOURCE_DIR}/bin/xxd.exe")
 
 file (GLOB_RECURSE GLSL_SOURCE_FILES "data/shaders/*.vert" "data/shaders/*.frag")
 
@@ -93,8 +92,10 @@ set (SRC
 	"src/image.cpp"
 	"src/keyboard.cpp"
 	"src/loader.cpp"
+	"src/mesh_loader.cpp"
 	"src/mesh.cpp"
 	"src/mouse.cpp"
+	"src/renderer.cpp"
 	"src/sprite_batch.cpp"
 	"src/system.cpp"
 	"src/texture_loader.cpp"

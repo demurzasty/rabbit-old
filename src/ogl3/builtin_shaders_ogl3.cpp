@@ -3,8 +3,6 @@
 #include <shaders/forward.vert.glsl.h>
 #include <shaders/forward.frag.glsl.h>
 
-#include <map>
-
 using namespace rb;
 
 span<const std::uint8_t> builtin_shaders::get(builtin_shader shader) {

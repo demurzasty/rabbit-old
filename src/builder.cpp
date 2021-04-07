@@ -12,8 +12,10 @@ builder rb::make_default_builder() {
     builder.service<graphics_device>(&graphics_device::resolve);
     builder.service<asset_manager>();
     builder.initialize([](asset_manager& asset_manager) {
-    //    asset_manager.add_loader<texture, texture_loader>();
+        asset_manager.add_loader<texture, texture_loader>();
+        asset_manager.add_loader<mesh, mesh_loader>();
     });
+    builder.system<renderer>();
     return builder;
 }
 
