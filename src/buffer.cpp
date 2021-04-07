@@ -2,21 +2,15 @@
 #include <rabbit/exception.hpp>
 #include <rabbit/vertex.hpp>
 
-#include <map>
-
 using namespace rb;
-
-static std::map<buffer_type, std::size_t> strides = {
-    { buffer_type::vertex, sizeof(vertex) },
-    { buffer_type::index, sizeof(std::uint32_t) },
-};
 
 buffer::buffer(const buffer_desc& desc)
     : _type(desc.type)
     , _size(desc.size)
+    , _stride(desc.stride)
     , _is_mutable(desc.is_mutable) {
     if (desc.size == 0) {
-        throw exception{ "Buffer size cannot be 0" };
+        throw make_exception("Buffer size cannot be 0");
     }
 }
 
@@ -29,7 +23,7 @@ std::size_t buffer::size() const {
 }
 
 std::size_t buffer::stride() const {
-    return strides.at(_type);
+    return _stride;
 }
 
 std::size_t buffer::count() const {
