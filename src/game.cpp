@@ -34,6 +34,11 @@ int game::run() {
     auto& gamepad = _container.get<rb::gamepad>();
     auto& config = _container.get<rb::config>();
 
+    // Initialize all systems.
+    for (auto& system : _systems) {
+        system->initialize(_registry);
+    }
+
     clock clock;
     auto acc = 0.0f;
     while (window.is_open()) {

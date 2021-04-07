@@ -2,7 +2,7 @@
 
 #include "span.hpp"
 #include "buffer.hpp"
-
+#include "vertex_desc.hpp"
 #include <memory>
 #include <cstdint>
 
@@ -12,11 +12,14 @@ namespace rb {
     struct shader_desc {
         span<const std::uint8_t> vertex_bytecode;
         span<const std::uint8_t> fragment_bytecode;
+        vertex_desc vertex_desc = {
+            { vertex_attribute::position, vertex_format::vec3f },
+            { vertex_attribute::texcoord, vertex_format::vec2f },
+            { vertex_attribute::normal, vertex_format::vec3f }
+        };
     };
 
     struct shader {
         virtual ~shader() = default;
-
-        virtual void bind_buffer(std::shared_ptr<buffer> uniform_buffer, std::size_t index) = 0;
     };
 }

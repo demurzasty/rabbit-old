@@ -20,6 +20,8 @@ namespace rb {
 
         std::shared_ptr<buffer> make_buffer(const buffer_desc& buffer_desc) override;
 
+        std::shared_ptr<shader> make_shader(const shader_desc& shader_desc) override;
+
         void clear(const color& color) override;
 
         void present() override;
@@ -42,6 +44,8 @@ namespace rb {
 
         void set_render_target(const std::shared_ptr<texture>& render_target) override;
 
+        void bind_buffer_base(const std::shared_ptr<buffer>& buffer, std::size_t binding_index) override;
+
         void draw(topology topology, const span<const vertex>& vertices) override;
 
         void draw(topology topology, std::shared_ptr<buffer> vertex_buffer) override;
@@ -58,6 +62,8 @@ namespace rb {
 
         void draw_textured(topology topology, std::shared_ptr<buffer> vertex_buffer, std::shared_ptr<buffer> index_buffer, const std::shared_ptr<texture>& texture) override;
         
+        void draw(topology topology, const std::shared_ptr<buffer>& vertex_buffer, const std::shared_ptr<shader>& shader) override;
+
         ID3D11Device* device() const;
 
         ID3D11DeviceContext1* device_context() const;

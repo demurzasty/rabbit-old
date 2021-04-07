@@ -10,5 +10,7 @@ layout (location = 2) in vec3 var_normal;
 layout (location = 0) out vec4 out_color;
 
 void main() {
-	out_color = vec4(1.0, 1.0, 1.0, 1.0);
+	vec3 light_dir = normalize(vec3(-1.0, -1.0, -1.0));
+	float n_dot_l = max(dot(var_normal, -light_dir), 0.0);
+	out_color = vec4(vec3(n_dot_l), 1.0);
 }

@@ -61,6 +61,8 @@ namespace rb {
 
         void draw_textured(topology topology, std::shared_ptr<buffer> vertex_buffer, std::shared_ptr<buffer> index_buffer, const std::shared_ptr<texture>& texture) override;
 
+        void draw(topology topology, const std::shared_ptr<buffer>& vertex_buffer, const std::shared_ptr<shader>& shader) override;
+
     private:
         GLuint compile_program(const char* vertex_shader_code, const char* fragment_shader_code) const;
 

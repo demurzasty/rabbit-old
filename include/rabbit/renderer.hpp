@@ -3,6 +3,9 @@
 #include "system.hpp"
 #include "graphics_device.hpp"
 #include "shader.hpp"
+#include "buffer.hpp"
+
+#include <memory>
 
 namespace rb {
     class renderer : public system {
@@ -14,5 +17,6 @@ namespace rb {
     private:
         graphics_device& _graphics_device;
         std::shared_ptr<shader> _forward;
+        std::shared_ptr<buffer> _matrices_buffer;
     };
 }

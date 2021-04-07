@@ -27,7 +27,7 @@ set (RB_AUDIO_BACKEND_OPENAL FALSE)
 if (RB_EMSCRIPTEN)
 	set (RB_GRAPHICS_BACKEND_OPENGL TRUE)
 elseif (RB_WINDOWS)
-	if (NOT) # (MSVC)
+	if (MSVC)
 		set (RB_GRAPHICS_BACKEND_DIRECTX TRUE)
 	else ()
 		set (RB_GRAPHICS_BACKEND_OPENGL TRUE)
@@ -56,22 +56,40 @@ find_package (Python COMPONENTS Interpreter)
 
 set (GLSL_VALIDATOR "${CMAKE_CURRENT_SOURCE_DIR}/bin/glslangValidator.exe")
 set (SPIRV_CROSS "${CMAKE_CURRENT_SOURCE_DIR}/bin/spirv-cross.exe")
+set (FXC "${CMAKE_CURRENT_SOURCE_DIR}/bin/fxc.exe")
 
 file (GLOB_RECURSE GLSL_SOURCE_FILES "data/shaders/*.vert" "data/shaders/*.frag")
 
 foreach (GLSL_SRC ${GLSL_SOURCE_FILES})
 	get_filename_component (FILE_NAME ${GLSL_SRC} NAME)
+	get_filename_component (FILE_EXT ${GLSL_SRC} EXT)
+	
 	set (BASE_NAME "${CMAKE_CURRENT_SOURCE_DIR}/generated/shaders/${FILE_NAME}")
 	set (GLSL_DST "${BASE_NAME}.glsl.h")
-	# set (SPIRV "${BASE_NAME}.spv")
-	# set (HLSL "${BASE_NAME}.hlsl")
+	set (SPIRV "${BASE_NAME}.spv")
+	set (HLSL "${BASE_NAME}.hlsl")
+	set (COMP "${BASE_NAME}.comp")
+	set (COMP_H "${BASE_NAME}.comp.h")
+
+	if (${FILE_EXT} STREQUAL ".vert")
+		set (SHADER_TARGET "vs_5_0")
+	else ()
+		set (SHADER_TARGET "ps_5_0")
+	endif ()
+
 	add_custom_command (
 		OUTPUT ${GLSL_DST}
 		COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_CURRENT_SOURCE_DIR}/generated/shaders/"
-		# COMMAND ${GLSL_VALIDATOR} -V ${GLSL} -o ${SPIRV} # Generate for Vulkan
+		# GLSL -> C Header
 		COMMAND ${Python_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/scripts/bin2h.py" -i ${GLSL_SRC} -o ${GLSL_DST} -v "${FILE_NAME}.glsl"
-		# COMMAND python "${CMAKE_CURRENT_SOURCE_DIR}/scripts/bin2h.py" -i ${SPIRV} -o "${BASE_NAME}.spirv.h" -v "${FILE_NAME}.spirv"
-		# COMMAND ${SPIRV_CROSS} --hlsl ${SPIRV} --output ${HLSL} # Generate for DirectX 11
+		# GLSL -> SPIR-V
+		COMMAND ${GLSL_VALIDATOR} -V ${GLSL_SRC} -o ${SPIRV}
+		# SPIR-V -> HLSL
+		COMMAND ${SPIRV_CROSS} --hlsl ${SPIRV} --shader-model 50 --set-hlsl-vertex-input-semantic 0 SV_POSITION --set-hlsl-vertex-input-semantic 1 TEXCOORD --set-hlsl-vertex-input-semantic 2 NORMAL --output ${HLSL} # Generate for DirectX 11
+		# HLSL -> DXBC
+		COMMAND ${FXC} /E"main" /T ${SHADER_TARGET} /Fo ${COMP} ${HLSL}
+		# DXBC -> C Header
+		COMMAND ${Python_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/scripts/bin2h.py" -i ${COMP} -o ${COMP_H} -v "${FILE_NAME}.comp"
 		DEPENDS ${GLSL_SRC}
 	)
 	list (APPEND GLSL_BINARY_FILES ${GLSL_DST})
@@ -134,9 +152,11 @@ endif ()
 
 if (RB_GRAPHICS_BACKEND_DIRECTX) 
 	set (SRC ${SRC}
+		"src/dx11/buffer_dx11.cpp"
+		"src/dx11/builtin_shaders_dx11.cpp"
 		"src/dx11/graphics_device_dx11.cpp"
 		"src/dx11/texture_dx11.cpp"
-		"src/dx11/buffer_dx11.cpp"
+		"src/dx11/shader_dx11.cpp"
 		"src/dx11/standard_shaders_dx11.cpp"
 	)
 endif ()

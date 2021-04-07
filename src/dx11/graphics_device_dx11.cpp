@@ -3,6 +3,7 @@
 #include "texture_dx11.hpp"
 #include "buffer_dx11.hpp"
 #include "utils_dx11.hpp"
+#include "shader_dx11.hpp"
 
 #include <rabbit/exception.hpp>
 
@@ -64,7 +65,7 @@ graphics_device_dx11::graphics_device_dx11(config& config, window& window)
 	};
 
 	UINT flags = 0;
-#ifdef _DEBUG
+#ifndef NDEBUG
 	flags |= D3D11_CREATE_DEVICE_DEBUG;
 #endif
 
@@ -280,6 +281,10 @@ std::shared_ptr<buffer> graphics_device_dx11::make_buffer(const buffer_desc& buf
 	return std::make_shared<buffer_dx11>(_device, _device_context, buffer_desc);
 }
 
+std::shared_ptr<shader> graphics_device_dx11::make_shader(const shader_desc& shader_desc) {
+	return std::make_shared<shader_dx11>(_device, _device_context, shader_desc);
+}
+
 void graphics_device_dx11::clear(const color& color) {
 	const auto rgba = color.to_vec4<float>();
 
@@ -448,6 +453,13 @@ void graphics_device_dx11::set_render_target(const std::shared_ptr<texture>& tex
 		_device_context->RSSetViewports(1, &viewport); 
 		_device_context->OMSetRenderTargets(1, &_render_target, _depth_test ? _depth_stencil_view : nullptr);
 	}
+}
+
+void graphics_device_dx11::bind_buffer_base(const std::shared_ptr<buffer>& buffer, std::size_t binding_index) {
+	const auto native_buffer = std::static_pointer_cast<buffer_dx11>(buffer)->buffer();
+
+	// todo: which shader should be used? vs or ps?
+	_device_context->VSSetConstantBuffers(binding_index, 1, &native_buffer);
 }
 
 void graphics_device_dx11::draw(topology topology, const span<const vertex>& vertices) {
@@ -664,6 +676,25 @@ void graphics_device_dx11::draw_textured(topology topology, std::shared_ptr<buff
 
 	_device_context->IASetPrimitiveTopology(topologies.at(topology));
 	_device_context->DrawIndexed(static_cast<UINT>(index_buffer->count()), 0, 0);
+}
+
+void graphics_device_dx11::draw(topology topology, const std::shared_ptr<buffer>& vertex_buffer, const std::shared_ptr<shader>& shader) {
+	const auto native_shader = std::static_pointer_cast<shader_dx11>(shader);
+
+	_device_context->RSSetState(_rasterizer_state);
+
+	const UINT stride = static_cast<UINT>(vertex_buffer->stride());
+	const UINT offset = 0;
+	const auto native_buffer = std::static_pointer_cast<buffer_dx11>(vertex_buffer)->buffer();
+
+	_device_context->IASetVertexBuffers(0, 1, &native_buffer, &stride, &offset);
+	_device_context->VSSetShader(native_shader->vertex_shader(), nullptr, 0);
+	_device_context->IASetInputLayout(native_shader->input_layout());
+	_device_context->PSSetShader(native_shader->pixel_shader(), nullptr, 0);
+
+	_device_context->IASetPrimitiveTopology(topologies.at(topology));
+
+	_device_context->Draw((UINT)vertex_buffer->count(), 0);
 }
 
 ID3D11Device* graphics_device_dx11::device() const {

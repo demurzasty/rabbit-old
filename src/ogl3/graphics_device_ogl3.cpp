@@ -340,6 +340,30 @@ void graphics_device_ogl3::draw_textured(topology topology, std::shared_ptr<buff
 	glDrawElements(topologies.at(topology), index_buffer->count(), GL_UNSIGNED_INT, 0);
 }
 
+void graphics_device_ogl3::draw(topology topology, const std::shared_ptr<buffer>& vertex_buffer, const std::shared_ptr<shader>& shader) {
+	glBindBuffer(GL_ARRAY_BUFFER, std::static_pointer_cast<buffer_ogl3>(vertex_buffer)->id());
+
+	// todo: use vertex_desc to define these
+	struct mesh_vertex {
+		vec3f position;
+		vec2f texcoord;
+		vec3f normal;
+	};
+
+	glEnableVertexAttribArray(0);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(mesh_vertex), (void*)offsetof(mesh_vertex, position));
+
+	glEnableVertexAttribArray(1);
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(mesh_vertex), (void*)offsetof(mesh_vertex, texcoord));
+
+	glEnableVertexAttribArray(2);
+	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(mesh_vertex), (void*)offsetof(mesh_vertex, normal));
+
+	glUseProgram(std::static_pointer_cast<shader_ogl3>(shader)->id());
+
+	glDrawArrays(topologies.at(topology), 0, static_cast<GLsizei>(vertex_buffer->count()));
+}
+
 GLuint graphics_device_ogl3::compile_program(const char* vertex_shader_code, const char* fragment_shader_code) const {
 	const auto vertex_shader = glCreateShader(GL_VERTEX_SHADER);
 	const auto fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);

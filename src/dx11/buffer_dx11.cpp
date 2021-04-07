@@ -11,6 +11,7 @@ using namespace rb;
 static std::map<buffer_type, UINT> bind_flags = {
     { buffer_type::vertex, D3D11_BIND_VERTEX_BUFFER },
     { buffer_type::index, D3D11_BIND_INDEX_BUFFER },
+    { buffer_type::uniform, D3D11_BIND_CONSTANT_BUFFER }
 };
 
 buffer_dx11::buffer_dx11(ID3D11Device* device, ID3D11DeviceContext* context, const buffer_desc& desc)
