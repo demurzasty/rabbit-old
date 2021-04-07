@@ -10,9 +10,9 @@ namespace rb {
         shader_ogl3(const shader_desc& desc);
 
         ~shader_ogl3();
-    
-        GLuint id() const;
         
+        GLuint id() const;
+
     private:
         GLuint _program{ 0 };
     };

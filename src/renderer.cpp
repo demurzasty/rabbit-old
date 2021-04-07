@@ -1,5 +1,8 @@
 #include <rabbit/renderer.hpp>
 #include <rabbit/builtin_shaders.hpp>
+#include <rabbit/transform.hpp>
+#include <rabbit/geometry.hpp>
+#include <rabbit/camera.hpp>
 
 using namespace rb;
 

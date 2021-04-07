@@ -8,7 +8,8 @@ using namespace rb;
 
 static std::map<buffer_type, GLenum> types = {
     { buffer_type::vertex, GL_ARRAY_BUFFER },
-    { buffer_type::index, GL_ELEMENT_ARRAY_BUFFER }
+    { buffer_type::index, GL_ELEMENT_ARRAY_BUFFER },
+    { buffer_type::uniform, GL_UNIFORM_BUFFER }
 };
 
 buffer_ogl3::buffer_ogl3(const buffer_desc& desc)

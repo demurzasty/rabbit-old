@@ -127,6 +127,11 @@ namespace rb {
         virtual void set_render_target(const std::shared_ptr<texture>& render_target) = 0;
 
         /**
+         * @brief Bind a buffer object to an indexed buffer target.
+         */
+        virtual void bind_buffer_base(const std::shared_ptr<buffer>& buffer, std::size_t binding_index) = 0;
+
+        /**
          * @brief Draws a sequence of non-indexed geometric primitives of the specified type.
          * 
          * @param topology Describes the type of primitive to draw.

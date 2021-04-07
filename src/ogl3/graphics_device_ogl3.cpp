@@ -184,6 +184,14 @@ void graphics_device_ogl3::set_render_target(const std::shared_ptr<texture>& tex
 	}
 }
 
+void graphics_device_ogl3::bind_buffer_base(const std::shared_ptr<buffer>& buffer, std::size_t binding_index) {
+	if (buffer->type() != buffer_type::uniform) {
+		throw make_exception("Buffer need to be uniform buffer to bind base");
+	}
+
+	glBindBufferBase(GL_UNIFORM_BUFFER, binding_index, std::static_pointer_cast<buffer_ogl3>(buffer)->id());
+}
+
 void graphics_device_ogl3::draw(topology topology, const span<const vertex>& vertices) {
 	update_vertex_buffer(vertices);
 

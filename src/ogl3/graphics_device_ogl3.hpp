@@ -43,6 +43,8 @@ namespace rb {
 
         void set_render_target(const std::shared_ptr<texture>& render_target) override;
 
+        void bind_buffer_base(const std::shared_ptr<buffer>& buffer, std::size_t binding_index) override;
+
         void draw(topology topology, const span<const vertex>& vertices) override;
 
         void draw(topology topology, std::shared_ptr<buffer> buffer) override;
