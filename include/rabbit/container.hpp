@@ -118,9 +118,9 @@ namespace rb {
                 func(r, r, r);
             } else if constexpr (std::is_invocable_v<Func, resolver, resolver, resolver, resolver>) {
                 func(r, r, r, r);
+            } else {
+                throw make_exception("No suitable invocation found");
             }
-
-            throw make_exception("No suitable invocation found");
         }
 
         template<typename T, std::enable_if_t<!std::is_same_v<std::decay_t<T>, container>, int> = 0>

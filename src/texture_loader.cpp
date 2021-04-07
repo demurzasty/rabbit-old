@@ -9,7 +9,7 @@
 
 using namespace rb;
 
-texture_loader::texture_loader(std::shared_ptr<graphics_device> graphics_device)
+texture_loader::texture_loader(graphics_device& graphics_device)
     : _graphics_device(graphics_device) {
 }
 
@@ -23,5 +23,5 @@ std::shared_ptr<void> texture_loader::load(const std::string& filename, const js
     desc.filter = json_utils::member_or(metadata, "filter", texture_filter::nearest);
     desc.wrap = json_utils::member_or(metadata, "wrap", texture_wrap::clamp);
 
-    return _graphics_device->make_texture(desc);
+    return _graphics_device.make_texture(desc);
 }
