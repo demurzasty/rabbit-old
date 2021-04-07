@@ -163,6 +163,4 @@ namespace rb {
 
         virtual void draw_textured(topology topology, std::shared_ptr<buffer> vertex_buffer, std::shared_ptr<buffer> index_buffer, const std::shared_ptr<texture>& texture) = 0;
     };
-
-    std::shared_ptr<graphics_device> make_graphics_device(const config& config, std::shared_ptr<window> window);
 }

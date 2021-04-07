@@ -10,7 +10,3 @@ using namespace rb;
 std::shared_ptr<window> window::resolve(container& container) {
     return container.resolve<window_impl>();
 }
-
-std::shared_ptr<window> rb::make_window(config& config) {
-    return nullptr;
-}

@@ -13,7 +13,3 @@ using namespace rb;
 std::shared_ptr<mouse> mouse::resolve(container& container) {
     return container.resolve<mouse_impl>();
 }
-
-std::shared_ptr<mouse> rb::make_mouse(const config& config, std::shared_ptr<window> window) {
-    return nullptr;
-}

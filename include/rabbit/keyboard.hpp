@@ -30,6 +30,4 @@ namespace rb {
 
         virtual const std::string& input_text() const = 0;
     };
-
-    std::shared_ptr<keyboard> make_keyboard(const config& config, std::shared_ptr<window> window);
 }

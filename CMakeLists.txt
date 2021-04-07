@@ -66,8 +66,6 @@ set (SRC
 	"src/loader.cpp"
 	"src/mouse.cpp"
 	"src/sprite_batch.cpp"
-	"src/state_manager.cpp"
-	"src/state.cpp"
 	"src/system.cpp"
 	"src/texture_loader.cpp"
 	"src/texture.cpp"

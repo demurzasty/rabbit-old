@@ -39,6 +39,4 @@ namespace rb {
 
         virtual float axis(gamepad_player player, gamepad_axis axis) = 0;
     };
-
-    std::shared_ptr<gamepad> make_gamepad(const config& config);
 }

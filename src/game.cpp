@@ -26,19 +26,6 @@ game::game(const builder& builder) {
     }
 }
 
-// game::game(rb::config& config)
-//     : _config(config) {
-//     // _window = make_window(config);
-//     // _keyboard = make_keyboard(config, _window);
-//     // _mouse = make_mouse(config, _window);
-//     // _graphics_device = make_graphics_device(config, _window);
-//     // _gamepad = make_gamepad(config);
-//     // _asset_manager = std::make_shared<rb::asset_manager>();
-//     // _state_manager = std::make_shared<rb::state_manager>();
-
-//     // _asset_manager->add_loader<texture>(std::make_shared<texture_loader>(_graphics_device));
-// }
-
 int game::run() {
     auto& window = _container.get<rb::window>();
     auto& graphics_device = _container.get<rb::graphics_device>();

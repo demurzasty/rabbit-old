@@ -89,9 +89,4 @@ namespace rb {
 
 		virtual bool is_cursor_visible() const = 0;
     };
-
-	/**
-	 * @brief Makes new instance of platform independent window.
-	 */
-	std::shared_ptr<window> make_window(config& config);
 }

@@ -13,7 +13,3 @@ using namespace rb;
 std::shared_ptr<graphics_device> graphics_device::resolve(container& container) {
     return container.resolve<graphics_device_impl>();
 }
-
-std::shared_ptr<graphics_device> rb::make_graphics_device(const config& config, std::shared_ptr<window> window) {
-    return nullptr;
-}

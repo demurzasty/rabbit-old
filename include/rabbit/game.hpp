@@ -9,7 +9,6 @@
 #include "mouse.hpp"
 #include "gamepad.hpp"
 #include "asset_manager.hpp"
-#include "state_manager.hpp"
 
 #include <map>
 #include <memory>

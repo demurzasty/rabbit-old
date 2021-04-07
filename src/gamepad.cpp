@@ -16,7 +16,3 @@ using namespace rb;
 std::shared_ptr<gamepad> gamepad::resolve(container& container) {
     return container.resolve<gamepad_impl>();
 }
-
-std::shared_ptr<gamepad> rb::make_gamepad(const config& config) {
-    return nullptr;
-}
