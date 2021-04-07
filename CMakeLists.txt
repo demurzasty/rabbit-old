@@ -27,7 +27,7 @@ set (RB_AUDIO_BACKEND_OPENAL FALSE)
 if (RB_EMSCRIPTEN)
 	set (RB_GRAPHICS_BACKEND_OPENGL TRUE)
 elseif (RB_WINDOWS)
-	if (MSVC)
+	if (NOT) # (MSVC)
 		set (RB_GRAPHICS_BACKEND_DIRECTX TRUE)
 	else ()
 		set (RB_GRAPHICS_BACKEND_OPENGL TRUE)
@@ -86,6 +86,7 @@ set (SRC
 	"src/image.cpp"
 	"src/keyboard.cpp"
 	"src/loader.cpp"
+	"src/mesh.cpp"
 	"src/mouse.cpp"
 	"src/sprite_batch.cpp"
 	"src/system.cpp"
