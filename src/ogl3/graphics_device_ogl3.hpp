@@ -11,13 +11,15 @@
 namespace rb {
     class graphics_device_ogl3 : public graphics_device {
     public:
-        graphics_device_ogl3(const config& config, std::shared_ptr<window> window);
+        graphics_device_ogl3(const config& config, window& window);
 
         ~graphics_device_ogl3();
 
         std::shared_ptr<texture> make_texture(const texture_desc& desc) override;
 
         std::shared_ptr<buffer> make_buffer(const buffer_desc& buffer_desc) override;
+
+        std::shared_ptr<shader> make_shader(const shader_desc& shader_desc) override;
 
         void clear(const color& color) override;
 
@@ -65,7 +67,7 @@ namespace rb {
         void update_index_buffer(const span<const std::uint32_t>& indices);
 
     private:
-        std::shared_ptr<window> _window;
+        window& _window;
 
         mat4f _view = mat4f::identity();
         mat4f _projection = mat4f::identity();

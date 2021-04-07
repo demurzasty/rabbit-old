@@ -142,10 +142,11 @@ endif ()
 
 if (RB_GRAPHICS_BACKEND_OPENGL) 
 	set (SRC ${SRC}
-		"src/ogl3/graphics_device_ogl3.cpp"
-		"src/ogl3/texture_ogl3.cpp"
 		"src/ogl3/buffer_ogl3.cpp"
+		"src/ogl3/graphics_device_ogl3.cpp"
+		"src/ogl3/shader_ogl3.cpp"
 		"src/ogl3/standard_shaders_ogl3.cpp"
+		"src/ogl3/texture_ogl3.cpp"
 	)
 endif ()
 

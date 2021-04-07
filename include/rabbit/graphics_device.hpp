@@ -11,6 +11,7 @@
 #include "texture.hpp"
 #include "window.hpp"
 #include "buffer.hpp"
+#include "shader.hpp"
 #include "container.hpp"
 
 #include <memory>
@@ -41,6 +42,14 @@ namespace rb {
          * @return Newly created buffer.
          */
         virtual std::shared_ptr<buffer> make_buffer(const buffer_desc& buffer_desc) = 0;
+
+        /**
+         * @brief Creates new shader using shader description.
+         *
+         * @return Newly created shader.
+         */
+        virtual std::shared_ptr<shader> make_shader(const shader_desc& shader_desc) = 0;
+
 
         /**
          * @brief Clears the viewport to a specified color.

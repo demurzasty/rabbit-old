@@ -82,6 +82,7 @@
         "xtree": "cpp",
         "xutility": "cpp",
         "format": "cpp",
-        "pointers": "cpp"
+        "pointers": "cpp",
+        "span": "cpp"
     }
 }

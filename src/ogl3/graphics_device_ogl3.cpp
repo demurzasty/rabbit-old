@@ -2,6 +2,7 @@
 #include "standard_shaders_ogl3.hpp"
 #include "texture_ogl3.hpp"
 #include "buffer_ogl3.hpp"
+#include "shader_ogl3.hpp"
 
 #include <rabbit/exception.hpp>
 
@@ -41,7 +42,7 @@ static std::map<blend, GLenum> blend_factors = {
 	{ blend::source_alpha_saturation, GL_SRC_ALPHA_SATURATE },
 	{ blend::source_color, GL_SRC_COLOR }
 };
-graphics_device_ogl3::graphics_device_ogl3(const config& config, std::shared_ptr<window> window)
+graphics_device_ogl3::graphics_device_ogl3(const config& config, window& window)
 	: _window(window) {
 	glewInit();
 
@@ -96,6 +97,10 @@ std::shared_ptr<buffer> graphics_device_ogl3::make_buffer(const buffer_desc& buf
 	return std::make_shared<buffer_ogl3>(buffer_desc);
 }
 
+std::shared_ptr<shader> graphics_device_ogl3::make_shader(const shader_desc& shader_desc) {
+	return std::make_shared<shader_ogl3>(shader_desc);
+}
+
 void graphics_device_ogl3::clear(const color& color) {
 	const auto rgba = color.to_vec4<float>();
 
@@ -104,7 +109,7 @@ void graphics_device_ogl3::clear(const color& color) {
 }
 
 void graphics_device_ogl3::present() {
-	_window->swap_buffers();
+	_window.swap_buffers();
 }
 
 void graphics_device_ogl3::set_blend_state(const blend_state& blend_state) {
