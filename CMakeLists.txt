@@ -52,23 +52,32 @@ option (RB_PROD_BUILD "Enable production build" OFF)
 
 add_subdirectory ("lib")
 
-set(GLSL_VALIDATOR "${CMAKE_CURRENT_SOURCE_DIR}/bin/glslangValidator.exe")
+set (GLSL_VALIDATOR "${CMAKE_CURRENT_SOURCE_DIR}/bin/glslangValidator.exe")
+set (SPIRV_CROSS "${CMAKE_CURRENT_SOURCE_DIR}/bin/spirv-cross.exe")
+set (XXD "${CMAKE_CURRENT_SOURCE_DIR}/bin/xxd.exe")
 
 file (GLOB_RECURSE GLSL_SOURCE_FILES "data/shaders/*.vert" "data/shaders/*.frag")
 
-foreach (GLSL ${GLSL_SOURCE_FILES})
-	get_filename_component (FILE_NAME ${GLSL} NAME)
-	set (SPIRV "${CMAKE_CURRENT_SOURCE_DIR}/generated/shaders/${FILE_NAME}.spv")
+foreach (GLSL_SRC ${GLSL_SOURCE_FILES})
+	get_filename_component (FILE_NAME ${GLSL_SRC} NAME)
+	set (BASE_NAME "${CMAKE_CURRENT_SOURCE_DIR}/generated/shaders/${FILE_NAME}")
+	set (GLSL_DST "${BASE_NAME}.glsl.h")
+	# set (SPIRV "${BASE_NAME}.spv")
+	# set (HLSL "${BASE_NAME}.hlsl")
 	add_custom_command (
-		OUTPUT ${SPIRV}
+		OUTPUT ${GLSL_DST}
 		COMMAND ${CMAKE_COMMAND} -E make_directory "${CMAKE_CURRENT_SOURCE_DIR}/generated/shaders/"
-		COMMAND ${GLSL_VALIDATOR} -V ${GLSL} -o ${SPIRV}
-		DEPENDS ${GLSL}
+		# COMMAND ${GLSL_VALIDATOR} -V ${GLSL} -o ${SPIRV} # Generate for Vulkan
+		COMMAND python "${CMAKE_CURRENT_SOURCE_DIR}/scripts/bin2h.py" -i ${GLSL_SRC} -o ${GLSL_DST} -v "${FILE_NAME}.glsl"
+		# COMMAND python "${CMAKE_CURRENT_SOURCE_DIR}/scripts/bin2h.py" -i ${SPIRV} -o "${BASE_NAME}.spirv.h" -v "${FILE_NAME}.spirv"
+		# COMMAND ${SPIRV_CROSS} --hlsl ${SPIRV} --output ${HLSL} # Generate for DirectX 11
+		DEPENDS ${GLSL_SRC}
 	)
-	list (APPEND SPIRV_BINARY_FILES ${SPIRV})
+	list (APPEND GLSL_BINARY_FILES ${GLSL_H})
 endforeach (GLSL)
 
-add_custom_target (shaders DEPENDS ${SPIRV_BINARY_FILES})
+
+add_custom_target (shaders DEPENDS ${GLSL_BINARY_FILES})
 
 set (SRC 
 	"src/asset_manager.cpp"
