@@ -1,6 +1,7 @@
 #pragma once 
 
 #include "config.hpp"
+#include "container.hpp"
 
 #include <string>
 #include <memory>
@@ -15,6 +16,11 @@ namespace rb { using window_handle = void*; }
 namespace rb {
     class window {
     public:
+		/**
+		 * @brief Install window implementation to dependency container.
+		 */
+		static std::shared_ptr<window> resolve(container& container);
+
 		/**
 		 * @brief Default virtual destructor.
 		 */

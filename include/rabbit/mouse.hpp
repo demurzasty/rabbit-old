@@ -4,12 +4,18 @@
 #include "vec2.hpp"
 #include "mouse_button.hpp"
 #include "window.hpp"
+#include "container.hpp"
 
 #include <memory>
 
 namespace rb {
     class mouse {
     public:
+		/**
+		 * @brief Install mouse implementation to dependency container.
+		 */
+        static std::shared_ptr<mouse> resolve(container& container);
+
         virtual ~mouse() = default;
 
         virtual void refresh() = 0;

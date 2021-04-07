@@ -9,117 +9,84 @@
 
 using namespace rb;
 
-game::game(rb::config& config)
-    : _config(config) {
-    _window = make_window(config);
-    _keyboard = make_keyboard(config, _window);
-    _mouse = make_mouse(config, _window);
-    _graphics_device = make_graphics_device(config, _window);
-    _gamepad = make_gamepad(config);
-    _asset_manager = std::make_shared<rb::asset_manager>();
-    _state_manager = std::make_shared<rb::state_manager>();
+game::game(const builder& builder) {
+    // Install services in container.
+    for (auto& service : builder._services) {
+        service(_container);
+    }
 
-    _asset_manager->add_loader<texture>(std::make_shared<texture_loader>(_graphics_device));
+    // Initialize all installed services.
+    for (auto& initializer : builder._initializers) {
+        initializer(_container);
+    }
+
+    // Create all systems using container.
+    for (auto& system : builder._systems) {
+        _systems.push_back(system(_container));
+    }
 }
 
-void game::run() {
-    initialize();
+// game::game(rb::config& config)
+//     : _config(config) {
+//     // _window = make_window(config);
+//     // _keyboard = make_keyboard(config, _window);
+//     // _mouse = make_mouse(config, _window);
+//     // _graphics_device = make_graphics_device(config, _window);
+//     // _gamepad = make_gamepad(config);
+//     // _asset_manager = std::make_shared<rb::asset_manager>();
+//     // _state_manager = std::make_shared<rb::state_manager>();
+
+//     // _asset_manager->add_loader<texture>(std::make_shared<texture_loader>(_graphics_device));
+// }
+
+int game::run() {
+    auto& window = _container.get<rb::window>();
+    auto& graphics_device = _container.get<rb::graphics_device>();
+    auto& keyboard = _container.get<rb::keyboard>();
+    auto& mouse = _container.get<rb::mouse>();
+    auto& gamepad = _container.get<rb::gamepad>();
+    auto& config = _container.get<rb::config>();
 
     clock clock;
-    long double acc = 0.0L;
-    while (_window->is_open() && _running) {
-        _window->poll_events();
+    auto acc = 0.0f;
+    while (window.is_open()) {
+        window.poll_events();
 
-        if (_window->is_focused()) {
-            _keyboard->refresh();
-            _mouse->refresh();
-            _gamepad->refresh();
+        if (window.is_focused()) {
+            keyboard.refresh();
+            mouse.refresh();
+            gamepad.refresh();
         }
 
-        const auto elapsed_time = clock.reset();
+        const auto elapsed_time = static_cast<float>(clock.reset());
 
-        update(static_cast<float>(elapsed_time));
-
-        _state_manager->update(static_cast<float>(elapsed_time));
+        for (auto& system : _systems) {
+            system->variable_update(_registry, elapsed_time);
+        }
 
         acc += elapsed_time;
-        while (acc >= _config.fixed_time_step) {
-            fixed_update(static_cast<float>(_config.fixed_time_step));
-
-            _state_manager->fixed_update(static_cast<float>(_config.fixed_time_step));
-
-            acc -= _config.fixed_time_step;
+        while (acc >= config.fixed_time_step) {
+            for (auto& system : _systems) {
+                system->fixed_update(_registry, static_cast<float>(config.fixed_time_step));
+            }
+            acc -= config.fixed_time_step;
         }
 
-        if (_window->is_focused()) {
-            if (_window->size() != _graphics_device->backbuffer_size()) {
-                _graphics_device->set_backbuffer_size(_window->size());
+        if (window.is_focused()) {
+            if (window.size() != graphics_device.backbuffer_size()) {
+                graphics_device.set_backbuffer_size(window.size());
             }
 
-            _graphics_device->set_render_target(nullptr);
+            graphics_device.set_render_target(nullptr);
 
-            draw();
+             for (auto& system : _systems) {
+                system->draw(_registry, graphics_device);
+            }
 
-            _state_manager->draw();
-
-            _graphics_device->present();
+            graphics_device.present();
         } else {
             std::this_thread::sleep_for(std::chrono::milliseconds{ 1 });
         }
     }
-
-    _state_manager->release();
-
-    release();
-}
-
-void game::exit() {
-    _running = false;
-}
-
-const rb::config& game::config() const {
-    return _config;
-}
-
-std::shared_ptr<rb::window> game::window() const {
-    return _window;
-}
-
-std::shared_ptr<rb::graphics_device> game::graphics_device() const {
-    return _graphics_device;
-}
-
-std::shared_ptr<rb::keyboard> game::keyboard() const {
-    return _keyboard;
-}
-
-std::shared_ptr<rb::mouse> game::mouse() const {
-    return _mouse;
-}
-
-std::shared_ptr<rb::gamepad> game::gamepad() const {
-    return _gamepad;
-}
-
-std::shared_ptr<rb::asset_manager> game::asset_manager() const {
-    return _asset_manager;
-}
-
-std::shared_ptr<rb::state_manager> game::state_manager() const {
-    return _state_manager;
-}
-
-void game::initialize() {
-}
-
-void game::release() {
-}
-
-void game::update(float elapsed_time) {
-}
-
-void game::fixed_update(float fixed_time) {
-}
-
-void game::draw() {
+    return 0;
 }

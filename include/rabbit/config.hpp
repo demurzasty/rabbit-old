@@ -29,6 +29,6 @@ namespace rb {
 			bool vsync = true;
 		} graphics;
 
-		long double fixed_time_step = 1.0L / 60.0L;
+		float fixed_time_step = 1.0f / 60.0f;
 	};
 }

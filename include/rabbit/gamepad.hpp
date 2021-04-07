@@ -4,10 +4,12 @@
 #include "config.hpp"
 #include "gamepad_button.hpp"
 #include "gamepad_axis.hpp"
+#include "container.hpp"
 
 #include <memory>
 
 namespace rb {
+    // todo: split into another file
     RB_ENUM(gamepad_player, std::uint8_t, "first", "second", "third", "fourth")
     enum class gamepad_player : std::uint8_t {
         first,
@@ -18,6 +20,11 @@ namespace rb {
 
     class gamepad {
     public:
+		/**
+		 * @brief Install gamepad implementation to dependency container.
+		 */
+        static std::shared_ptr<gamepad> resolve(container& container);
+
         virtual ~gamepad() = default;
 
         virtual void refresh() = 0;

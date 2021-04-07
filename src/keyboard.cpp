@@ -10,6 +10,10 @@ namespace rb { using keyboard_impl = keyboard_dummy; }
 
 using namespace rb;
 
+std::shared_ptr<keyboard> keyboard::resolve(container& container) {
+    return container.resolve<keyboard_impl>();
+}
+
 std::shared_ptr<keyboard> rb::make_keyboard(const config& config, std::shared_ptr<window> window) {
-    return std::make_shared<keyboard_impl>(window);
+    return nullptr;
 }

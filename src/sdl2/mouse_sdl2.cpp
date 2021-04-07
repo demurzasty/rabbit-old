@@ -13,7 +13,7 @@ static std::map<mouse_button, Uint32> flags = {
     { mouse_button::right, SDL_BUTTON_RIGHT }
 };
 
-mouse_sdl2::mouse_sdl2(std::shared_ptr<window> window)
+mouse_sdl2::mouse_sdl2(window& window)
     : _window(window) {
 }
 
@@ -27,7 +27,7 @@ vec2i mouse_sdl2::position() {
 }
 
 float mouse_sdl2::wheel() {
-    return std::static_pointer_cast<window_sdl2>(_window)->mouse_wheel();
+    return static_cast<window_sdl2&>(_window).mouse_wheel();
 }
 
 bool mouse_sdl2::is_button_down(mouse_button button) {

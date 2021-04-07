@@ -9,9 +9,17 @@
 
 namespace rb {
     class builder {
-        friend class application;
+        friend class game;
 
     public:
+        builder() = default;
+
+        builder(const builder&) = delete;
+        builder(builder&&) = default;
+
+        builder& operator=(const builder&) = delete;
+        builder& operator=(builder&&) = default;
+
         template<typename T>
         builder& service() {
             _services.push_back([](container& container) {
@@ -36,9 +44,9 @@ namespace rb {
             return *this;
         }
 
-        template<typename Interface, typename Func>
-        builder& service(Func factory) {
-            _services.push_back([func](container& container) {
+        template<typename Interface, typename Factory>
+        builder& service(Factory factory) {
+            _services.push_back([factory](container& container) {
                 container.install<Interface>(factory);
             });
             return *this;
@@ -60,9 +68,13 @@ namespace rb {
             return *this;
         }
 
+        game build();
+
     private:
         std::vector<std::function<void(container&)>> _services;
         std::vector<std::function<std::shared_ptr<rb::system>(container&)>> _systems;
         std::vector<std::function<void(container&)>> _initializers;
     };
+
+    [[nodiscard]] builder make_default_builder();
 }

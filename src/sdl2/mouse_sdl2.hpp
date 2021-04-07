@@ -7,7 +7,7 @@
 namespace rb {
     class mouse_sdl2 : public mouse {
     public:
-        mouse_sdl2(std::shared_ptr<window> window);
+        mouse_sdl2(window& window);
 
         void refresh() override;
 
@@ -24,7 +24,7 @@ namespace rb {
         bool is_button_released(mouse_button button) override;
 
     private:
-        std::shared_ptr<window> _window;
+        window& _window;
         Uint32 _state = 0;
         Uint32 _last_state = 0;
         vec2i _mouse_position = { 0, 0 };

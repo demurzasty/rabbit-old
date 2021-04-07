@@ -39,7 +39,7 @@ namespace rb {
         container& install() {
             _beans.emplace(type_id<T>().hash(), bean{
                 nullptr,
-                [](container& container) {
+                [](container& container) -> std::shared_ptr<void> {
                     return container.resolve<T>();
                 }
             });
@@ -65,7 +65,7 @@ namespace rb {
         container& install() {
             _beans.emplace(type_id<Interface>().hash(), bean{
                 nullptr,
-                [](container& container) {
+                [](container& container) -> std::shared_ptr<void> {
                     return container.resolve<Implementation>();
                 }
             });
@@ -76,7 +76,7 @@ namespace rb {
         container& install(Func factory) {
             _beans.emplace(type_id<Interface>().hash(), bean{
                 nullptr,
-                [factory](container& container) {
+                [factory](container& container) -> std::shared_ptr<void> {
                     return factory(container);
                 }
             });

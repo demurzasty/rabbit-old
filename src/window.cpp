@@ -7,6 +7,10 @@ namespace rb { using window_impl = window_sdl2; }
 
 using namespace rb;
 
+std::shared_ptr<window> window::resolve(container& container) {
+    return container.resolve<window_impl>();
+}
+
 std::shared_ptr<window> rb::make_window(config& config) {
-    return std::make_shared<window_impl>(config);
+    return nullptr;
 }

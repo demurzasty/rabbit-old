@@ -103,7 +103,7 @@ static std::unordered_map<keycode, int> keys = {
     { keycode::num9, SDL_SCANCODE_9 },
 };
 
-keyboard_sdl2::keyboard_sdl2(std::shared_ptr<window> window)
+keyboard_sdl2::keyboard_sdl2(window& window)
     : _window(window)
     , _last_state()
     , _state() {
@@ -133,5 +133,5 @@ bool keyboard_sdl2::is_key_released(keycode key) {
 }
 
 const std::string& keyboard_sdl2::input_text() const {
-    return std::static_pointer_cast<window_sdl2>(_window)->input_text();
+    return static_cast<window_sdl2&>(_window).input_text();
 }

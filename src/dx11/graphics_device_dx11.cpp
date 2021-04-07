@@ -52,7 +52,7 @@ static std::map<msaa, UINT> samples = {
 	{ msaa::x16, 8 },
 };
 
-graphics_device_dx11::graphics_device_dx11(const config& config, std::shared_ptr<window> window)
+graphics_device_dx11::graphics_device_dx11(config& config, window& window)
 	: _window(window)
 	, _vsync(config.graphics.vsync) {
 	ID3D11DeviceContext* context;
@@ -80,7 +80,7 @@ graphics_device_dx11::graphics_device_dx11(const config& config, std::shared_ptr
 		throw make_exception("[DX11] Cannot query d3d11 device context");
 	}
 
-	const auto window_size = window->size();
+	const auto window_size = window.size();
 
 	IDXGIDevice2* dxgi_device;
 	result = _device->QueryInterface(__uuidof(IDXGIDevice2), reinterpret_cast<void**>(&dxgi_device));
@@ -123,12 +123,12 @@ graphics_device_dx11::graphics_device_dx11(const config& config, std::shared_ptr
 	}
 	swap_chain_desc.Flags = 0;
 
-	result = dxgi_factory->CreateSwapChainForHwnd(_device, window->native_handle(), &swap_chain_desc, nullptr, nullptr, &_swap_chain);
+	result = dxgi_factory->CreateSwapChainForHwnd(_device, window.native_handle(), &swap_chain_desc, nullptr, nullptr, &_swap_chain);
 	if (FAILED(result)) {
 		throw make_exception("[DX11] Cannot create swap chain for window");
 	}
 
-	result = dxgi_factory->MakeWindowAssociation(window->native_handle(), DXGI_MWA_NO_WINDOW_CHANGES);
+	result = dxgi_factory->MakeWindowAssociation(window.native_handle(), DXGI_MWA_NO_WINDOW_CHANGES);
 	if (FAILED(result)) {
 		throw make_exception("[DX11] Cannot make window association");
 	}
@@ -436,7 +436,7 @@ void graphics_device_dx11::set_render_target(const std::shared_ptr<texture>& tex
 	} else {
 		_offscreen_render_target = nullptr;
 
-		const auto viewport_size = static_cast<vec2f>(_window->size());
+		const auto viewport_size = static_cast<vec2f>(_window.size());
 
 		D3D11_VIEWPORT viewport = { 0 };
 		viewport.TopLeftX = 0;

@@ -11,12 +11,18 @@
 #include "texture.hpp"
 #include "window.hpp"
 #include "buffer.hpp"
+#include "container.hpp"
 
 #include <memory>
 
 namespace rb {
     class graphics_device {
     public:
+		/**
+		 * @brief Install graphics device implementation to dependency container.
+		 */
+        static std::shared_ptr<graphics_device> resolve(container& container);
+
         /**
          * @brief Default virtual constructor.
          */

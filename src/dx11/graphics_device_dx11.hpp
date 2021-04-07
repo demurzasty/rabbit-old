@@ -12,7 +12,7 @@
 namespace rb {
     class graphics_device_dx11 : public graphics_device {
     public:
-        graphics_device_dx11(const config& config, std::shared_ptr<window> window);
+        graphics_device_dx11(config& config, window& window);
 
         ~graphics_device_dx11();
 
@@ -75,7 +75,7 @@ namespace rb {
         };
 
     private:
-        std::shared_ptr<window> _window; // keep reference
+        window& _window; // keep reference
         ID3D11Device* _device = nullptr;
         ID3D11DeviceContext1* _device_context = nullptr;
         IDXGISwapChain1* _swap_chain = nullptr;

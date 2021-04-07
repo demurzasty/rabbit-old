@@ -3,6 +3,7 @@
 #include "config.hpp"
 #include "keycode.hpp"
 #include "window.hpp"
+#include "container.hpp"
 
 #include <memory>
 #include <string>
@@ -10,6 +11,11 @@
 namespace rb {
     class keyboard {
     public:
+		/**
+		 * @brief Install keyboard implementation to dependency container.
+		 */
+        static std::shared_ptr<keyboard> resolve(container& container);
+
         virtual ~keyboard() = default;
 
         virtual void refresh() = 0;

@@ -13,6 +13,10 @@ namespace rb { using gamepad_impl = gamepad_dummy; }
 
 using namespace rb;
 
+std::shared_ptr<gamepad> gamepad::resolve(container& container) {
+    return container.resolve<gamepad_impl>();
+}
+
 std::shared_ptr<gamepad> rb::make_gamepad(const config& config) {
-    return std::make_shared<gamepad_impl>();
+    return nullptr;
 }
