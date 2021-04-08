@@ -13,6 +13,7 @@
 #include "buffer.hpp"
 #include "shader.hpp"
 #include "container.hpp"
+#include "mesh.hpp"
 
 #include <memory>
 
@@ -50,6 +51,12 @@ namespace rb {
          */
         virtual std::shared_ptr<shader> make_shader(const shader_desc& shader_desc) = 0;
 
+        /**
+         * @brief Creates new mesh using mesh description.
+         *
+         * @return Newly created mesh.
+         */
+        virtual std::shared_ptr<mesh> make_mesh(const mesh_desc& mesh_desc) = 0;
 
         /**
          * @brief Clears the viewport to a specified color.

@@ -16,7 +16,7 @@ buffer_ogl3::buffer_ogl3(const buffer_desc& desc)
     : buffer(desc)
     , _type(types.at(desc.type)) {
     glCreateBuffers(1, &_id);
-    glNamedBufferData(_id, desc.size, desc.data, desc.is_mutable ? GL_DYNAMIC_DRAW : GL_STATIC_DRAW);
+    glNamedBufferStorage(_id, desc.size, desc.data, desc.is_mutable ? GL_DYNAMIC_STORAGE_BIT : 0);
 }
 
 buffer_ogl3::~buffer_ogl3() {

@@ -119,7 +119,6 @@ set (SRC
 	"src/texture_loader.cpp"
 	"src/texture.cpp"
 	"src/uuid.cpp"
-	"src/vertex_format.cpp"
 	"src/window.cpp"
 
 	"src/dummy/gamepad_dummy.cpp"
@@ -167,6 +166,7 @@ if (RB_GRAPHICS_BACKEND_OPENGL)
 		"src/ogl3/buffer_ogl3.cpp"
 		"src/ogl3/builtin_shaders_ogl3.cpp"
 		"src/ogl3/graphics_device_ogl3.cpp"
+		"src/ogl3/mesh_ogl3.cpp"
 		"src/ogl3/shader_ogl3.cpp"
 		"src/ogl3/texture_ogl3.cpp"
 	)

@@ -73,9 +73,9 @@ std::shared_ptr<void> mesh_loader::load(const std::string& filename, const json&
     }
 
     vertex_desc vertex_desc = {
-        { vertex_attribute::position, vertex_format::vec3f },
-        { vertex_attribute::texcoord, vertex_format::vec2f },
-        { vertex_attribute::normal, vertex_format::vec3f }
+        { vertex_attribute::position, vertex_format::vec3f() },
+        { vertex_attribute::texcoord, vertex_format::vec2f() },
+        { vertex_attribute::normal, vertex_format::vec3f() }
     };
 
     buffer_desc buffer_desc;

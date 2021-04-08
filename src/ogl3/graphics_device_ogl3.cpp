@@ -2,6 +2,7 @@
 #include "texture_ogl3.hpp"
 #include "buffer_ogl3.hpp"
 #include "shader_ogl3.hpp"
+#include "mesh_ogl3.hpp"
 
 #include <rabbit/exception.hpp>
 
@@ -77,6 +78,10 @@ std::shared_ptr<buffer> graphics_device_ogl3::make_buffer(const buffer_desc& buf
 
 std::shared_ptr<shader> graphics_device_ogl3::make_shader(const shader_desc& shader_desc) {
 	return std::make_shared<shader_ogl3>(shader_desc);
+}
+
+std::shared_ptr<mesh> graphics_device_ogl3::make_mesh(const mesh_desc& mesh_desc) {
+	return std::make_shared<mesh_ogl3>(mesh_desc);
 }
 
 void graphics_device_ogl3::clear(const color& color) {
@@ -166,7 +171,7 @@ void graphics_device_ogl3::draw(topology topology, const std::shared_ptr<buffer>
 
 	// Iterate through vertex elements to calculate stride
 	for (const auto& element : shader->vertex_desc()) {
-		stride += vertex_format_size(element.format);
+		stride += element.format.size;
 	}
 
 	std::size_t offset = 0;
@@ -175,8 +180,8 @@ void graphics_device_ogl3::draw(topology topology, const std::shared_ptr<buffer>
 	// Iterate again to declare layout
 	for (const auto& element : shader->vertex_desc()) {
 		glEnableVertexAttribArray(index);
-		glVertexAttribPointer(index, vertex_format_size(element.format) / sizeof(float), GL_FLOAT, GL_FALSE, stride, (void*)offset);
-		offset += vertex_format_size(element.format);
+		glVertexAttribPointer(index, element.format.components, element.format.type == vertex_format_type::floating_point ? GL_FLOAT : GL_INT, element.format.normalize ? GL_TRUE : GL_FALSE, stride, (void*)offset);
+		offset += element.format.size;
 		index++;
 	}
 

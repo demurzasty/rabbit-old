@@ -17,6 +17,8 @@ namespace rb {
     public:
         mesh(const mesh_desc& desc);
 
+        virtual ~mesh() = default;
+
         mesh(const mesh&) = delete;
         mesh& operator=(const mesh&) = delete;
 

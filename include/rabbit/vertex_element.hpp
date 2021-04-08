@@ -6,6 +6,6 @@
 namespace rb {
     struct vertex_element {
         vertex_attribute attribute{ vertex_attribute::position };
-        vertex_format format{ vertex_format::vec3f };
+        vertex_format format;
     };
 }

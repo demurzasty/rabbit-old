@@ -13,9 +13,9 @@ namespace rb {
         span<const std::uint8_t> vertex_bytecode;
         span<const std::uint8_t> fragment_bytecode;
         vertex_desc vertex_desc = {
-            { vertex_attribute::position, vertex_format::vec3f },
-            { vertex_attribute::texcoord, vertex_format::vec2f },
-            { vertex_attribute::normal, vertex_format::vec3f }
+            { vertex_attribute::position, vertex_format::vec3f() },
+            { vertex_attribute::texcoord, vertex_format::vec2f() },
+            { vertex_attribute::normal, vertex_format::vec3f() }
         };
     };
 

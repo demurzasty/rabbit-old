@@ -5,5 +5,6 @@
 #include <vector>
 
 namespace rb {
+    // todo: make struct with utility methods
     using vertex_desc = std::vector<vertex_element>;
 }

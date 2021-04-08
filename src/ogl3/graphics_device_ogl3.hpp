@@ -21,6 +21,8 @@ namespace rb {
 
         std::shared_ptr<shader> make_shader(const shader_desc& shader_desc) override;
 
+        std::shared_ptr<mesh> make_mesh(const mesh_desc& mesh_desc) override;
+
         void clear(const color& color) override;
 
         void present() override;
