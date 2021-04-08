@@ -1,5 +1,6 @@
 #include "graphics_device_ogl3.hpp"
 #include "texture_ogl3.hpp"
+#include "texture_cube_ogl3.hpp"
 #include "buffer_ogl3.hpp"
 #include "shader_ogl3.hpp"
 #include "mesh_ogl3.hpp"
@@ -70,6 +71,10 @@ graphics_device_ogl3::~graphics_device_ogl3() {
 
 std::shared_ptr<texture> graphics_device_ogl3::make_texture(const texture_desc& desc) {
 	return std::make_shared<texture_ogl3>(desc);
+}
+
+std::shared_ptr<texture_cube> graphics_device_ogl3::make_texture(const texture_cube_desc& texture_desc) {
+	return std::make_shared<texture_cube_ogl3>(texture_desc);
 }
 
 std::shared_ptr<buffer> graphics_device_ogl3::make_buffer(const buffer_desc& buffer_desc) {

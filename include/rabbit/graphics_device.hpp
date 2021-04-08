@@ -9,6 +9,7 @@
 #include "blend_state.hpp"
 #include "vertex.hpp"
 #include "texture.hpp"
+#include "texture_cube.hpp"
 #include "window.hpp"
 #include "buffer.hpp"
 #include "shader.hpp"
@@ -36,6 +37,13 @@ namespace rb {
          * @return Newly created texture.
          */
         virtual std::shared_ptr<texture> make_texture(const texture_desc& texture_desc) = 0;
+
+        /**
+         * @brief Creates new texture cube using texture cube description.
+         * 
+         * @return Newly created texture cube.
+         */
+        virtual std::shared_ptr<texture_cube> make_texture(const texture_cube_desc& texture_desc) = 0;
 
         /**
          * @brief Creates new buffer using buffer description.

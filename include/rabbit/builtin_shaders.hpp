@@ -7,7 +7,15 @@
 namespace rb {
     enum class builtin_shader : std::uint8_t {
         forward_vert,
-        forward_frag
+        forward_frag,
+        irradiance_vert,
+        irradiance_frag,
+        brdf_vert,
+        brdf_frag,
+        prefilter_vert,
+        prefilter_frag,
+        skybox_vert,
+        skybox_frag
     };
 
     struct builtin_shaders {

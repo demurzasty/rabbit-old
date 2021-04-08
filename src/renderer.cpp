@@ -5,6 +5,8 @@
 #include <rabbit/camera.hpp>
 #include <rabbit/mat4.hpp>
 
+#include <iostream>
+
 using namespace rb;
 
 struct matrices_buffer_data {
@@ -15,11 +17,43 @@ struct matrices_buffer_data {
 
 renderer::renderer(graphics_device& graphics_device)
     : _graphics_device(graphics_device) {
-    shader_desc desc;
-    desc.vertex_bytecode = builtin_shaders::get(builtin_shader::forward_vert);
-    desc.fragment_bytecode = builtin_shaders::get(builtin_shader::forward_frag);
-    _forward = graphics_device.make_shader(desc);
+    try {
+        shader_desc desc;
+        desc.vertex_desc = {
+            { vertex_attribute::position, vertex_format::vec3f() },
+            { vertex_attribute::texcoord, vertex_format::vec2f() },
+            { vertex_attribute::normal, vertex_format::vec3f() }
+        };
+        desc.vertex_bytecode = builtin_shaders::get(builtin_shader::forward_vert);
+        desc.fragment_bytecode = builtin_shaders::get(builtin_shader::forward_frag);
+        _forward = graphics_device.make_shader(desc);
 
+        desc.vertex_desc = { { vertex_attribute::position, vertex_format::vec2f() } };
+        desc.vertex_bytecode = builtin_shaders::get(builtin_shader::irradiance_vert);
+        desc.fragment_bytecode = builtin_shaders::get(builtin_shader::irradiance_frag);
+        _irradiance = graphics_device.make_shader(desc);
+
+        desc.vertex_desc = { { vertex_attribute::position, vertex_format::vec2f() } };
+        desc.vertex_bytecode = builtin_shaders::get(builtin_shader::brdf_vert);
+        desc.fragment_bytecode = builtin_shaders::get(builtin_shader::brdf_frag);
+        _brdf = graphics_device.make_shader(desc);
+
+        desc.vertex_desc = { { vertex_attribute::position, vertex_format::vec2f() } };
+        desc.vertex_bytecode = builtin_shaders::get(builtin_shader::prefilter_vert);
+        desc.fragment_bytecode = builtin_shaders::get(builtin_shader::prefilter_frag);
+        _prefilter = graphics_device.make_shader(desc);
+
+        desc.vertex_desc = {
+            { vertex_attribute::position, vertex_format::vec3f() },
+            { vertex_attribute::texcoord, vertex_format::vec2f() },
+            { vertex_attribute::normal, vertex_format::vec3f() }
+        };
+        desc.vertex_bytecode = builtin_shaders::get(builtin_shader::skybox_vert);
+        desc.fragment_bytecode = builtin_shaders::get(builtin_shader::skybox_frag);
+        _skybox = graphics_device.make_shader(desc);
+    } catch (const exception& exception) {
+        std::cerr << exception.what() << std::endl;
+    }
 
     buffer_desc buffer_desc;
     buffer_desc.type = buffer_type::uniform;

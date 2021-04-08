@@ -116,6 +116,7 @@ set (SRC
 	"src/renderer.cpp"
 	"src/shader.cpp"
 	"src/system.cpp"
+	"src/texture_cube.cpp"
 	"src/texture_loader.cpp"
 	"src/texture.cpp"
 	"src/uuid.cpp"
@@ -168,6 +169,7 @@ if (RB_GRAPHICS_BACKEND_OPENGL)
 		"src/ogl3/mesh_ogl3.cpp"
 		"src/ogl3/shader_ogl3.cpp"
 		"src/ogl3/texture_ogl3.cpp"
+		"src/ogl3/texture_cube_ogl3.cpp"
 	)
 endif ()
 

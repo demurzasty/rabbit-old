@@ -17,6 +17,8 @@ namespace rb {
 
         std::shared_ptr<texture> make_texture(const texture_desc& desc) override;
 
+        std::shared_ptr<texture_cube> make_texture(const texture_cube_desc& texture_desc) override;
+
         std::shared_ptr<buffer> make_buffer(const buffer_desc& buffer_desc) override;
 
         std::shared_ptr<shader> make_shader(const shader_desc& shader_desc) override;
