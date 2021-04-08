@@ -37,7 +37,6 @@
 #include "mouse.hpp"
 #include "renderer.hpp"
 #include "span.hpp"
-#include "sprite_batch.hpp"
 #include "texture.hpp"
 #include "texture_filter.hpp"
 #include "texture_format.hpp"

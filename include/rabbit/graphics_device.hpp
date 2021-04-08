@@ -132,51 +132,12 @@ namespace rb {
         virtual void bind_buffer_base(const std::shared_ptr<buffer>& buffer, std::size_t binding_index) = 0;
 
         /**
-         * @brief Draws a sequence of non-indexed geometric primitives of the specified type.
-         * 
-         * @param topology Describes the type of primitive to draw.
-         * @param vertices Input data to draw from.
-         */
-        virtual void draw(topology topology, const span<const vertex>& vertices) = 0;
-
-        virtual void draw(topology topology, std::shared_ptr<buffer> vertex_buffer) = 0;
-
-        /**
-         * @brief Draws a sequence of indexed geometric primitives of the specified type.
-         *
-         * @param topology Describes the type of primitive to draw.
-         * @param vertices Input data to draw from.
-         * @param indices Input data to index vertices.
-         */
-        virtual void draw(topology topology, const span<const vertex>& vertices, const span<const std::uint32_t>& indices) = 0;
-
-        virtual void draw(topology topology, std::shared_ptr<buffer> vertex_buffer, std::shared_ptr<buffer> index_buffer) = 0;
-
-        /**
          * @brief Draws a textured sequence of non-indexed geometric primitives of the specified type.
-         *        If texture is not provided, primitives will be drawed in solid mode.
-         * 
-         * @param topology Describes the type of primitive to draw.
-         * @param vertices Input data to draw from.
-         * @param texture Texture to be used.
-         */
-        virtual void draw_textured(topology topology, const span<const vertex>& vertices, const std::shared_ptr<texture>& texture) = 0;
-
-        virtual void draw_textured(topology topology, std::shared_ptr<buffer> vertex_buffer, const std::shared_ptr<texture>& texture) = 0;
-
-        /**
-         * @brief Draws a textured sequence of indexed geometric primitives of the specified type.
-         *        If texture is not provided, primitives will be drawed in solid mode.
          *
          * @param topology Describes the type of primitive to draw.
-         * @param vertices Input data to draw from.
-         * @param texture Texture to be used.
-         * @param indices Input data to index vertices.
+         * @param vertex_buffer Input data to draw from.
+         * @param shader Shader to be used.
          */
-        virtual void draw_textured(topology topology, const span<const vertex>& vertices, const span<const std::uint32_t>& indices, const std::shared_ptr<texture>& texture) = 0;
-
-        virtual void draw_textured(topology topology, std::shared_ptr<buffer> vertex_buffer, std::shared_ptr<buffer> index_buffer, const std::shared_ptr<texture>& texture) = 0;
-
         virtual void draw(topology topology, const std::shared_ptr<buffer>& vertex_buffer, const std::shared_ptr<shader>& shader) = 0;
     };
 }

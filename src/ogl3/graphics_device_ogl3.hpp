@@ -45,22 +45,6 @@ namespace rb {
 
         void bind_buffer_base(const std::shared_ptr<buffer>& buffer, std::size_t binding_index) override;
 
-        void draw(topology topology, const span<const vertex>& vertices) override;
-
-        void draw(topology topology, std::shared_ptr<buffer> buffer) override;
-
-        void draw(topology topology, const span<const vertex>& vertices, const span<const std::uint32_t>& indices) override;
-
-        void draw(topology topology, std::shared_ptr<buffer> vertex_buffer, std::shared_ptr<buffer> index_buffer) override;
-
-        void draw_textured(topology topology, const span<const vertex>& vertices, const std::shared_ptr<texture>& texture) override;
-
-        void draw_textured(topology topology, std::shared_ptr<buffer> vertex_buffer, const std::shared_ptr<texture>& texture) override;
-
-        void draw_textured(topology topology, const span<const vertex>& vertices, const span<const std::uint32_t>& indices, const std::shared_ptr<texture>& texture) override;
-
-        void draw_textured(topology topology, std::shared_ptr<buffer> vertex_buffer, std::shared_ptr<buffer> index_buffer, const std::shared_ptr<texture>& texture) override;
-
         void draw(topology topology, const std::shared_ptr<buffer>& vertex_buffer, const std::shared_ptr<shader>& shader) override;
 
     private:
