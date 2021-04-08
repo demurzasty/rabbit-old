@@ -7,7 +7,6 @@
 #include "color.hpp"
 #include "topology.hpp"
 #include "blend_state.hpp"
-#include "vertex.hpp"
 #include "texture.hpp"
 #include "texture_cube.hpp"
 #include "window.hpp"

@@ -8,11 +8,11 @@
 
 namespace rb {
     struct buffer_desc {
-        buffer_type type = buffer_type::vertex;
-        std::size_t size = 0;
-        std::size_t stride = 0;
-        const void* data = nullptr;
-        bool is_mutable = false;
+        buffer_type type{ buffer_type::vertex };
+        std::size_t size{ 0 };
+        std::size_t stride{ 0 };
+        const void* data{ nullptr };
+        bool is_mutable{ false };
     };
 
     class buffer {

@@ -2,7 +2,6 @@
 #include <rabbit/mesh.hpp>
 #include <rabbit/json.hpp>
 #include <rabbit/exception.hpp>
-#include <rabbit/vertex.hpp>
 
 #include <fstream>
 #include <sstream>

@@ -81,7 +81,7 @@ texture_dx11::texture_dx11(ID3D11Device* device, ID3D11DeviceContext* context, c
 	}
 
 	HRESULT result = device->CreateTexture2D(&texture_desc, !desc.data.empty() ? &subresource_data : nullptr, &_texture);
-	assert(SUCCEEDED(result));
+	assert(SUCCEEDED(result)); // todo: exception
 
 	if (texture_desc.BindFlags & D3D11_BIND_SHADER_RESOURCE) {
 		CD3D11_SHADER_RESOURCE_VIEW_DESC srv_esc;
@@ -91,7 +91,7 @@ texture_dx11::texture_dx11(ID3D11Device* device, ID3D11DeviceContext* context, c
 		srv_esc.Texture2D.MostDetailedMip = 0;
 
 		result = device->CreateShaderResourceView(_texture, &srv_esc, &_shader_resource_view);
-		assert(SUCCEEDED(result));
+		assert(SUCCEEDED(result)); // todo: exception
 
 		auto sampler_desc = CD3D11_SAMPLER_DESC(CD3D11_DEFAULT());
 		sampler_desc.Filter = filters.at(desc.filter);
@@ -106,7 +106,7 @@ texture_dx11::texture_dx11(ID3D11Device* device, ID3D11DeviceContext* context, c
 		sampler_desc.MaxLOD = D3D11_FLOAT32_MAX;
 
 		result = device->CreateSamplerState(&sampler_desc, &_sampler_state);
-		assert(SUCCEEDED(result));
+		assert(SUCCEEDED(result)); // todo: exception
 	}
 
 	if (desc.is_render_target) {
@@ -116,7 +116,7 @@ texture_dx11::texture_dx11(ID3D11Device* device, ID3D11DeviceContext* context, c
 		render_target_view_desc.Texture2D.MipSlice = 0;
 
 		result = device->CreateRenderTargetView(_texture, &render_target_view_desc, &_render_target);
-		assert(SUCCEEDED(result));
+		assert(SUCCEEDED(result)); // todo: exception
 	}
 }
 
@@ -140,11 +140,11 @@ void texture_dx11::update(const span<const std::uint8_t>& pixels, const vec4i& r
 
 	ID3D11Texture2D* staging_texture;
 	HRESULT result = _device->CreateTexture2D(&staging_texture_desc, nullptr, &staging_texture);
-	assert(SUCCEEDED(result));
+	assert(SUCCEEDED(result)); // todo: exception
 
 	D3D11_MAPPED_SUBRESOURCE texture_memory;
 	result = _context->Map(staging_texture, 0, D3D11_MAP_WRITE, 0, &texture_memory);
-	assert(SUCCEEDED(result));
+	assert(SUCCEEDED(result)); // todo: exception
 
 	const auto src = pixels.data();
 	auto dst = reinterpret_cast<std::uint8_t*>(texture_memory.pData);

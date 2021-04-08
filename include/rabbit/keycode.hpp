@@ -1,9 +1,8 @@
 #pragma once 
 
-#include "enum.hpp"
+#include <cstdint>
 
 namespace rb {
-	// todo: enum definition
 	enum class keycode : std::uint8_t {
 		a,
 		b,

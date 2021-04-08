@@ -154,13 +154,13 @@ namespace rb {
 				(((uint64_t)(color_source_blend) & 0xF) << 52);
 		}
 
-		blend_function alpha_blend_function = blend_function::add;
-		blend alpha_destination_blend = blend::one;
-		blend alpha_source_blend = blend::one;
-		blend_function color_blend_function = blend_function::add;
-		blend color_destination_blend = blend::one;
-		blend color_source_blend = blend::one;
-		color color_factor = { 255, 255, 255, 255 };
+		blend_function alpha_blend_function{ blend_function::add };
+		blend alpha_destination_blend{ blend::one };
+		blend alpha_source_blend{ blend::one };
+		blend_function color_blend_function{ blend_function::add };
+		blend color_destination_blend{ blend::one };
+		blend color_source_blend{ blend::one };
+		color color_factor{ 255, 255, 255, 255 };
 		// todo: add color write channels
 	};
 }

@@ -1,6 +1,5 @@
 #include <rabbit/buffer.hpp>
 #include <rabbit/exception.hpp>
-#include <rabbit/vertex.hpp>
 
 using namespace rb;
 

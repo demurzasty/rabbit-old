@@ -109,7 +109,6 @@ set (SRC
 	"src/graphics_device.cpp"
 	"src/image.cpp"
 	"src/keyboard.cpp"
-	"src/loader.cpp"
 	"src/mesh_loader.cpp"
 	"src/mesh.cpp"
 	"src/mouse.cpp"

@@ -38,7 +38,7 @@ namespace rb {
 
     private:
         container& _container;
-        std::unordered_map<id_type, std::shared_ptr<loader>> _loaders; // todo: should we use unique_ptr instead?
-        std::unordered_map<std::string, std::weak_ptr<void>> _assets; // todo; use weak_ptr instead
+        std::unordered_map<id_type, std::shared_ptr<loader>> _loaders;
+        std::unordered_map<std::string, std::weak_ptr<void>> _assets;
     };
 }

@@ -55,5 +55,4 @@
 #include "vertex_desc.hpp"
 #include "vertex_element.hpp"
 #include "vertex_format.hpp"
-#include "vertex.hpp"
 #include "window.hpp"

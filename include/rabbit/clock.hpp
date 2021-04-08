@@ -11,6 +11,6 @@ namespace rb {
         long double reset();
 
     private:
-        using_clock::time_point _time = using_clock::now();
+        using_clock::time_point _time{ using_clock::now() };
     };
 }

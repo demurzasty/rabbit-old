@@ -16,19 +16,19 @@ namespace rb {
 
 	struct config {
 		struct {
-			std::string title = "RabBit";
-			vec2i size = { 1280, 720 };
-			bool fullscreen = false;
-			bool borderless = false;
-			bool resizable = false;
-			bool hide_cursor = false;
-			msaa msaa = msaa::x8;
+			std::string title{ "RabBit" };
+			vec2i size{ 1280, 720 };
+			bool fullscreen{ false };
+			bool borderless{ false };
+			bool resizable{ false };
+			bool hide_cursor{ false };
+			msaa msaa{ msaa::x8 };
 		} window;
 
 		struct {
-			bool vsync = true;
+			bool vsync{ true };
 		} graphics;
 
-		float fixed_time_step = 1.0f / 60.0f;
+		float fixed_time_step{ 1.0f / 60.0f };
 	};
 }

@@ -81,12 +81,26 @@ namespace rb {
 		 */
 		virtual bool is_focused() const = 0;
 
+		/**
+		 * @brief Sets window title.
+		 */
 		virtual void set_title(const std::string& title) = 0;
 
+		/**
+		 * @brief Retrieve window title.
+		 * 
+		 * @return Window title.
+		 */
 		virtual std::string title() const = 0;
 
+		/**
+		 * @brief Show or hide cursor.
+		 */
 		virtual void show_cursor(bool enable) = 0;
 
+		/**
+		 * @brief Tell whether cursor is visible.
+		 */
 		virtual bool is_cursor_visible() const = 0;
     };
 }
