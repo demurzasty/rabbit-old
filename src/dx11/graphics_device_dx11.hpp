@@ -22,6 +22,8 @@ namespace rb {
 
         std::shared_ptr<shader> make_shader(const shader_desc& shader_desc) override;
 
+        std::shared_ptr<mesh> make_mesh(const mesh_desc& mesh_desc) override;
+
         void clear(const color& color) override;
 
         void present() override;
@@ -29,12 +31,6 @@ namespace rb {
         void set_blend_state(const blend_state& blend_state) override;
 
         void set_depth_test(bool depth_test) override;
-
-        void set_view_matrix(const mat4f& view) override;
-
-        void set_projection_matrix(const mat4f& projection) override;
-
-        void set_world_matrix(const mat4f& world) override;
 
         void set_backbuffer_size(const vec2i& size) override;
 
@@ -46,39 +42,11 @@ namespace rb {
 
         void bind_buffer_base(const std::shared_ptr<buffer>& buffer, std::size_t binding_index) override;
 
-        void draw(topology topology, const span<const vertex>& vertices) override;
-
-        void draw(topology topology, std::shared_ptr<buffer> vertex_buffer) override;
-
-        void draw(topology topology, const span<const vertex>& vertices, const span<const std::uint32_t>& indices) override;
-
-        void draw(topology topology, std::shared_ptr<buffer> vertex_buffer, std::shared_ptr<buffer> index_buffer) override;
-
-        void draw_textured(topology topology, const span<const vertex>& vertices, const std::shared_ptr<texture>& texture) override;
-
-        void draw_textured(topology topology, std::shared_ptr<buffer> vertex_buffer, const std::shared_ptr<texture>& texture) override;
-
-        void draw_textured(topology topology, const span<const vertex>& vertices, const span<const std::uint32_t>& indices, const std::shared_ptr<texture>& texture) override;
-
-        void draw_textured(topology topology, std::shared_ptr<buffer> vertex_buffer, std::shared_ptr<buffer> index_buffer, const std::shared_ptr<texture>& texture) override;
-        
-        void draw(topology topology, const std::shared_ptr<buffer>& vertex_buffer, const std::shared_ptr<shader>& shader) override;
+        void draw(const std::shared_ptr<mesh>& vertex_buffer, const std::shared_ptr<shader>& shader) override;
 
         ID3D11Device* device() const;
 
         ID3D11DeviceContext1* device_context() const;
-
-    private:
-        void update_vertex_buffer(const span<const vertex>& vertices);
-
-        void update_index_buffer(const span<const std::uint32_t>& indices);
-
-    private:
-        struct vertex_shader_data {
-            mat4f world = mat4f::identity();
-            mat4f view = mat4f::identity();
-            mat4f projection = mat4f::identity();
-        };
 
     private:
         window& _window; // keep reference
@@ -89,17 +57,9 @@ namespace rb {
         ID3D11RenderTargetView* _offscreen_render_target = nullptr;
         ID3D11Texture2D* _depth_stencil_texture = nullptr;
         ID3D11DepthStencilView* _depth_stencil_view = nullptr;
-        ID3D11Buffer* _vertex_buffer = nullptr;
-        ID3D11Buffer* _index_buffer = nullptr;
-        ID3D11Buffer* _vertex_constant_buffer = nullptr;
-        ID3D11VertexShader* _vertex_shader = nullptr;
-        ID3D11PixelShader* _color_pixel_shader = nullptr;
-        ID3D11PixelShader* _texture_pixel_shader = nullptr;
-        ID3D11InputLayout* _input_layout = nullptr;
         ID3D11RasterizerState* _rasterizer_state = nullptr;
         D3D11_TEXTURE2D_DESC _depth_desc = {};
         D3D11_DEPTH_STENCIL_VIEW_DESC _depth_stencil_view_desc = {};
-        vertex_shader_data _vertex_shader_data;
         std::map<uint64_t, ID3D11BlendState*> _blend_states;
         bool _depth_test = false;
         bool _vsync;
