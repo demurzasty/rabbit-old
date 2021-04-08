@@ -8,7 +8,7 @@ layout (location = 0) in vec2 varTexcoord;
 
 layout (location = 0) out vec4 out_color;
 
-#if 0 
+#if 1 
 float radicalInverse_VdC(uint bits) {
      bits = (bits << 16u) | (bits >> 16u);
      bits = ((bits & 0x55555555u) << 1u) | ((bits & 0xAAAAAAAAu) >> 1u);
@@ -21,8 +21,7 @@ float radicalInverse_VdC(uint bits) {
 vec2 hammersley(uint i, uint N) {
 	return vec2(float(i)/float(N), radicalInverse_VdC(i));
 }
-#endif
-
+#else
 float vanDerCorpus(int n, int base) {
     float invBase = 1.0 / float(base);
     float denom   = 1.0;
@@ -43,6 +42,7 @@ float vanDerCorpus(int n, int base) {
 vec2 hammersley(int i, int n) {
     return vec2(float(i) / float(n), vanDerCorpus(i, 2));
 }
+#endif
 
 vec3 importanceSampleGGX(vec2 Xi, vec3 N, float roughness) {
 	float a = roughness * roughness;

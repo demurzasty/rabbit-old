@@ -27,7 +27,7 @@ layout (std140, binding = 3) uniform ForwardData {
 layout (binding = 1) uniform samplerCube u_radiance;
 layout (binding = 2) uniform samplerCube u_irradiance;
 layout (binding = 3) uniform samplerCube u_prefilter;
-layout (binding = 4) uniform sampler2D u_lut_map;
+layout (binding = 4) uniform sampler2D u_lut;
 
 layout (binding = 5) uniform sampler2D u_diffuse_map;
 
@@ -117,7 +117,7 @@ void main() {
 	vec3 reflected = reflect(-V, N);
 
 	vec3 prefiltered_color = textureLod(u_prefilter, reflected, roughness * 5.0).rgb;
-	vec2 brdf = texture(u_lut_map, vec2(n_dot_v, roughness)).rg;
+	vec2 brdf = texture(u_lut, vec2(n_dot_v, roughness)).rg;
 	vec3 spec = prefiltered_color * (kS * brdf.x + brdf.y);
 
 	vec3 ambient = (kD * diff + spec);
