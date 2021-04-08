@@ -27,7 +27,7 @@ set (RB_AUDIO_BACKEND_OPENAL FALSE)
 if (RB_EMSCRIPTEN)
 	set (RB_GRAPHICS_BACKEND_OPENGL TRUE)
 elseif (RB_WINDOWS)
-	if (MSVC)
+	if (NOT) # (MSVC)
 		set (RB_GRAPHICS_BACKEND_DIRECTX TRUE)
 	else ()
 		set (RB_GRAPHICS_BACKEND_OPENGL TRUE)
@@ -157,7 +157,6 @@ if (RB_GRAPHICS_BACKEND_DIRECTX)
 		"src/dx11/graphics_device_dx11.cpp"
 		"src/dx11/texture_dx11.cpp"
 		"src/dx11/shader_dx11.cpp"
-		"src/dx11/standard_shaders_dx11.cpp"
 	)
 endif ()
 
