@@ -43,6 +43,7 @@ static std::map<blend, GLenum> blend_factors = {
 	{ blend::source_alpha_saturation, GL_SRC_ALPHA_SATURATE },
 	{ blend::source_color, GL_SRC_COLOR }
 };
+
 graphics_device_ogl3::graphics_device_ogl3(const config& config, window& window)
 	: _window(window) {
 	glewInit();
@@ -56,10 +57,16 @@ graphics_device_ogl3::graphics_device_ogl3(const config& config, window& window)
 
 	glDisable(GL_DEPTH_TEST);
 	glDisable(GL_CULL_FACE);
-	glEnable(GL_SCISSOR_TEST);
+	glDisable(GL_SCISSOR_TEST);
+	glDepthFunc(GL_LEQUAL);
 
 	glEnable(GL_BLEND);
 	glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+	glEnable(GL_DEBUG_OUTPUT);
+	glDebugMessageCallback([](GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, GLchar const* message, void const* user_param) {
+		fprintf(stderr, "%s\n", message);
+	}, nullptr);
 
 #if RB_WINDOWS
 	wglSwapIntervalEXT(config.graphics.vsync ? 1 : 0);
@@ -168,10 +175,24 @@ void graphics_device_ogl3::bind_buffer_base(const std::shared_ptr<buffer>& buffe
 	glBindBufferBase(GL_UNIFORM_BUFFER, binding_index, std::static_pointer_cast<buffer_ogl3>(buffer)->id());
 }
 
+void graphics_device_ogl3::bind_texture(const std::shared_ptr<texture>& texture, std::size_t binding_index) {
+	glBindTextureUnit(binding_index, std::static_pointer_cast<texture_ogl3>(texture)->id());
+}
+        
+void graphics_device_ogl3::bind_texture(const std::shared_ptr<texture_cube>& texture, std::size_t binding_index) {
+	glBindTextureUnit(binding_index, std::static_pointer_cast<texture_cube_ogl3>(texture)->id());
+}
+
 void graphics_device_ogl3::draw( const std::shared_ptr<mesh>& mesh, const std::shared_ptr<shader>& shader) {
 	auto native_mesh = std::static_pointer_cast<mesh_ogl3>(mesh);
 
 	glBindVertexArray(native_mesh->id());
 	glUseProgram(std::static_pointer_cast<shader_ogl3>(shader)->id());
-	glDrawArrays(topologies.at(mesh->topology()), 0, static_cast<GLsizei>(mesh->vertex_buffer()->count()));
+	
+	if (mesh->index_buffer()) {
+		// todo: do not use hard coded GL_UNSIGNED_INT
+		glDrawElements(topologies.at(mesh->topology()), mesh->index_buffer()->count(), GL_UNSIGNED_INT, nullptr);
+	} else {
+		glDrawArrays(topologies.at(mesh->topology()), 0, static_cast<GLsizei>(mesh->vertex_buffer()->count()));
+	}
 }

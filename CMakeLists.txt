@@ -116,6 +116,7 @@ set (SRC
 	"src/renderer.cpp"
 	"src/shader.cpp"
 	"src/system.cpp"
+	"src/texture_cube_loader.cpp"
 	"src/texture_cube.cpp"
 	"src/texture_loader.cpp"
 	"src/texture.cpp"

@@ -26,7 +26,10 @@ mesh_ogl3::mesh_ogl3(const mesh_desc& desc)
     glCreateVertexArrays(1, &_id);
 
     glVertexArrayVertexBuffer(_id, 0, vertex_buffer->id(), 0, stride);
-    // glVertexArrayElementBuffer(_id, index_buffer->id());
+
+    if (index_buffer) {
+        glVertexArrayElementBuffer(_id, index_buffer->id());
+    }
 
     std::size_t index{ 0 };
     std::size_t offset{ 0 };

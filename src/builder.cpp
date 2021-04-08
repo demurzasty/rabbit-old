@@ -14,6 +14,7 @@ builder rb::make_default_builder() {
     builder.initialize([](asset_manager& asset_manager) {
         asset_manager.add_loader<texture, texture_loader>();
         asset_manager.add_loader<mesh, mesh_loader>();
+        asset_manager.add_loader<texture_cube, texture_cube_loader>();
     });
     builder.system<renderer>();
     return builder;

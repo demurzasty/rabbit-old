@@ -43,6 +43,10 @@ namespace rb {
 
         void bind_buffer_base(const std::shared_ptr<buffer>& buffer, std::size_t binding_index) override;
 
+        void bind_texture(const std::shared_ptr<texture>& texture, std::size_t binding_index) override;
+        
+        void bind_texture(const std::shared_ptr<texture_cube>& texture, std::size_t binding_index) override;
+
         void draw(const std::shared_ptr<mesh>& mesh, const std::shared_ptr<shader>& shader) override;
 
     private:

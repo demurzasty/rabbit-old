@@ -126,6 +126,16 @@ namespace rb {
         virtual void bind_buffer_base(const std::shared_ptr<buffer>& buffer, std::size_t binding_index) = 0;
 
         /**
+         * @brief Bind a texture object to an indexed texture target.
+         */
+        virtual void bind_texture(const std::shared_ptr<texture>& texture, std::size_t binding_index) = 0;
+        
+        /**
+         * @brief Bind a texture object to an indexed texture target.
+         */
+        virtual void bind_texture(const std::shared_ptr<texture_cube>& texture, std::size_t binding_index) = 0;
+
+        /**
          * @brief Draws a textured sequence of non-indexed geometric primitives of the specified type.
          *
          * @param topology Describes the type of primitive to draw.

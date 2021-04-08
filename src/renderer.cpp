@@ -15,7 +15,7 @@ struct matrices_buffer_data {
     mat4f projection;
 };
 
-renderer::renderer(graphics_device& graphics_device)
+renderer::renderer(graphics_device& graphics_device, asset_manager& asset_manager)
     : _graphics_device(graphics_device) {
     try {
         shader_desc desc;
@@ -61,6 +61,104 @@ renderer::renderer(graphics_device& graphics_device)
     buffer_desc.stride = buffer_desc.size;
     buffer_desc.is_mutable = true;
     _matrices_buffer = graphics_device.make_buffer(buffer_desc);
+
+    vec3f cube_vertices[24] = {
+		{ -1.0f, 1.0f, 1.0f },
+		{ 1.0f, 1.0f, 1.0f },
+		{ 1.0f, -1.0f, 1.0f },
+		{ -1.0f, -1.0f, 1.0f },
+
+		{ -1.0f, 1.0f, -1.0f },
+		{ -1.0f, 1.0f, 1.0f },
+		{ -1.0f, -1.0f, 1.0f },
+		{ -1.0f, -1.0f, -1.0f },
+
+		{ 1.0f, 1.0f, -1.0f },
+		{ -1.0f, 1.0f, -1.0f },
+		{ -1.0f, -1.0f, -1.0f },
+		{ 1.0f, -1.0f, -1.0f },
+
+		{ 1.0f, 1.0f, 1.0f },
+		{ 1.0f, 1.0f, -1.0f },
+		{ 1.0f, -1.0f, -1.0f },
+		{ 1.0f, -1.0f, 1.0f },
+
+		{ -1.0f, 1.0f, -1.0f },
+		{ 1.0f, 1.0f, -1.0f },
+		{ 1.0f, 1.0f, 1.0f },
+		{ -1.0f, 1.0f, 1.0f },
+
+		{ -1.0f, -1.0f, 1.0f },
+		{ 1.0f, -1.0f, 1.0f },
+		{ 1.0f, -1.0f, -1.0f },
+		{ -1.0f, -1.0f, -1.0f },
+    };
+
+    std::uint32_t cube_indices[36] = {
+        0, 2, 1,
+        2, 0, 3,
+
+        4, 6, 5,
+        6, 4, 7,
+
+        8, 10, 9,
+        10, 8, 11,
+
+        12, 14, 13,
+        14, 12, 15,
+
+        16, 18, 17,
+        18, 16, 19,
+
+        20, 22, 21,
+        22, 20, 23
+    };
+
+    buffer_desc.type = buffer_type::vertex;
+    buffer_desc.data = cube_vertices;
+    buffer_desc.stride = sizeof(vec3f);
+    buffer_desc.size = sizeof(cube_vertices);
+    buffer_desc.is_mutable = false;
+    auto cube_vertex_buffer = graphics_device.make_buffer(buffer_desc);
+
+    buffer_desc.type = buffer_type::index;
+    buffer_desc.data = cube_indices;
+    buffer_desc.stride = sizeof(std::uint32_t);
+    buffer_desc.size = sizeof(cube_indices);
+    buffer_desc.is_mutable = false;
+    auto cube_index_buffer = graphics_device.make_buffer(buffer_desc);
+
+    mesh_desc mesh_desc;
+    mesh_desc.topology = topology::triangles;
+    mesh_desc.vertex_desc = { { vertex_attribute::position, vertex_format::vec3f() } };
+    mesh_desc.vertex_buffer = cube_vertex_buffer;
+    mesh_desc.index_buffer = cube_index_buffer;
+    _cube = graphics_device.make_mesh(mesh_desc);
+
+    vec2f quad_vertices[] = {
+        { -1.0f, 1.0f },
+        { -1.0f, -1.0f },
+        { 1.0f, -1.0f },
+
+        { 1.0f, -1.0f },
+        { 1.0f, 1.0f },
+        { -1.0f, 1.0f }
+    };
+
+    buffer_desc.type = buffer_type::vertex;
+    buffer_desc.data = quad_vertices;
+    buffer_desc.stride = sizeof(vec2f);
+    buffer_desc.size = sizeof(quad_vertices);
+    buffer_desc.is_mutable = false;
+    auto quad_vertex_buffer = graphics_device.make_buffer(buffer_desc);
+    
+    mesh_desc.topology = topology::triangles;
+    mesh_desc.vertex_desc = { { vertex_attribute::position, vertex_format::vec2f() } };
+    mesh_desc.vertex_buffer = cube_vertex_buffer;
+    mesh_desc.index_buffer = nullptr;
+    _quad = graphics_device.make_mesh(mesh_desc);
+
+    _skybox_texture = asset_manager.load<texture_cube>("cubemaps/magic_hour.json");
 }
 
 void renderer::draw(registry& registry, graphics_device& graphics_device) {
@@ -78,4 +176,15 @@ void renderer::draw(registry& registry, graphics_device& graphics_device) {
     registry.view<transform, geometry>().each([this, &graphics_device](transform& transform, geometry& geometry) {
         graphics_device.draw(geometry.mesh, _forward);
     });
+
+    graphics_device.set_blend_state(blend_state::opaque());
+    graphics_device.set_depth_test(true);
+    graphics_device.bind_texture(_skybox_texture, 2);
+
+    matrices.view[12] = 0.0f;
+    matrices.view[13] = 0.0f;
+    matrices.view[14] = 0.0f;
+    _matrices_buffer->update<matrices_buffer_data>({ &matrices, 1 });
+
+    graphics_device.draw(_cube, _skybox);
 }

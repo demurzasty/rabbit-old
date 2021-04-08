@@ -53,21 +53,22 @@ static std::map<texture_cube_face, GLint> texture_cube_faces = {
 
 texture_cube_ogl3::texture_cube_ogl3(const texture_cube_desc& desc)
     : texture_cube(desc) {
-	glGenTextures(1, &_id);
-	glBindTexture(GL_TEXTURE_CUBE_MAP, _id);
+	glCreateTextures(GL_TEXTURE_CUBE_MAP, 1, &_id);
 
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
-	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, filters.at(desc.filter));
-	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, filters.at(desc.filter));
-	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, wraps.at(desc.wrap));
-	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, wraps.at(desc.wrap));
-	glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, wraps.at(desc.wrap));
+	glTextureParameteri(_id, GL_TEXTURE_MIN_FILTER, filters.at(desc.filter));
+	glTextureParameteri(_id, GL_TEXTURE_MAG_FILTER, filters.at(desc.filter));
+	glTextureParameteri(_id, GL_TEXTURE_WRAP_S, wraps.at(desc.wrap));
+	glTextureParameteri(_id, GL_TEXTURE_WRAP_T, wraps.at(desc.wrap));
+	glTextureParameteri(_id, GL_TEXTURE_WRAP_R, wraps.at(desc.wrap));
+
+	glTextureStorage2D(_id, 1, internal_formats.at(desc.format), desc.size.x, desc.size.y);
 
     for (const auto& [face, face_id] : texture_cube_faces) {
         const auto data = desc.data.find(face) != desc.data.end() ? desc.data.at(face) : gsl::span<const std::uint8_t>{}; 
-        glTexImage2D(face_id, 0, internal_formats.at(desc.format), desc.size.x, desc.size.y, 0, formats.at(desc.format), GL_UNSIGNED_BYTE, !data.empty() ? data.data() : nullptr);
-    }
+        glTextureSubImage3D(_id, 0, 0, 0, (int)face, desc.size.x, desc.size.y, 1, formats.at(desc.format), GL_UNSIGNED_BYTE, !data.empty() ? data.data() : nullptr);
+	  }
 
 	if (desc.is_render_target) {
         for (const auto& [face, face_id] : texture_cube_faces) {
@@ -83,8 +84,6 @@ texture_cube_ogl3::texture_cube_ogl3(const texture_cube_desc& desc)
     if (desc.generate_mipmap) {
         glGenerateMipmap(GL_TEXTURE_CUBE_MAP);
     }
-
-	glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
 }
 
 texture_cube_ogl3::~texture_cube_ogl3() {
@@ -96,9 +95,7 @@ texture_cube_ogl3::~texture_cube_ogl3() {
 }
 
 void texture_cube_ogl3::update(texture_cube_face face, const span<const std::uint8_t>& pixels, const vec4i& rect) {
-	glBindTexture(GL_TEXTURE_CUBE_MAP, _id);
-	glTexSubImage2D(texture_cube_faces.at(face), 0, rect.x, rect.y, rect.z, rect.w, formats.at(format()), GL_UNSIGNED_BYTE, pixels.data());
-	glBindTexture(GL_TEXTURE_CUBE_MAP, 0);
+	glTextureSubImage3D(_id, 0, rect.x, rect.y, (int)face, rect.z, rect.w, 1, formats.at(format()), GL_UNSIGNED_BYTE, pixels.data());
 }
 
 GLuint texture_cube_ogl3::id() const {
