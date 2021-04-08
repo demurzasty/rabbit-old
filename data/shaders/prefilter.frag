@@ -9,7 +9,7 @@ layout (std140, binding = 2) uniform PrefilterData {
     float roughness;
 };
 
-layout (binding = 0) uniform samplerCube radianceMap;
+layout (binding = 1) uniform samplerCube radianceMap;
 
 layout (location = 0) out vec4 out_color;
 
@@ -41,12 +41,12 @@ vec2 hammersley(uint i, uint N) {
 }
 #endif
 
-float vanDerCorpus(int n, int base) {
+float vanDerCorpus(uint n, int base) {
     float invBase = 1.0 / float(base);
     float denom   = 1.0;
     float result  = 0.0;
 
-    for(int i = 0; i < 32; ++i) {
+    for(uint i = 0u; i < 32u; ++i) {
         if (n > 0) {
             denom   = mod(float(n), 2.0);
             result += denom * invBase;
@@ -58,7 +58,7 @@ float vanDerCorpus(int n, int base) {
     return result;
 }
 
-vec2 hammersley(int i, int n) {
+vec2 hammersley(uint i, uint n) {
     return vec2(float(i) / float(n), vanDerCorpus(i, 2));
 }
 
@@ -101,14 +101,14 @@ void main() {
     vec3 R = N;
     vec3 V = R;
 
-    const int SAMPLE_COUNT = 1024;
+    const uint SAMPLE_COUNT = 1024;
     vec3 prefilteredColor = vec3(0.0);
     float totalWeight = 0.0;
     
     float resolution = 1024.0; // resolution of source cubemap (per face)
     float saTexel  = 4.0 * PI / (6.0 * resolution * resolution);
 			
-    for (int i = 0; i < SAMPLE_COUNT; ++i)
+    for (uint i = 0u; i < SAMPLE_COUNT; ++i)
     {
         // generates a sample vector that's biased towards the preferred alignment direction (importance sampling).
         vec2 Xi = hammersley(i, SAMPLE_COUNT);

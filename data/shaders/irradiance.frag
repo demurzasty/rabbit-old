@@ -11,7 +11,7 @@ layout (std140, binding = 1) uniform IrradianceData {
     int cube_face;
 };
 
-layout (binding = 0) uniform samplerCube radianceMap;
+layout (binding = 1) uniform samplerCube radianceMap;
 
 layout (location = 0) out vec4 out_color;
 

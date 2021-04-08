@@ -41,6 +41,8 @@ namespace rb {
 
         void set_render_target(const std::shared_ptr<texture>& render_target) override;
 
+        void set_render_target(const std::shared_ptr<texture_cube>& render_target, texture_cube_face face, int level) override;
+
         void bind_buffer_base(const std::shared_ptr<buffer>& buffer, std::size_t binding_index) override;
 
         void bind_texture(const std::shared_ptr<texture>& texture, std::size_t binding_index) override;

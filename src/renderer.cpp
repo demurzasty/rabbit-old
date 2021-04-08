@@ -9,6 +9,21 @@
 
 using namespace rb;
 
+namespace {
+    texture_cube_face texture_cube_faces[] = {
+        texture_cube_face::positive_x,
+        texture_cube_face::negative_x,
+        texture_cube_face::positive_y,
+        texture_cube_face::negative_y,
+        texture_cube_face::positive_z,
+        texture_cube_face::negative_z
+    };
+}
+
+constexpr auto irradiance_map_size = 64;
+constexpr auto prefilter_map_size = 128;
+constexpr auto lut_map_size = 512;
+
 struct matrices_buffer_data {
     mat4f world;
     mat4f view;
@@ -158,7 +173,64 @@ renderer::renderer(graphics_device& graphics_device, asset_manager& asset_manage
     mesh_desc.index_buffer = nullptr;
     _quad = graphics_device.make_mesh(mesh_desc);
 
+    texture_cube_desc texture_cube_desc;
+    texture_cube_desc.size = { irradiance_map_size, irradiance_map_size };
+    texture_cube_desc.filter = texture_filter::linear;
+    texture_cube_desc.format = texture_format::rgba8;
+    texture_cube_desc.is_render_target = true;
+    _irradiance_map = graphics_device.make_texture(texture_cube_desc);
+
+    buffer_desc.type = buffer_type::uniform;
+    buffer_desc.data = nullptr;
+    buffer_desc.stride = sizeof(irradiance_data);
+    buffer_desc.size = sizeof(irradiance_data);
+    buffer_desc.is_mutable = true;
+    _irradiance_buffer = graphics_device.make_buffer(buffer_desc);
+
+    texture_cube_desc.size = { prefilter_map_size, prefilter_map_size };
+    texture_cube_desc.filter = texture_filter::linear;
+    texture_cube_desc.format = texture_format::rgba8;
+    texture_cube_desc.is_render_target = true;
+    texture_cube_desc.mipmaps = true;
+    texture_cube_desc.generate_mipmap = true;
+    _prefilter_map = graphics_device.make_texture(texture_cube_desc);
+
+    buffer_desc.type = buffer_type::uniform;
+    buffer_desc.data = nullptr;
+    buffer_desc.stride = sizeof(prefilter_data);
+    buffer_desc.size = sizeof(prefilter_data);
+    buffer_desc.is_mutable = true;
+    _prefilter_buffer = graphics_device.make_buffer(buffer_desc);
+
+    texture_desc texture_desc;
+    texture_desc.size = { lut_map_size, lut_map_size };
+    texture_desc.filter = texture_filter::linear;
+    texture_desc.format = texture_format::rg8;
+    texture_desc.is_render_target = true;
+    _lut_map = graphics_device.make_texture(texture_desc);
+
+    buffer_desc.type = buffer_type::uniform;
+    buffer_desc.data = nullptr;
+    buffer_desc.stride = sizeof(forward_data);
+    buffer_desc.size = sizeof(forward_data);
+    buffer_desc.is_mutable = true;
+    _forward_buffer = graphics_device.make_buffer(buffer_desc);
+
+    const auto backbuffer_size = graphics_device.backbuffer_size();
+
+    graphics_device.set_backbuffer_size({ lut_map_size, lut_map_size });
+    graphics_device.set_render_target(_lut_map);
+
+    graphics_device.draw(_quad, _brdf);
+
+    graphics_device.set_render_target(nullptr);
+
     _skybox_texture = asset_manager.load<texture_cube>("cubemaps/magic_hour.json");
+
+    _generate_irradiance_map();
+    _generate_prefilter_map();
+
+    graphics_device.set_backbuffer_size(backbuffer_size);
 }
 
 void renderer::draw(registry& registry, graphics_device& graphics_device) {
@@ -172,8 +244,22 @@ void renderer::draw(registry& registry, graphics_device& graphics_device) {
     _matrices_buffer->update<matrices_buffer_data>({ &matrices, 1 });
 
     graphics_device.bind_buffer_base(_matrices_buffer, 0);
+    graphics_device.bind_buffer_base(_forward_buffer, 3);
+    graphics_device.bind_texture(_irradiance_map, 2);
+    graphics_device.bind_texture(_prefilter_map, 3);
+    graphics_device.bind_texture(_lut_map, 4);
 
     registry.view<transform, geometry>().each([this, &graphics_device](transform& transform, geometry& geometry) {
+        forward_data data;
+        data.diffuse = { 1.0f, 1.0f, 1.0f };
+        data.metallic = 0.0f;
+        data.roughness = 0.8f;
+        data.light_dir = vec3f::normalize({ -1.0f, -1.0f, -1.0f });
+        data.light_color = { 1.0f, 1.0f, 1.0f };
+        data.light_intensity = 1.0f;
+        data.camera_position = { 0.0f, 0.0f, 10.0f };
+        _forward_buffer->update<forward_data>({ &data, 1 });
+        
         graphics_device.draw(geometry.mesh, _forward);
     });
 
@@ -187,4 +273,49 @@ void renderer::draw(registry& registry, graphics_device& graphics_device) {
     _matrices_buffer->update<matrices_buffer_data>({ &matrices, 1 });
 
     graphics_device.draw(_cube, _skybox);
+}
+
+void renderer::_generate_irradiance_map() {
+    _graphics_device.bind_texture(_skybox_texture, 1);
+    _graphics_device.bind_buffer_base(_irradiance_buffer, 1);
+    _graphics_device.set_backbuffer_size({ irradiance_map_size, irradiance_map_size });
+
+    irradiance_data data;
+    for (auto face : texture_cube_faces) {
+        data.cube_face = static_cast<int>(face);
+        _irradiance_buffer->update<irradiance_data>({ &data, 1 });
+
+        _graphics_device.set_render_target(_irradiance_map, face);
+
+        _graphics_device.clear(rb::color::black());
+
+        _graphics_device.draw(_quad, _irradiance);
+    }
+}
+
+void renderer::_generate_prefilter_map() {
+    _graphics_device.bind_texture(_skybox_texture, 1);
+    _graphics_device.bind_buffer_base(_prefilter_buffer, 2);
+
+    auto size = prefilter_map_size;
+    auto mipmap = 0;
+
+    prefilter_data data;
+    while (mipmap < 4) {
+        _graphics_device.set_backbuffer_size({ size, size });
+
+        for (auto face : texture_cube_faces) {
+            data.cube_face = static_cast<int>(face);
+            data.roughness = mipmap / 4.0f;
+
+            _graphics_device.set_render_target(_prefilter_map, face, mipmap);
+
+            _graphics_device.clear(rb::color::black());
+
+            _graphics_device.draw(_quad, _prefilter);
+        }
+
+        size /= 2;
+        mipmap++;
+    }
 }

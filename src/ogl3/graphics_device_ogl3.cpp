@@ -167,6 +167,16 @@ void graphics_device_ogl3::set_render_target(const std::shared_ptr<texture>& tex
 	}
 }
 
+void graphics_device_ogl3::set_render_target(const std::shared_ptr<texture_cube>& render_target, texture_cube_face face, int level) {
+	if (render_target) {
+		glBindFramebuffer(GL_FRAMEBUFFER, std::static_pointer_cast<texture_cube_ogl3>(render_target)->framebuffer_id(face));
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + (int)face,
+			std::static_pointer_cast<texture_cube_ogl3>(render_target)->id(), level);
+	} else {
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	}
+} 
+
 void graphics_device_ogl3::bind_buffer_base(const std::shared_ptr<buffer>& buffer, std::size_t binding_index) {
 	if (buffer->type() != buffer_type::uniform) {
 		throw make_exception("Buffer need to be uniform buffer to bind base index");

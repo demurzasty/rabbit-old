@@ -121,6 +121,14 @@ namespace rb {
         virtual void set_render_target(const std::shared_ptr<texture>& render_target) = 0;
 
         /**
+         * @brief Sets a new offscreen render target.
+         *        If no render target is provided, screen render target will be used.
+         *
+         * @param render_target New render target for the device.
+         */
+        virtual void set_render_target(const std::shared_ptr<texture_cube>& render_target, texture_cube_face face, int level = 0) = 0;
+
+        /**
          * @brief Bind a buffer object to an indexed buffer target.
          */
         virtual void bind_buffer_base(const std::shared_ptr<buffer>& buffer, std::size_t binding_index) = 0;

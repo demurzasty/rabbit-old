@@ -20,6 +20,7 @@ namespace rb {
         texture_wrap wrap = texture_wrap::clamp;
         bool is_render_target = false;
         bool is_mutable = false;
+        bool mipmaps = false;
         bool generate_mipmap = false;
     };
 
