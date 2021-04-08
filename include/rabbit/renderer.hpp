@@ -18,14 +18,27 @@ namespace rb {
         void draw(registry& registry, graphics_device& graphics_device);
 
     private:
-        struct forward_data {
+        struct matrices_buffer_data {
+            mat4f world;
+            mat4f view;
+            mat4f projection;
+        };
+
+        struct object_data {
             vec3f diffuse;
             float roughness;
-            float metallic; float _p1[3];
-            vec3f light_dir;
-            float light_intensity;
-            vec3f light_color; float _p2;
-            vec3f camera_position;
+            float metallic;
+            int bitfield;
+        };
+
+        struct light_data {
+            vec3f direction;
+            float intensity;
+            vec3f color;
+        };
+
+        struct camera_data {
+            vec3f position;
         };
 
         struct irradiance_data {
@@ -58,6 +71,8 @@ namespace rb {
         std::shared_ptr<texture> _lut_map;
         std::shared_ptr<buffer> _irradiance_buffer;
         std::shared_ptr<buffer> _prefilter_buffer;
-        std::shared_ptr<buffer> _forward_buffer;
+        std::shared_ptr<buffer> _object_buffer;
+        std::shared_ptr<buffer> _light_buffer;
+        std::shared_ptr<buffer> _camera_buffer;
     };
 }

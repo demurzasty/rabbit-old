@@ -5,8 +5,9 @@
 
 class test_system : public rb::system {
 public:
-    test_system(rb::asset_manager& asset_manager)
-        : _asset_manager(asset_manager) {
+    test_system(rb::asset_manager& asset_manager, rb::gamepad& gamepad)
+        : _asset_manager(asset_manager)
+        , _gamepad(gamepad) {
     }
 
     void initialize(rb::registry& registry) override {
@@ -32,10 +33,50 @@ public:
         sphere = registry.create();
         registry.emplace<rb::geometry>(sphere, mesh, sphere_material);
         registry.emplace<rb::transform>(sphere);
+
+        auto camera = registry.create();
+        registry.emplace<rb::camera>(camera);
+        registry.emplace<rb::transform>(camera).position = { 0.0f, 0.0f, 10.0f };
+    }
+
+    void variable_update(rb::registry& registry, float elapsed_time) override {
+        registry.view<rb::camera, rb::transform>().each([this, elapsed_time](rb::camera& camera, rb::transform& transform) {
+            const auto horizontal = _gamepad.axis(rb::gamepad_player::first, rb::gamepad_axis::right_x);
+            const auto horizontal_left = _gamepad.axis(rb::gamepad_player::first, rb::gamepad_axis::left_x);
+            const auto vertical = _gamepad.axis(rb::gamepad_player::first, rb::gamepad_axis::left_y);
+            const auto vertical_right = _gamepad.axis(rb::gamepad_player::first, rb::gamepad_axis::right_y);
+            const auto up = _gamepad.axis(rb::gamepad_player::first, rb::gamepad_axis::right_trigger);
+            const auto down = _gamepad.axis(rb::gamepad_player::first, rb::gamepad_axis::left_trigger);
+
+            if (rb::abs(horizontal) > 0.1) {
+                transform.rotation.y -= horizontal * elapsed_time * 2.0f;
+            }
+
+            if (rb::abs(horizontal_left) > 0.1) {
+                transform.position.x += std::sin(transform.rotation.y + rb::pi<float>() * 0.5) * horizontal_left * elapsed_time * 2.0f;
+                transform.position.z += std::cos(transform.rotation.y + rb::pi<float>() * 0.5) * horizontal_left * elapsed_time * 2.0f;
+            }
+
+            if (rb::abs(vertical) > 0.1) {
+                transform.position.x += std::sin(transform.rotation.y) * vertical * elapsed_time * 2.0f;
+                transform.position.z += std::cos(transform.rotation.y) * vertical * elapsed_time * 2.0f;
+            }
+
+            if (rb::abs(vertical_right) > 0.2) {
+                transform.rotation.x -= vertical_right * elapsed_time * 2.0f;
+            }
+
+            if (rb::abs(up) > 0.1) {
+                transform.position.y += up * elapsed_time * 2.0f;
+            } else if (rb::abs(down) > 0.1) {
+                transform.position.y -= down * elapsed_time * 2.0f;
+            }
+        });
     }
 
 private:
     rb::asset_manager& _asset_manager;
+    rb::gamepad& _gamepad;
 };
 
 int main(int argc, char* argv[]) {

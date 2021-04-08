@@ -105,9 +105,9 @@ namespace rb {
         }
 
         static mat4<T> rotation(const vec3<T>& pitch_yaw_roll) {
-            return rotation_x(pitch_yaw_roll.x) *
-                rotation_z(pitch_yaw_roll.z) *
-                rotation_y(pitch_yaw_roll.y);
+            return rotation_y(pitch_yaw_roll.y) *
+                rotation_x(pitch_yaw_roll.x) *
+                rotation_z(pitch_yaw_roll.z);
         }
 
         static constexpr mat4<T> orthographic(T left, T right, T bottom, T top, T min, T max) {

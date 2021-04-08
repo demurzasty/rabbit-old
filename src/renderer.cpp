@@ -24,12 +24,6 @@ constexpr auto irradiance_map_size = 64;
 constexpr auto prefilter_map_size = 128;
 constexpr auto lut_map_size = 512;
 
-struct matrices_buffer_data {
-    mat4f world;
-    mat4f view;
-    mat4f projection;
-};
-
 renderer::renderer(graphics_device& graphics_device, asset_manager& asset_manager)
     : _graphics_device(graphics_device) {
     try {
@@ -211,10 +205,24 @@ renderer::renderer(graphics_device& graphics_device, asset_manager& asset_manage
 
     buffer_desc.type = buffer_type::uniform;
     buffer_desc.data = nullptr;
-    buffer_desc.stride = sizeof(forward_data);
-    buffer_desc.size = sizeof(forward_data);
+    buffer_desc.stride = sizeof(object_data);
+    buffer_desc.size = sizeof(object_data);
     buffer_desc.is_mutable = true;
-    _forward_buffer = graphics_device.make_buffer(buffer_desc);
+    _object_buffer = graphics_device.make_buffer(buffer_desc);
+
+    buffer_desc.type = buffer_type::uniform;
+    buffer_desc.data = nullptr;
+    buffer_desc.stride = sizeof(light_data);
+    buffer_desc.size = sizeof(light_data);
+    buffer_desc.is_mutable = true;
+    _light_buffer = graphics_device.make_buffer(buffer_desc);
+
+    buffer_desc.type = buffer_type::uniform;
+    buffer_desc.data = nullptr;
+    buffer_desc.stride = sizeof(camera_data);
+    buffer_desc.size = sizeof(camera_data);
+    buffer_desc.is_mutable = true;
+    _camera_buffer = graphics_device.make_buffer(buffer_desc);
 
     const auto backbuffer_size = graphics_device.backbuffer_size();
 
@@ -239,28 +247,53 @@ void renderer::draw(registry& registry, graphics_device& graphics_device) {
 
     matrices_buffer_data matrices;
     matrices.projection = mat4f::perspective(45.0f, 1280.0f / 720.0, 0.1f, 100.0f);
-    matrices.view = mat4f::inverse(mat4f::rotation_x(-pi<float>() * 0.125f) * mat4f::translation({ 0.0f, 0.0f, 10.0f }));
+    matrices.view = mat4f::inverse(mat4f::rotation_x(-pi<float>() * 0.125f) * mat4f::translation({ 0.0f, 1.0f, 5.0f }));
     matrices.world = mat4f::identity();
-    _matrices_buffer->update<matrices_buffer_data>({ &matrices, 1 });
 
     graphics_device.bind_buffer_base(_matrices_buffer, 0);
-    graphics_device.bind_buffer_base(_forward_buffer, 3);
+    graphics_device.bind_buffer_base(_object_buffer, 3);
+    graphics_device.bind_buffer_base(_light_buffer, 4);
+    graphics_device.bind_buffer_base(_camera_buffer, 5);
     graphics_device.bind_texture(_irradiance_map, 2);
     graphics_device.bind_texture(_prefilter_map, 3);
     graphics_device.bind_texture(_lut_map, 4);
 
-    registry.view<transform, geometry>().each([this, &graphics_device](transform& transform, geometry& geometry) {
-        forward_data data;
-        data.diffuse = geometry.material->diffuse;
-        data.metallic = geometry.material->metallic;
-        data.roughness =  geometry.material->roughness;
-        data.light_dir = vec3f::normalize({ -1.0f, -1.0f, -1.0f });
-        data.light_color = { 1.0f, 1.0f, 1.0f };
-        data.light_intensity = 1.0f;
-        data.camera_position = { 0.0f, 0.0f, 10.0f };
-        _forward_buffer->update<forward_data>({ &data, 1 });
+    light_data light_data;
+    light_data.direction = vec3f::normalize({ -1.0f, -1.0f, -1.0f });
+    light_data.color = { 1.0f, 1.0f, 1.0f };
+    light_data.intensity = 1.0f;
+    _light_buffer->update<renderer::light_data>({ &light_data, 1 });
 
-        graphics_device.bind_texture(geometry.material->diffuse_map, 5);
+    camera_data camera_data;
+
+    registry.view<transform, camera>().each([&camera_data, &matrices](transform& transform, camera& camera) {
+        camera_data.position = transform.position;
+        
+        matrices.projection = mat4f::perspective(camera.fov, 1280.0f / 720.0, 0.1f, 100.0f);
+        matrices.view = mat4f::inverse(mat4f::translation(transform.position) * mat4f::rotation(transform.rotation));
+    });
+
+    _camera_buffer->update<renderer::camera_data>({ &camera_data, 1 });
+    _matrices_buffer->update<matrices_buffer_data>({ &matrices, 1 });
+
+    registry.view<transform, geometry>().each([this, &graphics_device](transform& transform, geometry& geometry) {
+        object_data data;
+        data.bitfield = 0;
+        if (geometry.material) {
+            data.diffuse = geometry.material->diffuse;
+            data.metallic = geometry.material->metallic;
+            data.roughness =  geometry.material->roughness;
+
+            if (geometry.material->diffuse_map) {
+                graphics_device.bind_texture(geometry.material->diffuse_map, 5);
+                data.bitfield |= 1;
+            }
+        } else {
+            data.diffuse = { 1.0f, 1.0f, 1.0f };
+            data.metallic = 0.0f;
+            data.roughness =  0.8f;
+        }
+        _object_buffer->update<object_data>({ &data, 1 });
 
         graphics_device.draw(geometry.mesh, _forward);
     });

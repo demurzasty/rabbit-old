@@ -4,6 +4,8 @@
 #extension GL_ARB_shading_language_420pack : enable
 #define PI 3.14159265359
 
+#define DIFFUSE_MAP_BIT 1
+
 layout (location = 0) in vec3 var_position;
 layout (location = 1) in vec2 var_texcoord;
 layout (location = 2) in vec3 var_normal;
@@ -14,13 +16,20 @@ layout (std140, binding = 0) uniform Matrices {
     mat4 proj;
 };
 
-layout (std140, binding = 3) uniform ForwardData {
+layout (std140, binding = 3) uniform ObjectData {
 	vec3 u_diffuse; 
 	float u_roughness;
 	float u_metallic;
+	int u_bitfield;
+};
+
+layout (std140, binding = 4) uniform LightData {
 	vec3 u_light_dir;
 	float u_light_intensity;
 	vec3 u_light_color;
+};
+
+layout (std140, binding = 5) uniform CameraData {
 	vec3 u_camera_position;
 };
 
@@ -34,13 +43,13 @@ layout (binding = 5) uniform sampler2D u_diffuse_map;
 layout (location = 0) out vec4 out_color;
 
 float distribution_ggx(vec3 N, vec3 H, float roughness) {
-    float a = roughness*roughness;
-    float a2 = a*a;
-    float NdotH = max(dot(N, H), 0.0);
-    float NdotH2 = NdotH*NdotH;
+    float a = roughness * roughness;
+    float a2 = a * a;
+    float n_dot_h = max(dot(N, H), 0.0);
+    float n_dot_h2 = n_dot_h * n_dot_h;
 
     float nom   = a2;
-    float denom = (NdotH2 * (a2 - 1.0) + 1.0);
+    float denom = (n_dot_h2 * (a2 - 1.0) + 1.0);
     denom = PI * denom * denom;
 
     return nom / denom;
@@ -75,7 +84,11 @@ vec3 fresnel_schlick_roughness(float cosTheta, vec3 F0, float roughness) {
 }   
 
 void main() {
-	vec3 albedo = u_diffuse * texture(u_diffuse_map, var_texcoord).rgb;
+	vec3 albedo = u_diffuse;
+	if ((u_bitfield & DIFFUSE_MAP_BIT) != 0) {
+		albedo *= texture(u_diffuse_map, var_texcoord).rgb;
+	}
+
 	float roughness = u_roughness;
 	float metallic = u_metallic;
 
