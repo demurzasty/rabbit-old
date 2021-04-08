@@ -121,9 +121,9 @@ namespace rb {
          * @brief Draws a textured sequence of non-indexed geometric primitives of the specified type.
          *
          * @param topology Describes the type of primitive to draw.
-         * @param vertex_buffer Input data to draw from.
+         * @param mesh Input data to draw from.
          * @param shader Shader to be used.
          */
-        virtual void draw(topology topology, const std::shared_ptr<buffer>& vertex_buffer, const std::shared_ptr<shader>& shader) = 0;
+        virtual void draw(const std::shared_ptr<mesh>& mesh, const std::shared_ptr<shader>& shader) = 0;
     };
 }

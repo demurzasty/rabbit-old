@@ -3,9 +3,14 @@
 using namespace rb;
 
 mesh::mesh(const mesh_desc& desc)
-    : _vertex_desc(desc.vertex_desc)
+    : _topology(desc.topology)
+    , _vertex_desc(desc.vertex_desc)
     , _vertex_buffer(desc.vertex_buffer)
     , _index_buffer(desc.index_buffer) {
+}
+
+topology mesh::topology() const {
+    return _topology;
 }
 
 const vertex_desc& mesh::vertex_desc() {

@@ -42,6 +42,6 @@ void renderer::draw(registry& registry, graphics_device& graphics_device) {
     graphics_device.bind_buffer_base(_matrices_buffer, 0);
 
     registry.view<transform, geometry>().each([this, &graphics_device](transform& transform, geometry& geometry) {
-        graphics_device.draw(topology::triangles, geometry.mesh->vertex_buffer(), _forward);
+        graphics_device.draw(geometry.mesh, _forward);
     });
 }

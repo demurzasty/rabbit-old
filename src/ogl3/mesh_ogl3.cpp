@@ -38,6 +38,9 @@ mesh_ogl3::mesh_ogl3(const mesh_desc& desc)
             element.format.normalize ? GL_TRUE : GL_FALSE,
             offset);
         glVertexArrayAttribBinding(_id, index, 0);
+
+        index++;
+        offset += element.format.size;
     }
 }
 

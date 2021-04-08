@@ -95,6 +95,7 @@ std::shared_ptr<void> mesh_loader::load(const std::string& filename, const json&
     // auto vertex_buffer = _graphics_device.make_buffer(buffer_desc);
 
     mesh_desc desc;
+    desc.topology = topology::triangles;
     desc.vertex_desc = vertex_desc;
     desc.vertex_buffer = vertex_buffer;
     desc.index_buffer = nullptr; 

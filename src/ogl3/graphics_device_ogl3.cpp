@@ -163,29 +163,10 @@ void graphics_device_ogl3::bind_buffer_base(const std::shared_ptr<buffer>& buffe
 	glBindBufferBase(GL_UNIFORM_BUFFER, binding_index, std::static_pointer_cast<buffer_ogl3>(buffer)->id());
 }
 
-void graphics_device_ogl3::draw(topology topology, const std::shared_ptr<buffer>& vertex_buffer, const std::shared_ptr<shader>& shader) {
-	glBindBuffer(GL_ARRAY_BUFFER, std::static_pointer_cast<buffer_ogl3>(vertex_buffer)->id());
+void graphics_device_ogl3::draw( const std::shared_ptr<mesh>& mesh, const std::shared_ptr<shader>& shader) {
+	auto native_mesh = std::static_pointer_cast<mesh_ogl3>(mesh);
 
-	// todo: move to new input_layout class
-	std::size_t stride = 0;
-
-	// Iterate through vertex elements to calculate stride
-	for (const auto& element : shader->vertex_desc()) {
-		stride += element.format.size;
-	}
-
-	std::size_t offset = 0;
-	std::size_t index = 0;
-
-	// Iterate again to declare layout
-	for (const auto& element : shader->vertex_desc()) {
-		glEnableVertexAttribArray(index);
-		glVertexAttribPointer(index, element.format.components, element.format.type == vertex_format_type::floating_point ? GL_FLOAT : GL_INT, element.format.normalize ? GL_TRUE : GL_FALSE, stride, (void*)offset);
-		offset += element.format.size;
-		index++;
-	}
-
+	glBindVertexArray(native_mesh->id());
 	glUseProgram(std::static_pointer_cast<shader_ogl3>(shader)->id());
-
-	glDrawArrays(topologies.at(topology), 0, static_cast<GLsizei>(vertex_buffer->count()));
+	glDrawArrays(topologies.at(mesh->topology()), 0, static_cast<GLsizei>(mesh->vertex_buffer()->count()));
 }
