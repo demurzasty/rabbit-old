@@ -29,12 +29,6 @@ namespace rb {
 
         void set_depth_test(bool depth_test) override;
 
-        void set_view_matrix(const mat4f& view) override;
-
-        void set_projection_matrix(const mat4f& projection) override;
-
-        void set_world_matrix(const mat4f& world) override;
-
         void set_backbuffer_size(const vec2i& size) override;
 
         vec2i backbuffer_size() const override;
@@ -48,23 +42,8 @@ namespace rb {
         void draw(topology topology, const std::shared_ptr<buffer>& vertex_buffer, const std::shared_ptr<shader>& shader) override;
 
     private:
-        GLuint compile_program(const char* vertex_shader_code, const char* fragment_shader_code) const;
-
-        void update_vertex_buffer(const span<const vertex>& vertices);
-
-        void update_index_buffer(const span<const std::uint32_t>& indices);
-
-    private:
         window& _window;
 
-        mat4f _view = mat4f::identity();
-        mat4f _projection = mat4f::identity();
-        mat4f _world = mat4f::identity();
-
         GLuint _vao = 0;
-        GLuint _vbo = 0;
-        GLuint _ibo = 0;
-        GLuint _solid_program = 0;
-        GLuint _texture_program = 0;
     };
 }

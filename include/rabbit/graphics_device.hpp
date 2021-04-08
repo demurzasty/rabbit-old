@@ -77,27 +77,6 @@ namespace rb {
         virtual void set_depth_test(bool depth_test) = 0;
 
         /**
-         * @brief Sets a new projection matrix for a graphics device.
-         * 
-         * @param projection A new projection matrix for the device.
-         */
-        virtual void set_projection_matrix(const mat4f& projection) = 0;
-
-        /**
-         * @brief Sets a new view matrix for a graphics device.
-         *
-         * @param projection A new view matrix for the device.
-         */
-        virtual void set_view_matrix(const mat4f& view) = 0;
-
-        /**
-         * @brief Sets a new world matrix for a graphics device.
-         *
-         * @param projection A new world matrix for the device.
-         */
-        virtual void set_world_matrix(const mat4f& world) = 0;
-
-        /**
          * @brief Sets a new backbuffer size for a graphics device.
          * 
          * @param size A new backbuffer size for the device.

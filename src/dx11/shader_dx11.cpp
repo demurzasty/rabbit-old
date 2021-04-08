@@ -8,7 +8,8 @@
 using namespace rb;
 
 shader_dx11::shader_dx11(ID3D11Device* device, ID3D11DeviceContext* context, const shader_desc& desc)
-	: _device(device)
+	: shader(desc)
+	, _device(device)
 	, _context(context) {
 	auto result = _device->CreateVertexShader(desc.vertex_bytecode.data(), desc.vertex_bytecode.size_bytes(), nullptr, &_vertex_shader);
 	if (FAILED(result)) {

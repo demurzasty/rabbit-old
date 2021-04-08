@@ -1,5 +1,4 @@
 #include "graphics_device_ogl3.hpp"
-#include "standard_shaders_ogl3.hpp"
 #include "texture_ogl3.hpp"
 #include "buffer_ogl3.hpp"
 #include "shader_ogl3.hpp"
@@ -51,28 +50,7 @@ graphics_device_ogl3::graphics_device_ogl3(const config& config, window& window)
 #endif
 
 	glGenVertexArrays(1, &_vao);
-	glGenBuffers(1, &_vbo);
-	glGenBuffers(1, &_ibo);
-
 	glBindVertexArray(_vao);
-
-	glBindBuffer(GL_ARRAY_BUFFER, _vbo);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertex) * 4, NULL, GL_DYNAMIC_DRAW);
-
-	glEnableVertexAttribArray(0);
-	glBindBuffer(GL_ARRAY_BUFFER, _vbo);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(vertex), (void*)offsetof(vertex, position));
-
-	glEnableVertexAttribArray(1);
-	glBindBuffer(GL_ARRAY_BUFFER, _vbo);
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(vertex), (void*)offsetof(vertex, texcoord));
-
-	glEnableVertexAttribArray(2);
-	glBindBuffer(GL_ARRAY_BUFFER, _vbo);
-	glVertexAttribPointer(2, 4, GL_UNSIGNED_BYTE, GL_TRUE, sizeof(vertex), (void*)offsetof(vertex, color));
-
-	_solid_program = compile_program(standard_shaders_ogl3::vertex_shader(), standard_shaders_ogl3::solid_pixel_shader());
-	_texture_program = compile_program(standard_shaders_ogl3::vertex_shader(), standard_shaders_ogl3::texture_pixel_shader());
 
 	glDisable(GL_DEPTH_TEST);
 	glDisable(GL_CULL_FACE);
@@ -143,18 +121,6 @@ void graphics_device_ogl3::set_depth_test(bool depth_test) {
 	}
 }
 
-void graphics_device_ogl3::set_view_matrix(const mat4f& view) {
-	_view = view;
-}
-
-void graphics_device_ogl3::set_projection_matrix(const mat4f& projection) {
-	_projection = projection;
-}
-
-void graphics_device_ogl3::set_world_matrix(const mat4f& world) {
-	_world = world;
-}
-
 void graphics_device_ogl3::set_backbuffer_size(const vec2i& size) {
 	glViewport(0, 0, size.x, size.y);
 	set_clip_rect({ 0, 0, size.x, size.y });
@@ -186,7 +152,7 @@ void graphics_device_ogl3::set_render_target(const std::shared_ptr<texture>& tex
 
 void graphics_device_ogl3::bind_buffer_base(const std::shared_ptr<buffer>& buffer, std::size_t binding_index) {
 	if (buffer->type() != buffer_type::uniform) {
-		throw make_exception("Buffer need to be uniform buffer to bind base");
+		throw make_exception("Buffer need to be uniform buffer to bind base index");
 	}
 
 	glBindBufferBase(GL_UNIFORM_BUFFER, binding_index, std::static_pointer_cast<buffer_ogl3>(buffer)->id());
@@ -195,118 +161,26 @@ void graphics_device_ogl3::bind_buffer_base(const std::shared_ptr<buffer>& buffe
 void graphics_device_ogl3::draw(topology topology, const std::shared_ptr<buffer>& vertex_buffer, const std::shared_ptr<shader>& shader) {
 	glBindBuffer(GL_ARRAY_BUFFER, std::static_pointer_cast<buffer_ogl3>(vertex_buffer)->id());
 
-	// todo: use vertex_desc to define these
-	struct mesh_vertex {
-		vec3f position;
-		vec2f texcoord;
-		vec3f normal;
-	};
+	// todo: move to new input_layout class
+	std::size_t stride = 0;
 
-	glEnableVertexAttribArray(0);
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(mesh_vertex), (void*)offsetof(mesh_vertex, position));
+	// Iterate through vertex elements to calculate stride
+	for (const auto& element : shader->vertex_desc()) {
+		stride += vertex_format_size(element.format);
+	}
 
-	glEnableVertexAttribArray(1);
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, sizeof(mesh_vertex), (void*)offsetof(mesh_vertex, texcoord));
+	std::size_t offset = 0;
+	std::size_t index = 0;
 
-	glEnableVertexAttribArray(2);
-	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(mesh_vertex), (void*)offsetof(mesh_vertex, normal));
+	// Iterate again to declare layout
+	for (const auto& element : shader->vertex_desc()) {
+		glEnableVertexAttribArray(index);
+		glVertexAttribPointer(index, vertex_format_size(element.format) / sizeof(float), GL_FLOAT, GL_FALSE, stride, (void*)offset);
+		offset += vertex_format_size(element.format);
+		index++;
+	}
 
 	glUseProgram(std::static_pointer_cast<shader_ogl3>(shader)->id());
 
 	glDrawArrays(topologies.at(topology), 0, static_cast<GLsizei>(vertex_buffer->count()));
-}
-
-GLuint graphics_device_ogl3::compile_program(const char* vertex_shader_code, const char* fragment_shader_code) const {
-	const auto vertex_shader = glCreateShader(GL_VERTEX_SHADER);
-	const auto fragment_shader = glCreateShader(GL_FRAGMENT_SHADER);
-
-	const char* vertex_shader_codes[] = { vertex_shader_code };
-	const char* fragment_shader_codes[] = { fragment_shader_code };
-
-	glShaderSource(vertex_shader, sizeof(vertex_shader_codes) / sizeof(*vertex_shader_codes), vertex_shader_codes, nullptr);
-	glShaderSource(fragment_shader, sizeof(fragment_shader_codes) / sizeof(*fragment_shader_codes), fragment_shader_codes, nullptr);
-
-	glCompileShader(vertex_shader);
-	glCompileShader(fragment_shader);
-
-	GLint vertex_result, fragment_result;
-	glGetShaderiv(vertex_shader, GL_COMPILE_STATUS, &vertex_result);
-	glGetShaderiv(fragment_shader, GL_COMPILE_STATUS, &fragment_result);
-
-	if (!vertex_result || !fragment_result) {
-		GLint vertex_info_length, fragment_info_length;
-		glGetShaderiv(vertex_shader, GL_INFO_LOG_LENGTH, &vertex_info_length);
-		glGetShaderiv(fragment_shader, GL_INFO_LOG_LENGTH, &fragment_info_length);
-
-		std::string vertex_message(vertex_info_length, '\000');
-		std::string fragment_message(fragment_info_length, '\000');
-
-		if (vertex_info_length > 0) {
-			glGetShaderInfoLog(vertex_shader, vertex_info_length, nullptr, &vertex_message[0]);
-		}
-
-		if (fragment_info_length > 0) {
-			glGetShaderInfoLog(fragment_shader, fragment_info_length, nullptr, &fragment_message[0]);
-		}
-
-		glDeleteShader(vertex_shader);
-		glDeleteShader(fragment_shader);
-
-		throw make_exception("Cannot compile program: {}\n{}", vertex_message, fragment_message);
-	}
-
-	const auto program = glCreateProgram();
-
-	glAttachShader(program, vertex_shader);
-	glAttachShader(program, fragment_shader);
-
-	glLinkProgram(program);
-
-	GLint program_result;
-	glGetProgramiv(program, GL_LINK_STATUS, &program_result);
-	if (!program_result) {
-		GLint program_info_length;
-		glGetProgramiv(program, GL_INFO_LOG_LENGTH, &program_info_length);
-
-		std::string program_message(program_info_length, '\000');
-		glGetProgramInfoLog(program, program_info_length, NULL, &program_message[0]);
-
-		glDetachShader(program, vertex_shader);
-		glDetachShader(program, fragment_shader);
-
-		glDeleteShader(vertex_shader);
-		glDeleteShader(fragment_shader);
-
-		glDeleteProgram(program);
-
-		throw make_exception("Cannot link program: {}", program_message);
-	}
-
-	return program;
-}
-
-void graphics_device_ogl3::update_vertex_buffer(const span<const vertex>& vertices) {
-	glBindBuffer(GL_ARRAY_BUFFER, _vbo);
-
-	GLint current_size;
-	glGetBufferParameteriv(GL_ARRAY_BUFFER, GL_BUFFER_SIZE, &current_size);
-
-	if (vertices.size_bytes() <= current_size) {
-		glBufferSubData(GL_ARRAY_BUFFER, 0, vertices.size_bytes(), vertices.data());
-	} else {
-		glBufferData(GL_ARRAY_BUFFER, vertices.size_bytes(), vertices.data(), GL_DYNAMIC_DRAW);
-	}
-}
-
-void graphics_device_ogl3::update_index_buffer(const span<const std::uint32_t>& indices) {
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, _ibo);
-
-	GLint current_size;
-	glGetBufferParameteriv(GL_ELEMENT_ARRAY_BUFFER, GL_BUFFER_SIZE, &current_size);
-
-	if (indices.size_bytes() <= current_size) {
-		glBufferSubData(GL_ELEMENT_ARRAY_BUFFER, 0, indices.size_bytes(), indices.data());
-	} else {
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, indices.size_bytes(), indices.data(), GL_DYNAMIC_DRAW);
-	}
 }

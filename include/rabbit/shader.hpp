@@ -19,7 +19,15 @@ namespace rb {
         };
     };
 
-    struct shader {
+    class shader {
+    public:
+        shader(const shader_desc& desc);
+
         virtual ~shader() = default;
+
+        const vertex_desc& vertex_desc() const;
+
+    private:
+        rb::vertex_desc _vertex_desc;
     };
 }

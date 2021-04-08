@@ -114,10 +114,12 @@ set (SRC
 	"src/mesh.cpp"
 	"src/mouse.cpp"
 	"src/renderer.cpp"
+	"src/shader.cpp"
 	"src/system.cpp"
 	"src/texture_loader.cpp"
 	"src/texture.cpp"
 	"src/uuid.cpp"
+	"src/vertex_format.cpp"
 	"src/window.cpp"
 
 	"src/dummy/gamepad_dummy.cpp"
@@ -166,7 +168,6 @@ if (RB_GRAPHICS_BACKEND_OPENGL)
 		"src/ogl3/builtin_shaders_ogl3.cpp"
 		"src/ogl3/graphics_device_ogl3.cpp"
 		"src/ogl3/shader_ogl3.cpp"
-		"src/ogl3/standard_shaders_ogl3.cpp"
 		"src/ogl3/texture_ogl3.cpp"
 	)
 endif ()

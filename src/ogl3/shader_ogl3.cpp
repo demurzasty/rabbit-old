@@ -6,7 +6,8 @@
 
 using namespace rb;
 
-shader_ogl3::shader_ogl3(const shader_desc& desc) {
+shader_ogl3::shader_ogl3(const shader_desc& desc)
+	: shader(desc) {
     // Retrieve code from bytecode
     std::string vertex_shader_code(desc.vertex_bytecode.size(), '\000');
     std::string fragment_shader_code(desc.fragment_bytecode.size(), '\000');
