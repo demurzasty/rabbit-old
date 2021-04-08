@@ -251,15 +251,17 @@ void renderer::draw(registry& registry, graphics_device& graphics_device) {
 
     registry.view<transform, geometry>().each([this, &graphics_device](transform& transform, geometry& geometry) {
         forward_data data;
-        data.diffuse = { 1.0f, 1.0f, 1.0f };
-        data.metallic = 0.0f;
-        data.roughness = 0.8f;
+        data.diffuse = geometry.material->diffuse;
+        data.metallic = geometry.material->metallic;
+        data.roughness =  geometry.material->roughness;
         data.light_dir = vec3f::normalize({ -1.0f, -1.0f, -1.0f });
         data.light_color = { 1.0f, 1.0f, 1.0f };
         data.light_intensity = 1.0f;
         data.camera_position = { 0.0f, 0.0f, 10.0f };
         _forward_buffer->update<forward_data>({ &data, 1 });
-        
+
+        graphics_device.bind_texture(geometry.material->diffuse_map, 5);
+
         graphics_device.draw(geometry.mesh, _forward);
     });
 
@@ -307,6 +309,7 @@ void renderer::_generate_prefilter_map() {
         for (auto face : texture_cube_faces) {
             data.cube_face = static_cast<int>(face);
             data.roughness = mipmap / 4.0f;
+            _prefilter_buffer->update<prefilter_data>({ &data, 1 });
 
             _graphics_device.set_render_target(_prefilter_map, face, mipmap);
 

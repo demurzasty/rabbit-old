@@ -44,6 +44,15 @@ static std::map<blend, GLenum> blend_factors = {
 	{ blend::source_color, GL_SRC_COLOR }
 };
 
+static std::map<texture_cube_face, GLint> texture_cube_faces = {
+	{ texture_cube_face::positive_x, GL_TEXTURE_CUBE_MAP_POSITIVE_X },
+	{ texture_cube_face::negative_x, GL_TEXTURE_CUBE_MAP_NEGATIVE_X },
+	{ texture_cube_face::positive_y, GL_TEXTURE_CUBE_MAP_POSITIVE_Y },
+	{ texture_cube_face::negative_y, GL_TEXTURE_CUBE_MAP_NEGATIVE_Y },
+	{ texture_cube_face::positive_z, GL_TEXTURE_CUBE_MAP_POSITIVE_Z },
+	{ texture_cube_face::negative_z, GL_TEXTURE_CUBE_MAP_NEGATIVE_Z },
+};
+
 graphics_device_ogl3::graphics_device_ogl3(const config& config, window& window)
 	: _window(window) {
 	glewInit();
@@ -170,8 +179,10 @@ void graphics_device_ogl3::set_render_target(const std::shared_ptr<texture>& tex
 void graphics_device_ogl3::set_render_target(const std::shared_ptr<texture_cube>& render_target, texture_cube_face face, int level) {
 	if (render_target) {
 		glBindFramebuffer(GL_FRAMEBUFFER, std::static_pointer_cast<texture_cube_ogl3>(render_target)->framebuffer_id(face));
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_CUBE_MAP_POSITIVE_X + (int)face,
+		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, texture_cube_faces.at(face),
 			std::static_pointer_cast<texture_cube_ogl3>(render_target)->id(), level);
+		
+		// glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, face_id, _id, 0);
 	} else {
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	}

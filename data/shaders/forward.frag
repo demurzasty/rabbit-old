@@ -75,7 +75,7 @@ vec3 fresnel_schlick_roughness(float cosTheta, vec3 F0, float roughness) {
 }   
 
 void main() {
-	vec3 albedo = u_diffuse;
+	vec3 albedo = u_diffuse * texture(u_diffuse_map, var_texcoord).rgb;
 	float roughness = u_roughness;
 	float metallic = u_metallic;
 
