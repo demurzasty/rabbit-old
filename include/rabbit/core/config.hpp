@@ -22,7 +22,7 @@ namespace rb {
 			bool borderless{ false };
 			bool resizable{ false };
 			bool hide_cursor{ false };
-			msaa msaa{ msaa::x4 };
+			msaa msaa{ msaa::x8 };
 		} window;
 
 		struct {

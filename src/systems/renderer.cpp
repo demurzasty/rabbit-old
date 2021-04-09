@@ -274,9 +274,8 @@ void renderer::draw(registry& registry, graphics_device& graphics_device) {
     });
 
     _camera_buffer->update<renderer::camera_data>({ &camera_data, 1 });
-    _matrices_buffer->update<matrices_buffer_data>({ &matrices, 1 });
 
-    registry.view<transform, geometry>().each([this, &graphics_device](transform& transform, geometry& geometry) {
+    registry.view<transform, geometry>().each([this, &graphics_device, &matrices](transform& transform, geometry& geometry) {
         object_data data;
         data.bitfield = 0;
         if (geometry.material) {
@@ -294,6 +293,9 @@ void renderer::draw(registry& registry, graphics_device& graphics_device) {
             data.roughness =  0.8f;
         }
         _object_buffer->update<object_data>({ &data, 1 });
+
+        matrices.world = mat4f::translation(transform.position);
+        _matrices_buffer->update<matrices_buffer_data>({ &matrices, 1 });
 
         graphics_device.draw(geometry.mesh, _forward);
     });

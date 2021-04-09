@@ -85,7 +85,7 @@ std::shared_ptr<void> mesh_loader::load(const std::string& filename, const json&
     buffer_desc.type = buffer_type::vertex;
     auto vertex_buffer = _graphics_device.make_buffer(buffer_desc);
 
-    // todo: generate indices
+    // todo: generate indices and optimize mesh
     // buffer_desc.data = vertices.data();
     // buffer_desc.size = vertices.size() * sizeof(mesh_vertex);
     // buffer_desc.stride = sizeof(mesh_vertex);

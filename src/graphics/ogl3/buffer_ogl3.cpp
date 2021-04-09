@@ -19,7 +19,7 @@ buffer_ogl3::buffer_ogl3(const buffer_desc& desc)
 
     constexpr GLbitfield mutable_flags = GL_MAP_WRITE_BIT | GL_MAP_READ_BIT | GL_MAP_PERSISTENT_BIT | GL_MAP_COHERENT_BIT | GL_DYNAMIC_STORAGE_BIT;
 
-    glNamedBufferStorage(_id, desc.size, desc.data, desc.is_mutable ? mutable_flags : GL_DYNAMIC_STORAGE_BIT);
+    glNamedBufferStorage(_id, desc.size, desc.data, desc.is_mutable ? mutable_flags : 0);
 }
 
 buffer_ogl3::~buffer_ogl3() {
