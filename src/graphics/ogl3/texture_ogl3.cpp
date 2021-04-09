@@ -44,26 +44,25 @@ static std::map<texture_format, bool> depth_formats = {
 
 texture_ogl3::texture_ogl3(const texture_desc& desc)
     : texture(desc) {
-	glGenTextures(1, &_id);
-	glBindTexture(GL_TEXTURE_2D, _id);
+	glCreateTextures(GL_TEXTURE_2D, 1, &_id);
 
 	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filters.at(desc.filter));
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filters.at(desc.filter));
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wraps.at(desc.wrap));
-	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wraps.at(desc.wrap));
+	glTextureParameteri(_id, GL_TEXTURE_MIN_FILTER, filters.at(desc.filter));
+	glTextureParameteri(_id, GL_TEXTURE_MAG_FILTER, filters.at(desc.filter));
+	glTextureParameteri(_id, GL_TEXTURE_WRAP_S, wraps.at(desc.wrap));
+	glTextureParameteri(_id, GL_TEXTURE_WRAP_T, wraps.at(desc.wrap));
 
-	glTexImage2D(GL_TEXTURE_2D, 0, internal_formats.at(desc.format), desc.size.x, desc.size.y, 0, formats.at(desc.format), GL_UNSIGNED_BYTE, desc.data.data());
+	glTextureStorage2D(_id, 1, internal_formats.at(desc.format), desc.size.x, desc.size.y);
 
-	if (desc.is_render_target) {
-		glGenFramebuffers(1, &_framebuffer_id);
-		glBindFramebuffer(GL_FRAMEBUFFER, _framebuffer_id);
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, _id, 0);
-		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+	if (!desc.data.empty()) {
+		glTextureSubImage2D(_id, 0, 0, 0, desc.size.x, desc.size.y, formats.at(desc.format), GL_UNSIGNED_BYTE, desc.data.data());
 	}
 
-	glBindTexture(GL_TEXTURE_2D, 0);
+	if (desc.is_render_target) {
+		glCreateFramebuffers(1, &_framebuffer_id);
+		glNamedFramebufferTexture(_framebuffer_id, GL_COLOR_ATTACHMENT0, _id, 0);
+	}
 }
 
 texture_ogl3::~texture_ogl3() {
@@ -72,9 +71,7 @@ texture_ogl3::~texture_ogl3() {
 }
 
 void texture_ogl3::update(const span<const std::uint8_t>& pixels, const vec4i& rect) {
-	glBindTexture(GL_TEXTURE_2D, _id);
-	glTexSubImage2D(GL_TEXTURE_2D, 0, rect.x, rect.y, rect.z, rect.w, formats.at(format()), GL_UNSIGNED_BYTE, pixels.data());
-	glBindTexture(GL_TEXTURE_2D, 0);
+	glTextureSubImage2D(_id, 0, rect.x, rect.y, rect.z, rect.w, formats.at(format()), GL_UNSIGNED_BYTE, pixels.data());
 }
 
 GLuint texture_ogl3::id() const {
