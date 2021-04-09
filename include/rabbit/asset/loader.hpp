@@ -10,7 +10,9 @@ namespace rb {
         virtual ~loader() = default;
 
         /**
-         * @brief
+         * @brief Abstract method for asset loading.
+         * 
+         * @return Loaded asset.
          */
         virtual std::shared_ptr<void> load(const std::string& filename, const json& metadata) = 0;
     };
