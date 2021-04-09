@@ -99,32 +99,39 @@ endforeach (GLSL_SRC)
 add_custom_target (shaders DEPENDS ${GLSL_BINARY_FILES})
 
 set (SRC 
-	"src/asset_manager.cpp"
-	"src/buffer.cpp"
-	"src/builder.cpp"
-	"src/clock.cpp"
-	"src/exception.cpp"
-	"src/game.cpp"
-	"src/gamepad.cpp"
-	"src/graphics_device.cpp"
-	"src/image.cpp"
-	"src/keyboard.cpp"
-	"src/mesh_loader.cpp"
-	"src/mesh.cpp"
-	"src/mouse.cpp"
-	"src/renderer.cpp"
-	"src/shader.cpp"
-	"src/system.cpp"
-	"src/texture_cube_loader.cpp"
-	"src/texture_cube.cpp"
-	"src/texture_loader.cpp"
-	"src/texture.cpp"
-	"src/uuid.cpp"
-	"src/window.cpp"
+	"src/asset/asset_manager.cpp"
 
-	"src/dummy/gamepad_dummy.cpp"
-	"src/dummy/keyboard_dummy.cpp"
-	"src/dummy/mouse_dummy.cpp"
+	"src/core/clock.cpp"
+	"src/core/exception.cpp"
+	"src/core/uuid.cpp"
+
+	"src/engine/builder.cpp"
+	"src/engine/game.cpp"
+
+	"src/entity/system.cpp"
+
+	"src/graphics/buffer.cpp"
+	"src/graphics/graphics_device.cpp"
+	"src/graphics/image.cpp"
+	"src/graphics/mesh.cpp"
+	"src/graphics/shader.cpp"
+	"src/graphics/texture_cube.cpp"
+	"src/graphics/texture.cpp"
+
+	"src/input/gamepad.cpp"
+	"src/input/keyboard.cpp"
+	"src/input/mouse.cpp"
+	"src/input/dummy/gamepad_dummy.cpp"
+	"src/input/dummy/keyboard_dummy.cpp"
+	"src/input/dummy/mouse_dummy.cpp"
+
+	"src/loaders/mesh_loader.cpp"
+	"src/loaders/texture_cube_loader.cpp"
+	"src/loaders/texture_loader.cpp"
+
+	"src/platform/window.cpp"
+
+	"src/systems/renderer.cpp"
 )
 
 if (RB_PLATFORM_BACKEND_WIN32) 
@@ -137,11 +144,11 @@ endif ()
 
 if (RB_PLATFORM_BACKEND_SDL2)
 	set (SRC ${SRC}
-		"src/sdl2/window_sdl2.cpp"
-		"src/sdl2/keyboard_sdl2.cpp"
-		"src/sdl2/mouse_sdl2.cpp"
-		"src/sdl2/gamepad_sdl2.cpp"
-		"src/sdl2/gamecontrollerdb_sdl2.cpp"
+		"src/platform/sdl2/window_sdl2.cpp"
+		"src/input/sdl2/keyboard_sdl2.cpp"
+		"src/input/sdl2/mouse_sdl2.cpp"
+		"src/input/sdl2/gamepad_sdl2.cpp"
+		"src/input/sdl2/gamecontrollerdb_sdl2.cpp"
 	)
 endif ()
 
@@ -153,23 +160,23 @@ endif ()
 
 if (RB_GRAPHICS_BACKEND_DIRECTX) 
 	set (SRC ${SRC}
-		"src/dx11/buffer_dx11.cpp"
-		"src/dx11/builtin_shaders_dx11.cpp"
-		"src/dx11/graphics_device_dx11.cpp"
-		"src/dx11/texture_dx11.cpp"
-		"src/dx11/shader_dx11.cpp"
+		"src/graphics/dx11/buffer_dx11.cpp"
+		"src/graphics/dx11/builtin_shaders_dx11.cpp"
+		"src/graphics/dx11/graphics_device_dx11.cpp"
+		"src/graphics/dx11/texture_dx11.cpp"
+		"src/graphics/dx11/shader_dx11.cpp"
 	)
 endif ()
 
 if (RB_GRAPHICS_BACKEND_OPENGL) 
 	set (SRC ${SRC}
-		"src/ogl3/buffer_ogl3.cpp"
-		"src/ogl3/builtin_shaders_ogl3.cpp"
-		"src/ogl3/graphics_device_ogl3.cpp"
-		"src/ogl3/mesh_ogl3.cpp"
-		"src/ogl3/shader_ogl3.cpp"
-		"src/ogl3/texture_ogl3.cpp"
-		"src/ogl3/texture_cube_ogl3.cpp"
+		"src/graphics/ogl3/buffer_ogl3.cpp"
+		"src/graphics/ogl3/builtin_shaders_ogl3.cpp"
+		"src/graphics/ogl3/graphics_device_ogl3.cpp"
+		"src/graphics/ogl3/mesh_ogl3.cpp"
+		"src/graphics/ogl3/shader_ogl3.cpp"
+		"src/graphics/ogl3/texture_ogl3.cpp"
+		"src/graphics/ogl3/texture_cube_ogl3.cpp"
 	)
 endif ()
 

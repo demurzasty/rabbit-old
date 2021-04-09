@@ -83,7 +83,9 @@
         "xutility": "cpp",
         "format": "cpp",
         "pointers": "cpp",
-        "span": "cpp"
+        "span": "cpp",
+        "multi_span": "cpp",
+        "string_span": "cpp"
     },
     "python.pythonPath": "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\Python37_64\\python.exe"
 }
