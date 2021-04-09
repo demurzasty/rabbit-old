@@ -20,7 +20,7 @@ std::shared_ptr<void> texture_loader::load(const std::string& filename, const js
     desc.data = image.pixels();
     desc.size = image.size();
 
-    desc.filter = json_utils::member_or(metadata, "filter", texture_filter::nearest);
+    desc.filter = json_utils::member_or(metadata, "filter", texture_filter::linear);
     desc.wrap = json_utils::member_or(metadata, "wrap", texture_wrap::clamp);
 
     return _graphics_device.make_texture(desc);
