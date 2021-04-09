@@ -63,7 +63,7 @@ graphics_device_ogl3::graphics_device_ogl3(const config& config, window& window)
 	glBindVertexArray(_vao);
 
 	glDisable(GL_DEPTH_TEST);
-	glDisable(GL_CULL_FACE);
+	glEnable(GL_CULL_FACE);
 	glDisable(GL_SCISSOR_TEST);
 	glDepthFunc(GL_LEQUAL);
 
@@ -115,18 +115,18 @@ void graphics_device_ogl3::present() {
 }
 
 void graphics_device_ogl3::set_blend_state(const blend_state& blend_state) {
-	const auto blendEnabled = blend_state.color_source_blend != blend::one ||
+	const auto blend_enabled = blend_state.color_source_blend != blend::one ||
 		blend_state.color_destination_blend != blend::zero ||
 		blend_state.alpha_source_blend != blend::one ||
 		blend_state.alpha_destination_blend != blend::zero;
 
-	if (blendEnabled) {
+	if (blend_enabled) {
 		glEnable(GL_BLEND);
 	} else {
 		glDisable(GL_BLEND);
 	}
 
-	if (blendEnabled) {
+	if (blend_enabled) {
 		glBlendEquationSeparate(blend_equation_modes.at(blend_state.color_blend_function),
 			blend_equation_modes.at(blend_state.alpha_blend_function));
 
@@ -176,11 +176,10 @@ void graphics_device_ogl3::set_render_target(const std::shared_ptr<texture>& tex
 
 void graphics_device_ogl3::set_render_target(const std::shared_ptr<texture_cube>& render_target, texture_cube_face face, int level) {
 	if (render_target) {
-		glBindFramebuffer(GL_FRAMEBUFFER, std::static_pointer_cast<texture_cube_ogl3>(render_target)->framebuffer_id(face));
-		glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, texture_cube_faces.at(face),
-			std::static_pointer_cast<texture_cube_ogl3>(render_target)->id(), level);
-		
-		// glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, face_id, _id, 0);
+		const auto id = std::static_pointer_cast<texture_cube_ogl3>(render_target)->framebuffer_id();
+		glBindFramebuffer(GL_FRAMEBUFFER, id);
+		glNamedFramebufferTextureLayer(id, GL_COLOR_ATTACHMENT0, std::static_pointer_cast<texture_cube_ogl3>(render_target)->id(),
+			level, (int)face);
 	} else {
 		glBindFramebuffer(GL_FRAMEBUFFER, 0);
 	}
@@ -202,7 +201,7 @@ void graphics_device_ogl3::bind_texture(const std::shared_ptr<texture_cube>& tex
 	glBindTextureUnit(binding_index, std::static_pointer_cast<texture_cube_ogl3>(texture)->id());
 }
 
-void graphics_device_ogl3::draw( const std::shared_ptr<mesh>& mesh, const std::shared_ptr<shader>& shader) {
+void graphics_device_ogl3::draw(const std::shared_ptr<mesh>& mesh, const std::shared_ptr<shader>& shader) {
 	auto native_mesh = std::static_pointer_cast<mesh_ogl3>(mesh);
 
 	glBindVertexArray(native_mesh->id());

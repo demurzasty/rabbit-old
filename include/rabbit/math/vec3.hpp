@@ -53,6 +53,10 @@ namespace rb {
             return std::sqrt(dot(vec, vec));
         }
 
+        static constexpr T length_sqr(const vec3<T>& vec) {
+            return dot(vec, vec);
+        }
+
         static vec3<T> normalize(const vec3<T>& vec) {
             const auto inv_length = 1 / length(vec);
             return { vec.x * inv_length, vec.y * inv_length, vec.z * inv_length };

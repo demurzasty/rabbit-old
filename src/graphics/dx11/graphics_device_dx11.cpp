@@ -367,7 +367,7 @@ void graphics_device_dx11::set_render_target(const std::shared_ptr<texture>& tex
 	auto native_texture = std::static_pointer_cast<texture_dx11>(texture);
 	if (native_texture && native_texture->is_render_target()) {
 		_offscreen_render_target = native_texture->render_target();
-
+	
 		const auto viewport_size = static_cast<vec2f>(native_texture->size());
 
 		D3D11_VIEWPORT viewport = { 0 };

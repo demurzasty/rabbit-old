@@ -23,15 +23,15 @@ public:
         sphere_material->metallic = 1.0f;
         sphere_material->roughness = 0.0f;
 
-        auto mesh = _asset_manager.load<rb::mesh>("rabbit_base.obj");
-        
-        auto sphere = registry.create();
-        registry.emplace<rb::geometry>(sphere, mesh, base_material);
-        registry.emplace<rb::transform>(sphere);
+        auto base_mesh = _asset_manager.load<rb::mesh>("rabbit_base.obj");
+        auto sphere_mesh = _asset_manager.load<rb::mesh>("rabbit_sphere.obj");
 
-        mesh = _asset_manager.load<rb::mesh>("rabbit_sphere.obj");
-        sphere = registry.create();
-        registry.emplace<rb::geometry>(sphere, mesh, sphere_material);
+        auto base = registry.create();
+        registry.emplace<rb::geometry>(base, base_mesh, base_material);
+        registry.emplace<rb::transform>(base);
+
+        auto sphere = registry.create();
+        registry.emplace<rb::geometry>(sphere, sphere_mesh, sphere_material);
         registry.emplace<rb::transform>(sphere);
 
         auto camera = registry.create();
@@ -47,7 +47,8 @@ public:
             const auto vertical_right = _gamepad.axis(rb::gamepad_player::first, rb::gamepad_axis::right_y);
             const auto up = _gamepad.axis(rb::gamepad_player::first, rb::gamepad_axis::right_trigger);
             const auto down = _gamepad.axis(rb::gamepad_player::first, rb::gamepad_axis::left_trigger);
-
+            const auto speed = _gamepad.is_button_down(rb::gamepad_player::first, rb::gamepad_button::left_bumper) ? 20.0f : 2.0f;
+            
             if (rb::abs(horizontal) > 0.1) {
                 transform.rotation.y -= horizontal * elapsed_time * 2.0f;
             }
@@ -58,8 +59,8 @@ public:
             }
 
             if (rb::abs(vertical) > 0.1) {
-                transform.position.x += std::sin(transform.rotation.y) * vertical * elapsed_time * 2.0f;
-                transform.position.z += std::cos(transform.rotation.y) * vertical * elapsed_time * 2.0f;
+                transform.position.x += std::sin(transform.rotation.y) * vertical * elapsed_time * speed;
+                transform.position.z += std::cos(transform.rotation.y) * vertical * elapsed_time * speed;
             }
 
             if (rb::abs(vertical_right) > 0.2) {

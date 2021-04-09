@@ -4,8 +4,6 @@
 
 #include <GL/glew.h>
 
-#include <map>
-
 namespace rb {
     class texture_cube_ogl3 : public texture_cube {
     public:
@@ -17,10 +15,10 @@ namespace rb {
 
 		GLuint id() const;
 
-		GLuint framebuffer_id(texture_cube_face face) const;
+		GLuint framebuffer_id() const;
 
 	private:
-		GLuint _id = 0;
-		std::map<texture_cube_face, GLuint> _framebuffer_ids;
+		GLuint _id{ 0 };
+		GLuint _framebuffer_id{ 0 };
     };
 }
