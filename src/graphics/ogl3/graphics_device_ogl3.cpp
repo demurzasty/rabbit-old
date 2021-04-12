@@ -61,12 +61,6 @@ graphics_device_ogl3::graphics_device_ogl3(const config& config, window& window)
 	_context = std::make_shared<graphics_contrext_ogl3_win32>(window);
 	#endif
 
-	glewInit();
-
-#if RB_WINDOWS
-	wglewInit();
-#endif
-
 	glGenVertexArrays(1, &_vao);
 	glBindVertexArray(_vao);
 

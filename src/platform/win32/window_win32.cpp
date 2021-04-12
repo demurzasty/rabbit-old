@@ -1,6 +1,6 @@
 #include "window_win32.hpp"
 
-#include <cassert>
+#include <rabbit/core/exception.hpp>
 
 using namespace rb;
 
@@ -8,8 +8,10 @@ static LRESULT CALLBACK window_proc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM 
 
 window_win32::window_win32(config& config) {
 	WNDCLASS wc = {};
+	wc.style = CS_HREDRAW | CS_VREDRAW | CS_OWNDC;
 	wc.lpfnWndProc = &window_proc;
-	wc.hInstance = GetModuleHandle(NULL);
+	wc.hInstance = GetModuleHandle(nullptr);
+	wc.hCursor = LoadCursor(nullptr, IDC_ARROW);
 	wc.lpszClassName = "RabBit";
 	RegisterClass(&wc);
 
@@ -33,8 +35,10 @@ window_win32::window_win32(config& config) {
 		height = rect.bottom - rect.top;
 	}
 
-	_hwnd = CreateWindow("RabBit", config.window.title.c_str(), style, left, top, width, height, NULL, NULL, GetModuleHandle(NULL), this);
-	assert(_hwnd);
+	_hwnd = CreateWindowEx(WS_EX_APPWINDOW | WS_EX_WINDOWEDGE, "RabBit", config.window.title.c_str(), WS_CLIPSIBLINGS | WS_CLIPCHILDREN | style, left, top, width, height, NULL, NULL, GetModuleHandle(NULL), this);
+	if (!_hwnd) {
+		throw make_exception("Cannot create window");
+	}
 }
 
 window_win32::~window_win32() {
