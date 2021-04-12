@@ -5,6 +5,8 @@
 namespace rb {
     class gamepad_dummy : public gamepad {
     public:
+        gamepad_dummy() = default;
+        
         void refresh() override;
 
         bool is_button_down(gamepad_player player, gamepad_button button) override;

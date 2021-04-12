@@ -5,6 +5,10 @@
 #include "shader_ogl3.hpp"
 #include "mesh_ogl3.hpp"
 
+#if RB_WINDOWS
+#include "win32/graphics_context_ogl3_win32.hpp"
+#endif
+
 #include <rabbit/core/exception.hpp>
 
 #include <map>
@@ -53,6 +57,10 @@ static std::map<texture_cube_face, GLint> texture_cube_faces = {
 
 graphics_device_ogl3::graphics_device_ogl3(const config& config, window& window)
 	: _window(window) {
+	#if RB_WINDOWS
+	_context = std::make_shared<graphics_contrext_ogl3_win32>(window);
+	#endif
+
 	glewInit();
 
 #if RB_WINDOWS
@@ -111,7 +119,7 @@ void graphics_device_ogl3::clear(const color& color) {
 }
 
 void graphics_device_ogl3::present() {
-	_window.swap_buffers();
+	_context->swap_buffers();
 }
 
 void graphics_device_ogl3::set_blend_state(const blend_state& blend_state) {

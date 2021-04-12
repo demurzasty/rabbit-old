@@ -2,9 +2,6 @@
 
 using namespace rb;
 
-mouse_dummy::mouse_dummy(std::shared_ptr<window> window) {
-}
-
 void mouse_dummy::refresh() {
 }
 

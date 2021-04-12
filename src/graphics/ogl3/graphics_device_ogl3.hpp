@@ -2,11 +2,15 @@
 
 #include <rabbit/graphics/graphics_device.hpp>
 
+#include "graphics_context_ogl3.hpp"
+
 #include <GL/glew.h>
 
 #if RB_WINDOWS
 #include <GL/wglew.h>
 #endif
+
+#include <memory>
 
 namespace rb {
     class graphics_device_ogl3 : public graphics_device {
@@ -53,7 +57,8 @@ namespace rb {
 
     private:
         window& _window;
-
+        std::shared_ptr<graphics_context_ogl3> _context;
+        
         GLuint _vao = 0;
     };
 }

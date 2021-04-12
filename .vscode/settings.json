@@ -85,7 +85,8 @@
         "pointers": "cpp",
         "span": "cpp",
         "multi_span": "cpp",
-        "string_span": "cpp"
+        "string_span": "cpp",
+        "filesystem": "cpp"
     },
     "python.pythonPath": "C:\\Program Files (x86)\\Microsoft Visual Studio\\Shared\\Python37_64\\python.exe"
 }

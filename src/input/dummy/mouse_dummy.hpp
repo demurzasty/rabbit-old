@@ -5,8 +5,8 @@
 namespace rb {
     class mouse_dummy : public mouse {
     public:
-        mouse_dummy(std::shared_ptr<window> window);
-
+        mouse_dummy() = default;
+        
         void refresh() override;
 
         vec2i position() override;

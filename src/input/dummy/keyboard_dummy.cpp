@@ -20,3 +20,8 @@ bool keyboard_dummy::is_key_pressed(keycode key) {
 bool keyboard_dummy::is_key_released(keycode key) {
     return false;
 }
+
+const std::string& keyboard_dummy::input_text() const {
+    static std::string text;
+    return text;
+}

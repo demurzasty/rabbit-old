@@ -17,6 +17,7 @@ set (RB_GRAPHICS_BACKEND_OPENGL FALSE)
 set (RB_GRAPHICS_BACKEND_METAL FALSE)
 
 set (RB_PLATFORM_BACKEND_SDL2 FALSE)
+set (RB_PLATFORM_BACKEND_WIN32 FALSE)
 
 set (RB_GAMEPAD_BACKEND_XINPUT FALSE)
 set (RB_GAMEPAD_BACKEND_SDL2 FALSE)
@@ -33,8 +34,8 @@ elseif (RB_WINDOWS)
 		set (RB_GRAPHICS_BACKEND_OPENGL TRUE)
 	endif ()
 
-	set (RB_PLATFORM_BACKEND_SDL2 TRUE)
-	set (RB_GAMEPAD_BACKEND_SDL2 TRUE)
+	set (RB_PLATFORM_BACKEND_WIN32 TRUE)
+	set (RB_GAMEPAD_BACKEND_XINPUT TRUE)
 	set (RB_AUDIO_BACKEND_XAUDIO TRUE)
 elseif (RB_LINUX)
 	set (RB_GRAPHICS_BACKEND_OPENGL TRUE)
@@ -136,9 +137,9 @@ set (SRC
 
 if (RB_PLATFORM_BACKEND_WIN32) 
 	set (SRC ${SRC}
-		"src/win32/window_win32.cpp"
-		"src/win32/keyboard_win32.cpp"
-		"src/win32/mouse_win32.cpp"
+		"src/platform/win32/window_win32.cpp"
+	#	"src/win32/keyboard_win32.cpp"
+	#	"src/win32/mouse_win32.cpp"
 	)
 endif ()
 
@@ -154,7 +155,7 @@ endif ()
 
 if (RB_GAMEPAD_BACKEND_XINPUT) 
 	set (SRC ${SRC}
-		"src/xinput/gamepad_xinput.cpp"
+		"src/input/xinput/gamepad_xinput.cpp"
 	)
 endif ()
 
@@ -178,6 +179,12 @@ if (RB_GRAPHICS_BACKEND_OPENGL)
 		"src/graphics/ogl3/texture_ogl3.cpp"
 		"src/graphics/ogl3/texture_cube_ogl3.cpp"
 	)
+
+	if (RB_WINDOWS) 
+		set (SRC ${SRC}
+			"src/graphics/ogl3/win32/graphics_context_ogl3_win32.cpp"
+		)
+	endif ()
 endif ()
 
 add_library (rabbit STATIC ${SRC})

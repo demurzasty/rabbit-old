@@ -40,15 +40,16 @@ public:
     }
 
     void variable_update(rb::registry& registry, float elapsed_time) override {
-        registry.view<rb::camera, rb::transform>().each([this, elapsed_time](rb::camera& camera, rb::transform& transform) {
-            const auto horizontal = _gamepad.axis(rb::gamepad_player::first, rb::gamepad_axis::right_x);
-            const auto horizontal_left = _gamepad.axis(rb::gamepad_player::first, rb::gamepad_axis::left_x);
-            const auto vertical = _gamepad.axis(rb::gamepad_player::first, rb::gamepad_axis::left_y);
-            const auto vertical_right = _gamepad.axis(rb::gamepad_player::first, rb::gamepad_axis::right_y);
-            const auto up = _gamepad.axis(rb::gamepad_player::first, rb::gamepad_axis::right_trigger);
-            const auto down = _gamepad.axis(rb::gamepad_player::first, rb::gamepad_axis::left_trigger);
-            const auto speed = _gamepad.is_button_down(rb::gamepad_player::first, rb::gamepad_button::left_bumper) ? 20.0f : 2.0f;
-            
+        const auto horizontal = _gamepad.axis(rb::gamepad_player::first, rb::gamepad_axis::right_x);
+        const auto horizontal_left = _gamepad.axis(rb::gamepad_player::first, rb::gamepad_axis::left_x);
+        const auto vertical = _gamepad.axis(rb::gamepad_player::first, rb::gamepad_axis::left_y);
+        const auto vertical_right = _gamepad.axis(rb::gamepad_player::first, rb::gamepad_axis::right_y);
+        const auto up = _gamepad.axis(rb::gamepad_player::first, rb::gamepad_axis::right_trigger);
+        const auto down = _gamepad.axis(rb::gamepad_player::first, rb::gamepad_axis::left_trigger);
+        const auto speed = _gamepad.is_button_down(rb::gamepad_player::first, rb::gamepad_button::left_bumper) ? 20.0f : 2.0f;
+        
+
+        registry.view<rb::camera, rb::transform>().each([&](rb::camera& camera, rb::transform& transform) {
             if (rb::abs(horizontal) > 0.1) {
                 transform.rotation.y -= horizontal * elapsed_time * 2.0f;
             }
