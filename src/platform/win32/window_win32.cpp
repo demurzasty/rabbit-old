@@ -54,10 +54,6 @@ window_handle window_win32::native_handle() const {
 	return _hwnd;
 }
 
-void window_win32::swap_buffers() {
-    
-}
-
 void window_win32::poll_events() {
 	MSG message;
 	while (PeekMessage(&message, _hwnd, 0, 0, PM_REMOVE)) {
@@ -107,15 +103,6 @@ void window_win32::show_cursor(bool enable) {
 
 bool window_win32::is_cursor_visible() const {
     return true;
-}
-
-float window_win32::mouse_wheel() const {
-    return 0.0f;
-}
-
-const std::string& window_win32::input_text() const {
-    static std::string data;
-    return data;
 }
 
 LRESULT CALLBACK window_proc(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam) {

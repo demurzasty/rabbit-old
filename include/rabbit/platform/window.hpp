@@ -41,11 +41,6 @@ namespace rb {
 		virtual window_handle native_handle() const = 0;
 
 		/**
-		 * @brief Swap buffers if OpenGL is implemented.
-		 */
-		virtual void swap_buffers() = 0;
-
-		/**
 		 * @brief Poll window events.
 		 *
 		 * @return True if event queue was not empty.

@@ -15,8 +15,6 @@ namespace rb {
 
 		window_handle native_handle() const override;
 
-		void swap_buffers() override;
-
 		void poll_events() override;
 
 		vec2i size() const override;
@@ -36,10 +34,6 @@ namespace rb {
 		void show_cursor(bool enable) override;
 
 		bool is_cursor_visible() const override;
-
-		float mouse_wheel() const;
-
-		const std::string& input_text() const;
 
 		void close();
 
