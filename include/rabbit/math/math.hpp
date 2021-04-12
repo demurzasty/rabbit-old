@@ -41,7 +41,7 @@ namespace rb {
 #else
     template<typename T>
     constexpr T lerp(const T a, const T b, const T factor) noexcept {
-        return a + (b - a) * factor;
+        return a * (T{ 1 } - factor) + b * factor;
     }
 #endif
 }
