@@ -233,7 +233,7 @@ renderer::renderer(graphics_device& graphics_device, asset_manager& asset_manage
 
     graphics_device.set_render_target(nullptr);
 
-    _skybox_texture = asset_manager.load<texture_cube>("cubemaps/magic_hour.json");
+    _skybox_texture = asset_manager.load<texture_cube>("cubemaps/daylight.json");
 
     _generate_irradiance_map();
     _generate_prefilter_map();

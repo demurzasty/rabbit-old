@@ -18,15 +18,15 @@ layout (location = 0) out vec4 out_color;
 void main() {
     vec3 N = normalize(vec3(var_position.x, -var_position.y, 1));
 	
-    if(cube_face == 2) {
+    if (cube_face == 2) {
         N = normalize(vec3(var_position.x,  1, var_position.y));
-    } else if(cube_face == 3) {
+    } else if (cube_face == 3) {
         N = normalize(vec3(var_position.x, -1,  -var_position.y));
-    } else if(cube_face == 0) {
+    } else if (cube_face == 0) {
         N = normalize(vec3(  1, -var_position.y,-var_position.x));
-    } else if(cube_face == 1) {
+    } else if (cube_face == 1) {
         N = normalize(vec3( -1, -var_position.y, var_position.x));
-    } else if(cube_face == 5) {
+    } else if (cube_face == 5) {
         N = normalize(vec3(-var_position.x, -var_position.y, -1));
 	}
 		
