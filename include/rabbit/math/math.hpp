@@ -33,8 +33,15 @@ namespace rb {
         return value < a ? a : value > b ? b : value;
     }
 
+#if defined FP_FAST_FMA
+    template<typename T>
+    constexpr T lerp(const T a, const T b, const T factor) noexcept {
+        return std::fma(factor, b, std::fma(-factor, a, a));
+    }
+#else
     template<typename T>
     constexpr T lerp(const T a, const T b, const T factor) noexcept {
         return a + (b - a) * factor;
     }
+#endif
 }
