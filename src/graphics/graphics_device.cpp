@@ -10,6 +10,6 @@ namespace rb { using graphics_device_impl = graphics_device_ogl3; }
 
 using namespace rb;
 
-std::shared_ptr<graphics_device> graphics_device::resolve(container& container) {
-    return container.resolve<graphics_device_impl>();
+void graphics_device::install(installer<graphics_device>& installer) {
+    installer.install<graphics_device_impl>();
 }

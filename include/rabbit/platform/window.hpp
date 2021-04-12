@@ -19,7 +19,7 @@ namespace rb {
 		/**
 		 * @brief Install window implementation to dependency container.
 		 */
-		static std::shared_ptr<window> resolve(container& container);
+		static void install(installer<window>& installer);
 
 		/**
 		 * @brief Default virtual destructor.

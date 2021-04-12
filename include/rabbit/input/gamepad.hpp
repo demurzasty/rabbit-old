@@ -23,7 +23,7 @@ namespace rb {
 		/**
 		 * @brief Install gamepad implementation to dependency container.
 		 */
-        static std::shared_ptr<gamepad> resolve(container& container);
+        static void install(installer<gamepad>& installer);
 
         virtual ~gamepad() = default;
 

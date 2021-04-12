@@ -9,6 +9,19 @@
 #include <type_traits>
 
 namespace rb {
+    class container;
+
+    /**
+     * @brief Dependency installer used by dependency container.
+     */
+    template<typename Interface>
+    struct installer {
+        template<typename Implementation>
+        void install();
+
+        container& container;
+    };
+
     /**
      * @brief Dependency container. 
      */
@@ -73,13 +86,8 @@ namespace rb {
         }
 
         template<typename Interface, typename Func>
-        container& install(Func factory) {
-            _beans.emplace(type_id<Interface>().hash(), bean{
-                nullptr,
-                [factory](container& container) -> std::shared_ptr<void> {
-                    return factory(container);
-                }
-            });
+        container& install(Func func) {
+            func(installer<Interface>{ *this });
             return *this;
         }
 
@@ -140,4 +148,10 @@ namespace rb {
     private:
         std::map<id_type, bean> _beans;
     };
+
+    template<typename Interface>
+    template<typename Implementation>
+    void installer<Interface>::install() {
+        container.install<Interface, Implementation>();
+    }
 }

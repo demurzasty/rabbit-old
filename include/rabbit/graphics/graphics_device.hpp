@@ -23,7 +23,7 @@ namespace rb {
 		/**
 		 * @brief Install graphics device implementation to dependency container.
 		 */
-        static std::shared_ptr<graphics_device> resolve(container& container);
+        static void install(installer<graphics_device>& installer);
 
         /**
          * @brief Default virtual constructor.

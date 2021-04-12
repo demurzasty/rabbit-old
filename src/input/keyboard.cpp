@@ -10,6 +10,6 @@ namespace rb { using keyboard_impl = keyboard_dummy; }
 
 using namespace rb;
 
-std::shared_ptr<keyboard> keyboard::resolve(container& container) {
-    return container.resolve<keyboard_impl>();
+void keyboard::install(installer<keyboard>& installer) {
+    installer.install<keyboard_impl>();
 }

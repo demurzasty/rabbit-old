@@ -14,7 +14,7 @@ namespace rb {
 		/**
 		 * @brief Install mouse implementation to dependency container.
 		 */
-        static std::shared_ptr<mouse> resolve(container& container);
+        static void install(installer<mouse>& installer);
 
         virtual ~mouse() = default;
 

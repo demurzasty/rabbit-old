@@ -13,6 +13,6 @@ namespace rb { using gamepad_impl = gamepad_dummy; }
 
 using namespace rb;
 
-std::shared_ptr<gamepad> gamepad::resolve(container& container) {
-    return container.resolve<gamepad_impl>();
+void gamepad::install(installer<gamepad>& installer) {
+    installer.install<gamepad_impl>();
 }

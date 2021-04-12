@@ -7,6 +7,6 @@ namespace rb { using window_impl = window_sdl2; }
 
 using namespace rb;
 
-std::shared_ptr<window> window::resolve(container& container) {
-    return container.resolve<window_impl>();
+void window::install(installer<window>& installer) {
+    installer.install<window_impl>();
 }

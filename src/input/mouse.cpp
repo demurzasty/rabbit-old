@@ -10,6 +10,6 @@ namespace rb { using mouse_impl = mouse_dummy; }
 
 using namespace rb;
 
-std::shared_ptr<mouse> mouse::resolve(container& container) {
-    return container.resolve<mouse_impl>();
+void mouse::install(installer<mouse>& installer) {
+    installer.install<mouse_impl>();
 }

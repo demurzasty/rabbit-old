@@ -14,7 +14,7 @@ namespace rb {
 		/**
 		 * @brief Install keyboard implementation to dependency container.
 		 */
-        static std::shared_ptr<keyboard> resolve(container& container);
+        static void install(installer<keyboard>& installer);
 
         virtual ~keyboard() = default;
 
