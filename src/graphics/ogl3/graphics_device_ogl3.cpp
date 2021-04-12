@@ -7,6 +7,7 @@
 
 #if RB_WINDOWS
 #include "win32/graphics_context_ogl3_win32.hpp"
+namespace rb { using graphics_context_ogl3_impl = graphics_context_ogl3_win32; }
 #endif
 
 #include <rabbit/core/exception.hpp>
@@ -57,9 +58,7 @@ static std::map<texture_cube_face, GLint> texture_cube_faces = {
 
 graphics_device_ogl3::graphics_device_ogl3(const config& config, window& window)
 	: _window(window) {
-	#if RB_WINDOWS
-	_context = std::make_shared<graphics_contrext_ogl3_win32>(window);
-	#endif
+	_context = std::make_shared<graphics_context_ogl3_impl>(window);
 
 	glGenVertexArrays(1, &_vao);
 	glBindVertexArray(_vao);
@@ -77,9 +76,7 @@ graphics_device_ogl3::graphics_device_ogl3(const config& config, window& window)
 		fprintf(stderr, "%s\n", message);
 	}, nullptr);
 
-#if RB_WINDOWS
-	wglSwapIntervalEXT(config.graphics.vsync ? 1 : 0);
-#endif
+	_context->set_vsync(config.graphics.vsync);
 }
 
 graphics_device_ogl3::~graphics_device_ogl3() {

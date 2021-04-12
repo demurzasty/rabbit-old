@@ -10,7 +10,7 @@
 
 using namespace rb;
 
-graphics_contrext_ogl3_win32::graphics_contrext_ogl3_win32(window& window)
+graphics_context_ogl3_win32::graphics_context_ogl3_win32(window& window)
     : _hwnd(window.native_handle()) {
     PIXELFORMATDESCRIPTOR pixel_format_desc = {
         sizeof(PIXELFORMATDESCRIPTOR),  // Size Of This Pixel Format Descriptor
@@ -109,11 +109,15 @@ graphics_contrext_ogl3_win32::graphics_contrext_ogl3_win32(window& window)
     wglMakeCurrent(_hdc, _hglrc);
 }
 
-graphics_contrext_ogl3_win32::~graphics_contrext_ogl3_win32() {
+graphics_context_ogl3_win32::~graphics_context_ogl3_win32() {
     wglDeleteContext(_hglrc);
     ReleaseDC(_hwnd, _hdc);
 }
 
-void graphics_contrext_ogl3_win32::swap_buffers() {
+void graphics_context_ogl3_win32::set_vsync(bool vsync) {
+    wglSwapIntervalEXT(vsync ? 1 : 0);
+}
+
+void graphics_context_ogl3_win32::swap_buffers() {
     SwapBuffers(_hdc);
 }

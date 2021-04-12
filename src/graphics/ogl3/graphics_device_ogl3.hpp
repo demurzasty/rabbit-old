@@ -6,10 +6,6 @@
 
 #include <GL/glew.h>
 
-#if RB_WINDOWS
-#include <GL/wglew.h>
-#endif
-
 #include <memory>
 
 namespace rb {
@@ -58,7 +54,7 @@ namespace rb {
     private:
         window& _window;
         std::shared_ptr<graphics_context_ogl3> _context;
-        
+
         GLuint _vao = 0;
     };
 }

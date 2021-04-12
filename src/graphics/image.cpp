@@ -29,7 +29,9 @@ image image::from_file(const std::string& filename) {
 }
 
 image::image(storage&& pixels, const vec2i& size, image_format format)
-    : _pixels(std::forward<storage>(pixels)), _size(size), _format(format) {
+    : _pixels(std::forward<storage>(pixels))
+    , _size(size)
+    , _format(format) {
 }
 
 span<const std::uint8_t> image::pixels() const {
