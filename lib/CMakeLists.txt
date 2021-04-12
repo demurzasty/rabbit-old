@@ -7,8 +7,10 @@ add_subdirectory ("stb")
 add_subdirectory ("fmt-7.1.2")
 
 if (NOT EMSCRIPTEN AND (RB_WINDOWS OR RB_LINUX OR RB_OSX))
-	set (SDL_SHARED_ENABLED_BY_DEFAULT OFF)
-	add_subdirectory ("SDL2-2.0.12")
+	if (RB_PLATFORM_BACKEND_SDL2)
+		set (SDL_SHARED_ENABLED_BY_DEFAULT OFF)
+		add_subdirectory ("SDL2-2.0.12")
+	endif ()
 
 	if (RB_GRAPHICS_BACKEND_OPENGL) 
 		add_subdirectory ("glew-2.1.0")
