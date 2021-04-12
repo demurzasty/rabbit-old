@@ -7,7 +7,7 @@
 namespace rb {
 	template<typename T>
 	constexpr T ease_in_sine(const T& x) {
-		return 1 - std::cos((x * pi<T>()) / 2);
+		return T{ 1 } - std::cos((x * pi<T>()) / 2);
 	}
 
 	template<typename T>
@@ -17,7 +17,7 @@ namespace rb {
 
 	template<typename T>
 	constexpr T ease_in_out_sine(const T& x) {
-		return -(std::cos(x * pi<T>()) - 1) / 2;
+		return -(std::cos(x * pi<T>()) - T{ 1 }) / 2;
 	}
 
 	template<typename T>
@@ -27,12 +27,12 @@ namespace rb {
 
 	template<typename T>
 	constexpr T ease_out_quad(const T& x) {
-		return 1 - (1 - x) * (1 - x);
+		return T{ 1 } - (T{ 1 } - x) * (T{ 1 } - x);
 	}
 
 	template<typename T>
 	constexpr T ease_in_out_quad(const T& x) {
-		return x < 0.5 ? 2 * x * x : 1 - std::pow(-2 * x + 2, 2) / 2;
+		return x < 0.5 ? 2 * x * x : T{ 1 } - std::pow(-2 * x + 2, 2) / 2;
 	}
 
 	template<typename T>
@@ -42,12 +42,12 @@ namespace rb {
 
 	template<typename T>
 	constexpr T ease_out_cubic(const T& x) {
-		return 1 - std::pow(1 - x, 3);
+		return T{ 1 } - std::pow(T{ 1 } - x, 3);
 	}
 
 	template<typename T>
 	constexpr T ease_in_out_cubic(const T& x) {
-		return x < 0.5 ? 4 * x * x * x : 1 - std::pow(-2 * x + 2, 3) / 2;
+		return x < 0.5 ? 4 * x * x * x : T{ 1 } - std::pow(-2 * x + 2, 3) / 2;
 	}
 
 	template<typename T>
@@ -57,12 +57,12 @@ namespace rb {
 
 	template<typename T>
 	constexpr T ease_out_quart(const T& x) {
-		return 1 - std::pow(1 - x, 4);
+		return T{ 1 } - std::pow(T{ 1 } - x, 4);
 	}
 
 	template<typename T>
 	constexpr T ease_in_out_quart(const T& x) {
-		return x < 0.5 ? 8 * x * x * x * x : 1 - std::pow(-2 * x + 2, 4) / 2;
+		return x < 0.5 ? 8 * x * x * x * x : T{ 1 } - std::pow(-2 * x + 2, 4) / 2;
 	}
 
 	template<typename T>
@@ -72,12 +72,12 @@ namespace rb {
 
 	template<typename T>
 	constexpr T ease_out_quint(const T& x) {
-		return 1 - std::pow(1 - x, 5);
+		return T{ 1 } - std::pow(T{ 1 } - x, 5);
 	}
 
 	template<typename T>
 	constexpr T ease_in_out_quint(const T& x) {
-		return x < 0.5 ? 16 * x * x * x * x * x : 1 - std::pow(-2 * x + 2, 5) / 2;
+		return x < T{ 0.5 } ? T{ 16 } * x * x * x * x * x : T{ 1 } - std::pow(-T{ 2 } * x + T{ 2 }, T{ 5 }) / 2;
 	}
 
 	template<typename T>
