@@ -14,6 +14,12 @@ namespace rb {
     };
 
     struct vertex_format {
+        struct hasher {
+            std::size_t operator()(const vertex_format& format) const {
+                return *reinterpret_cast<const std::uint32_t*>(&format);
+            }
+        };
+
         static inline constexpr vertex_format vec2f() {
             return { vertex_format_type::floating_point, 2, sizeof(rb::vec2f), false };
         }

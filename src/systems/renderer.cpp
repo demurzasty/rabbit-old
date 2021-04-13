@@ -268,10 +268,11 @@ void renderer::draw(registry& registry, graphics_device& graphics_device) {
 
     camera_data camera_data;
 
-    registry.view<transform, camera>().each([&camera_data, &matrices](transform& transform, camera& camera) {
+    auto backbuffer_size = graphics_device.backbuffer_size();
+    registry.view<transform, camera>().each([&camera_data, &matrices, &backbuffer_size](transform& transform, camera& camera) {
         camera_data.position = transform.position;
         
-        matrices.projection = mat4f::perspective(camera.fov, 1280.0f / 720.0, 0.1f, 100.0f);
+        matrices.projection = mat4f::perspective(camera.fov, static_cast<float>(backbuffer_size.x) / backbuffer_size.y, 0.1f, 100.0f);
         matrices.view = mat4f::inverse(mat4f::translation(transform.position) * mat4f::rotation(transform.rotation));
     });
 
