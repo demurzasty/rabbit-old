@@ -15,6 +15,7 @@ endif()
 set (RB_GRAPHICS_BACKEND_DIRECTX FALSE)
 set (RB_GRAPHICS_BACKEND_OPENGL FALSE)
 set (RB_GRAPHICS_BACKEND_METAL FALSE)
+set (RB_GRAPHICS_BACKEND_VULKAN FALSE)
 
 set (RB_PLATFORM_BACKEND_SDL2 FALSE)
 set (RB_PLATFORM_BACKEND_WIN32 FALSE)
@@ -28,7 +29,9 @@ set (RB_AUDIO_BACKEND_OPENAL FALSE)
 if (RB_EMSCRIPTEN)
 	set (RB_GRAPHICS_BACKEND_OPENGL TRUE)
 elseif (RB_WINDOWS)
-	if (MSVC)
+	if (TRUE)
+		set (RB_GRAPHICS_BACKEND_VULKAN TRUE)
+	elseif (MSVC)
 		set (RB_GRAPHICS_BACKEND_DIRECTX TRUE)
 	else ()
 		set (RB_GRAPHICS_BACKEND_OPENGL TRUE)
@@ -71,6 +74,7 @@ foreach (GLSL_SRC ${GLSL_SOURCE_FILES})
 	set (HLSL "${BASE_NAME}.hlsl")
 	set (COMP "${BASE_NAME}.comp")
 	set (COMP_H "${BASE_NAME}.comp.h")
+	set (SPIRV_H "${BASE_NAME}.spv.h")
 
 	if (${FILE_EXT} STREQUAL ".vert")
 		set (SHADER_TARGET "vs_5_0")
@@ -91,6 +95,8 @@ foreach (GLSL_SRC ${GLSL_SOURCE_FILES})
 		COMMAND ${FXC} /E"main" /O3 /T ${SHADER_TARGET} /Fo ${COMP} ${HLSL}
 		# DXBC -> C Header
 		COMMAND ${Python_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/scripts/bin2h.py" -i ${COMP} -o ${COMP_H} -v "${FILE_NAME}.comp"
+		# SPIR-V -> C Header
+		COMMAND ${Python_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/scripts/bin2h.py" -i ${SPIRV} -o ${SPIRV_H} -v "${FILE_NAME}.spv"
 		DEPENDS ${GLSL_SRC}
 	)
 	list (APPEND GLSL_BINARY_FILES ${GLSL_DST})
@@ -188,6 +194,17 @@ if (RB_GRAPHICS_BACKEND_OPENGL)
 	endif ()
 endif ()
 
+if (RB_GRAPHICS_BACKEND_VULKAN)
+	set (SRC ${SRC}
+		"src/graphics/vulkan/buffer_vulkan.cpp"
+		"src/graphics/vulkan/builtin_shaders_vulkan.cpp"
+		"src/graphics/vulkan/graphics_device_vulkan.cpp"
+		"src/graphics/vulkan/shader_vulkan.cpp"
+		"src/graphics/vulkan/texture_vulkan.cpp"
+		"src/graphics/vulkan/texture_cube_vulkan.cpp"
+	)
+endif ()
+
 add_library (rabbit STATIC ${SRC})
 target_compile_features (rabbit PUBLIC cxx_std_17)
 target_include_directories (rabbit PUBLIC "include" "generated")
@@ -213,6 +230,10 @@ if (NOT RB_EMSCRIPTEN AND RB_GRAPHICS_BACKEND_OPENGL)
 	endif ()
 endif ()
 
+if (RB_GRAPHICS_BACKEND_VULKAN)
+	target_link_libraries (rabbit PRIVATE volk)
+endif ()
+
 target_compile_definitions (rabbit PUBLIC -DRB_EMSCRIPTEN=$<BOOL:${RB_EMSCRIPTEN}>)
 target_compile_definitions (rabbit PUBLIC -DRB_WINDOWS=$<BOOL:${RB_WINDOWS}>)
 target_compile_definitions (rabbit PUBLIC -DRB_LINUX=$<BOOL:${RB_LINUX}>)
@@ -228,6 +249,7 @@ target_compile_definitions (rabbit PUBLIC -DRB_GAMEPAD_BACKEND_XINPUT=$<BOOL:${R
 target_compile_definitions (rabbit PUBLIC -DRB_GRAPHICS_BACKEND_DIRECTX=$<BOOL:${RB_GRAPHICS_BACKEND_DIRECTX}>)
 target_compile_definitions (rabbit PUBLIC -DRB_GRAPHICS_BACKEND_OPENGL=$<BOOL:${RB_GRAPHICS_BACKEND_OPENGL}>)
 target_compile_definitions (rabbit PUBLIC -DRB_GRAPHICS_BACKEND_METAL=$<BOOL:${RB_GRAPHICS_BACKEND_METAL}>)
+target_compile_definitions (rabbit PUBLIC -DRB_GRAPHICS_BACKEND_VULKAN=$<BOOL:${RB_GRAPHICS_BACKEND_VULKAN}>)
 
 target_compile_definitions (rabbit PUBLIC -DRB_AUDIO_BACKEND_XAUDIO=$<BOOL:${RB_AUDIO_BACKEND_XAUDIO}>)
 target_compile_definitions (rabbit PUBLIC -DRB_AUDIO_BACKEND_OPENAL=$<BOOL:${RB_AUDIO_BACKEND_OPENAL}>)

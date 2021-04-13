@@ -6,6 +6,9 @@ namespace rb { using graphics_device_impl = graphics_device_dx11; }
 #elif RB_GRAPHICS_BACKEND_OPENGL
 #include "ogl3/graphics_device_ogl3.hpp"
 namespace rb { using graphics_device_impl = graphics_device_ogl3; }
+#elif RB_GRAPHICS_BACKEND_VULKAN
+#include "vulkan/graphics_device_vulkan.hpp"
+namespace rb { using graphics_device_impl = graphics_device_vulkan; }
 #endif
 
 using namespace rb;

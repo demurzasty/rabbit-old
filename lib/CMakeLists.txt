@@ -16,3 +16,7 @@ if (NOT EMSCRIPTEN AND (RB_WINDOWS OR RB_LINUX OR RB_OSX))
 		add_subdirectory ("glew-2.1.0")
 	endif ()
 endif ()
+
+if (RB_GRAPHICS_BACKEND_VULKAN)
+	add_subdirectory ("volk-1.2.170")
+endif ()
