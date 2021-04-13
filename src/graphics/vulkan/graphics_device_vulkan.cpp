@@ -656,6 +656,8 @@ graphics_device_vulkan::graphics_device_vulkan(const config& config, window& win
 }
 
 graphics_device_vulkan::~graphics_device_vulkan() {
+    vkDeviceWaitIdle(_device);
+    _vertex_buffer2.reset();
     vkDestroyInstance(_instance, nullptr);
 }
 

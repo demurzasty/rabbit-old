@@ -51,6 +51,8 @@ buffer_vulkan::buffer_vulkan(VkPhysicalDevice physical_device, VkDevice device, 
 }
 
 buffer_vulkan::~buffer_vulkan() {
+    vkDestroyBuffer(_device, _buffer, nullptr);
+    vkFreeMemory(_device, _memory, nullptr);
 }
 
 void* buffer_vulkan::map() {
