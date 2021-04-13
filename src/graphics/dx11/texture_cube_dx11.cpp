@@ -119,36 +119,20 @@ texture_cube_dx11::texture_cube_dx11(ID3D11Device* device, ID3D11DeviceContext* 
 		result = device->CreateSamplerState(&sampler_desc, &_sampler_state);
 		assert(SUCCEEDED(result)); // todo: exception
 	}
-
-	if (desc.is_render_target) {
-		D3D11_RENDER_TARGET_VIEW_DESC render_target_view_desc;
-		render_target_view_desc.Format = texture_desc.Format;
-		render_target_view_desc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2DARRAY;
-		render_target_view_desc.Texture2DArray.FirstArraySlice = 0;
-		render_target_view_desc.Texture2DArray.ArraySize = 1;
-		render_target_view_desc.Texture2DArray.MipSlice = 0;
-
-		result = device->CreateRenderTargetView(_texture, &render_target_view_desc, &_render_target);
-		assert(SUCCEEDED(result)); // todo: exception
-
-		for (int i = 0; i < 6; ++i) {
-			for (int j = 0; j < desc.mipmaps; ++j) {
-				render_target_view_desc.Texture2DArray.FirstArraySlice = i;
-				render_target_view_desc.Texture2DArray.ArraySize = 1;
-				render_target_view_desc.Texture2DArray.MipSlice = j;
-
-				result = device->CreateRenderTargetView(_texture, &render_target_view_desc, &_render_targets[i][j]);
-				assert(SUCCEEDED(result)); // todo: exception
-			}
-		}
-	}
 }
 
 texture_cube_dx11::~texture_cube_dx11() {
-	safe_release(_render_target);
 	safe_release(_sampler_state);
 	safe_release(_shader_resource_view);
 	safe_release(_texture);
+
+	for (const auto& [face, mipmaps] : _render_targets) {
+		for (const auto& [mipmap, render_target] : mipmaps) {
+			if (render_target) {
+				render_target->Release();
+			}
+		}
+	}
 }
 
 void texture_cube_dx11::update(texture_cube_face face, const span<const std::uint8_t>& pixels, const vec4i& rect) {
@@ -195,5 +179,22 @@ ID3D11SamplerState* texture_cube_dx11::sampler() const {
 }
 
 ID3D11RenderTargetView* texture_cube_dx11::render_target(texture_cube_face face, int level) const {
-	return _render_targets[(int)face][level];
+	if (!is_render_target()) {
+		return nullptr;
+	}
+
+	auto& render_target = _render_targets[face][level];
+	if (!render_target) {
+		D3D11_RENDER_TARGET_VIEW_DESC render_target_view_desc;
+		render_target_view_desc.Format = formats.at(format());
+		render_target_view_desc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2DARRAY;
+		render_target_view_desc.Texture2DArray.FirstArraySlice = static_cast<UINT>(face);
+		render_target_view_desc.Texture2DArray.ArraySize = 1;
+		render_target_view_desc.Texture2DArray.MipSlice = static_cast<UINT>(level);
+
+		if (FAILED(_device->CreateRenderTargetView(_texture, &render_target_view_desc, &render_target))) {
+			throw make_exception("Cannot create render target for face: {} level: {}", face, level);
+		}
+	}
+	return render_target;
 }

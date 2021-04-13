@@ -4,6 +4,8 @@
 
 #include <d3d11.h>
 
+#include <map>
+
 namespace rb {
 	class texture_cube_dx11 : public texture_cube {
 	public:
@@ -27,7 +29,6 @@ namespace rb {
 		ID3D11Texture2D* _texture = nullptr;
 		ID3D11ShaderResourceView* _shader_resource_view = nullptr;
 		ID3D11SamplerState* _sampler_state = nullptr;
-		ID3D11RenderTargetView* _render_target = nullptr;
-		ID3D11RenderTargetView* _render_targets[6][16];
+		mutable std::map<texture_cube_face, std::map<std::uint8_t, ID3D11RenderTargetView*>> _render_targets;
 	};
 }

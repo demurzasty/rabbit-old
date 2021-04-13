@@ -94,6 +94,14 @@ namespace rb {
          */
         bool is_mutable() const;
 
+
+        /**
+         * @brief Returns mipmap count.
+         * 
+         * @return Mipmaps count.
+         */
+        int mipmaps() const;
+
     protected:
         /**
          * @brief Creates texture cube using description.
@@ -107,5 +115,6 @@ namespace rb {
         texture_wrap _wrap;
         bool _is_render_target;
         bool _is_mutable;
+        int _mipmaps;
     };
 }

@@ -246,6 +246,8 @@ graphics_device_dx11::~graphics_device_dx11() {
 	safe_release(_device_context);
 	safe_release(_swap_chain);
 	safe_release(_render_target);
+	safe_release(_depth_stencil_texture);
+	safe_release(_depth_stencil_view);
 	safe_release(_rasterizer_state);
 	safe_release(_depth_stencil_state);
 }

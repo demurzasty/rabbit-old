@@ -8,7 +8,8 @@ texture_cube::texture_cube(const texture_cube_desc& desc)
 	, _filter(desc.filter)
 	, _wrap(desc.wrap)
 	, _is_render_target(desc.is_render_target)
-	, _is_mutable(desc.is_mutable) {
+	, _is_mutable(desc.is_mutable)
+	, _mipmaps(desc.mipmaps) {
 }
 
 const vec2i& texture_cube::size() const {
@@ -38,4 +39,8 @@ bool texture_cube::is_render_target() const {
 
 bool texture_cube::is_mutable() const {
 	return _is_mutable;
+}
+
+int texture_cube::mipmaps() const {
+	return _mipmaps;
 }

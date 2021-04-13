@@ -23,6 +23,6 @@ namespace rb {
     private:
         ID3D11Device* _device;
         ID3D11DeviceContext* _context;
-        ID3D11Buffer* _buffer = nullptr;
+        ID3D11Buffer* _buffer;
     };
 }

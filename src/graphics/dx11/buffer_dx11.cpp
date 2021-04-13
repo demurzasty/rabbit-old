@@ -28,8 +28,7 @@ buffer_dx11::buffer_dx11(ID3D11Device* device, ID3D11DeviceContext* context, con
 
     D3D11_SUBRESOURCE_DATA buffer_data = {};
     buffer_data.pSysMem = desc.data;
-    const auto result = _device->CreateBuffer(&buffer_desc, desc.data ? &buffer_data : nullptr, &_buffer);
-    if (FAILED(result)) {
+    if (FAILED( _device->CreateBuffer(&buffer_desc, desc.data ? &buffer_data : nullptr, &_buffer))) {
         throw make_exception("[DX11] Cannot create buffer");
     }
 }
