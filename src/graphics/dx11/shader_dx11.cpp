@@ -60,13 +60,6 @@ shader_dx11::shader_dx11(ID3D11Device* device, ID3D11DeviceContext* context, con
 		offset += vertex_element.format.size;
 		index++;
 	}
-	
-	// todo: use desc.vertex_desc
-	// const D3D11_INPUT_ELEMENT_DESC vertex_desc[] = {
-	// 	{ "SV_POSITION", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 0, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-	// 	{ "TEXCOORD", 0, DXGI_FORMAT_R32G32_FLOAT, 0, 12, D3D11_INPUT_PER_VERTEX_DATA, 0 },
-	// 	{ "NORMAL", 0, DXGI_FORMAT_R32G32B32_FLOAT, 0, 20, D3D11_INPUT_PER_VERTEX_DATA, 0 }
-	// };
 
 	result = _device->CreateInputLayout(vertex_desc, desc.vertex_desc.size(), desc.vertex_bytecode.data(), desc.vertex_bytecode.size_bytes(), &_input_layout);
 	if (FAILED(result)) {
