@@ -569,34 +569,13 @@ graphics_device_vulkan::graphics_device_vulkan(const config& config, window& win
         { { -0.5f, 0.5f, 0.0f }, { -1.0f, 1.0f }, { 0.0f, 0.0f, 1.0f } }
     };
 
-    VkBufferCreateInfo buffer_info{};
-    buffer_info.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-    buffer_info.size = sizeof(vertices);
-    buffer_info.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
-    buffer_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-
-    if (vkCreateBuffer(_device, &buffer_info, nullptr, &_vertex_buffer) != VK_SUCCESS) {
-        throw make_exception("Failed to create vertex buffer!");
-    }
-
-    VkMemoryRequirements memory_requirements;
-    vkGetBufferMemoryRequirements(_device, _vertex_buffer, &memory_requirements);
-
-    VkMemoryAllocateInfo memory_allocate_info{};
-    memory_allocate_info.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-    memory_allocate_info.allocationSize = memory_requirements.size;
-    memory_allocate_info.memoryTypeIndex = find_memory_type(_physical_device, memory_requirements.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-
-    if (vkAllocateMemory(_device, &memory_allocate_info, nullptr, &_vertex_buffer_memory) != VK_SUCCESS) {
-        throw make_exception("Failed to allocate vertex buffer memory!");
-    }
-
-    vkBindBufferMemory(_device, _vertex_buffer, _vertex_buffer_memory, 0);
-
-    void* data;
-    vkMapMemory(_device, _vertex_buffer_memory, 0, buffer_info.size, 0, &data);
-    std::memcpy(data, vertices, sizeof(vertices));
-    vkUnmapMemory(_device, _vertex_buffer_memory);
+    buffer_desc buffer_desc;
+    buffer_desc.type = buffer_type::vertex;
+    buffer_desc.is_mutable = false;
+    buffer_desc.size = sizeof(vertices);
+    buffer_desc.stride = sizeof(vertex);
+    buffer_desc.data = vertices;
+    _vertex_buffer2 = std::make_shared<buffer_vulkan>(_physical_device, _device, buffer_desc);
 
     VkCommandPoolCreateInfo pool_info{};
     pool_info.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
@@ -641,7 +620,7 @@ graphics_device_vulkan::graphics_device_vulkan(const config& config, window& win
 
         vkCmdBindPipeline(_command_buffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, _pipeline);
 
-        VkBuffer vertex_buffers[] = { _vertex_buffer };
+        VkBuffer vertex_buffers[] = { _vertex_buffer2->buffer() };
         VkDeviceSize offsets[] = { 0 };
         vkCmdBindVertexBuffers(_command_buffers[i], 0, 1, vertex_buffers, offsets);
 
@@ -689,7 +668,7 @@ std::shared_ptr<texture_cube> graphics_device_vulkan::make_texture(const texture
 }
 
 std::shared_ptr<buffer> graphics_device_vulkan::make_buffer(const buffer_desc& buffer_desc) {
-    return std::make_shared<buffer_vulkan>(buffer_desc);
+    return std::make_shared<buffer_vulkan>(_physical_device, _device, buffer_desc);
 }
 
 std::shared_ptr<shader> graphics_device_vulkan::make_shader(const shader_desc& shader_desc) {

@@ -2,6 +2,8 @@
 
 #include <rabbit/graphics/graphics_device.hpp>
 
+#include "buffer_vulkan.hpp"
+
 #include <volk.h>
 
 #include <vector>
@@ -81,8 +83,7 @@ namespace rb {
         std::vector<VkFence> _in_flight_fences;
         std::vector<VkFence> _images_in_flight;
 
-        VkBuffer _vertex_buffer;
-        VkDeviceMemory _vertex_buffer_memory;
+        std::shared_ptr<buffer_vulkan> _vertex_buffer2;
 
         std::size_t _current_frame = 0;
     };
