@@ -2,6 +2,10 @@
 
 #include <rabbit/graphics/graphics_device.hpp>
 
+#include <volk.h>
+
+#include <vector>
+
 namespace rb {
     class graphics_device_vulkan : public graphics_device {
     public:
@@ -44,5 +48,42 @@ namespace rb {
         void bind_texture(const std::shared_ptr<texture_cube>& texture, std::size_t binding_index) override;
 
         void draw(const std::shared_ptr<mesh>& mesh, const std::shared_ptr<shader>& shader) override;
+
+    private:
+        struct swap_chain_buffer {
+            VkImage image;
+            VkImageView view;
+        };
+
+    private:
+        VkInstance _instance{ VK_NULL_HANDLE };
+        VkPhysicalDevice _physical_device{ VK_NULL_HANDLE };
+        VkDevice _device{ VK_NULL_HANDLE };
+        VkSurfaceKHR _surface{ VK_NULL_HANDLE };
+        VkFormat _color_format;
+        VkColorSpaceKHR _color_space;
+        VkSwapchainKHR _swap_chain;
+        VkPresentModeKHR _present_mode;
+        VkExtent2D _swap_extent;
+        VkQueue _graphics_queue;
+        VkQueue _present_queue;
+        std::vector<VkImage> _images;
+        std::vector<VkImageView> _image_views;
+        VkRenderPass _render_pass;
+        VkPipelineLayout _pipeline_layout;
+        VkPipeline _pipeline;
+        std::vector<VkFramebuffer> _framebuffers;
+        VkCommandPool _command_pool;
+        std::vector<VkCommandBuffer> _command_buffers;
+
+        std::vector<VkSemaphore> _image_available_semaphores;
+        std::vector<VkSemaphore> _render_finished_semaphores;
+        std::vector<VkFence> _in_flight_fences;
+        std::vector<VkFence> _images_in_flight;
+
+        VkBuffer _vertex_buffer;
+        VkDeviceMemory _vertex_buffer_memory;
+
+        std::size_t _current_frame = 0;
     };
 }

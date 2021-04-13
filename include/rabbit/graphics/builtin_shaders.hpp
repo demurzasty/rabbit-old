@@ -6,6 +6,8 @@
 
 namespace rb {
     enum class builtin_shader : std::uint8_t {
+        simple_vert,
+        simple_frag,
         forward_vert,
         forward_frag,
         irradiance_vert,

@@ -18,5 +18,9 @@ if (NOT EMSCRIPTEN AND (RB_WINDOWS OR RB_LINUX OR RB_OSX))
 endif ()
 
 if (RB_GRAPHICS_BACKEND_VULKAN)
+	if (RB_WINDOWS)
+		set (VOLK_STATIC_DEFINES VK_USE_PLATFORM_WIN32_KHR)
+	endif ()
+
 	add_subdirectory ("volk-1.2.170")
 endif ()

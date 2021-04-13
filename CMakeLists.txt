@@ -232,6 +232,9 @@ endif ()
 
 if (RB_GRAPHICS_BACKEND_VULKAN)
 	target_link_libraries (rabbit PRIVATE volk)
+	if (RB_WINDOWS)
+		target_compile_definitions (rabbit PRIVATE VK_USE_PLATFORM_WIN32_KHR)
+	endif ()
 endif ()
 
 target_compile_definitions (rabbit PUBLIC -DRB_EMSCRIPTEN=$<BOOL:${RB_EMSCRIPTEN}>)
