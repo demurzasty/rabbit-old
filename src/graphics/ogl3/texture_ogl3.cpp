@@ -23,6 +23,11 @@ static std::map<texture_filter, GLint> filters = {
 	{ texture_filter::linear, GL_LINEAR },
 };
 
+static std::map<texture_filter, GLint> mipmap_filters = {
+	{ texture_filter::nearest, GL_NEAREST_MIPMAP_NEAREST },
+	{ texture_filter::linear, GL_LINEAR_MIPMAP_LINEAR },
+};
+
 static std::map<texture_wrap, GLint> wraps = {
 	{ texture_wrap::clamp, GL_CLAMP_TO_EDGE },
 	{ texture_wrap::repeat, GL_REPEAT },
@@ -42,21 +47,29 @@ static std::map<texture_format, bool> depth_formats = {
 	{ texture_format::d24s8, true }
 };
 
+static int get_levels(const vec2i& size) {
+	return 1 + static_cast<int>(std::log2(std::max(size.x, size.y)));
+}
+
 texture_ogl3::texture_ogl3(const texture_desc& desc)
     : texture(desc) {
 	glCreateTextures(GL_TEXTURE_2D, 1, &_id);
 
 	glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
-	glTextureParameteri(_id, GL_TEXTURE_MIN_FILTER, filters.at(desc.filter));
+	glTextureParameteri(_id, GL_TEXTURE_MIN_FILTER, desc.generate_mipmaps ? mipmap_filters.at(desc.filter) : filters.at(desc.filter));
 	glTextureParameteri(_id, GL_TEXTURE_MAG_FILTER, filters.at(desc.filter));
 	glTextureParameteri(_id, GL_TEXTURE_WRAP_S, wraps.at(desc.wrap));
 	glTextureParameteri(_id, GL_TEXTURE_WRAP_T, wraps.at(desc.wrap));
 
-	glTextureStorage2D(_id, 1, internal_formats.at(desc.format), desc.size.x, desc.size.y);
+	glTextureStorage2D(_id, desc.generate_mipmaps ? get_levels(desc.size) : 1, internal_formats.at(desc.format), desc.size.x, desc.size.y);
 
 	if (!desc.data.empty()) {
 		glTextureSubImage2D(_id, 0, 0, 0, desc.size.x, desc.size.y, formats.at(desc.format), GL_UNSIGNED_BYTE, desc.data.data());
+
+		if (desc.generate_mipmaps) {
+			glGenerateTextureMipmap(_id);
+		}
 	}
 
 	if (desc.is_render_target) {

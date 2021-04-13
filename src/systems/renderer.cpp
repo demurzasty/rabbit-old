@@ -291,6 +291,26 @@ void renderer::draw(registry& registry, graphics_device& graphics_device) {
                 graphics_device.bind_texture(geometry.material->diffuse_map, 5);
                 data.bitfield |= 1;
             }
+
+            if (geometry.material->normal_map) {
+                graphics_device.bind_texture(geometry.material->normal_map, 6);
+                data.bitfield |= 2;
+            }
+
+            if (geometry.material->roughness_map) {
+                graphics_device.bind_texture(geometry.material->roughness_map, 7);
+                data.bitfield |= 4;
+            }
+
+            if (geometry.material->metallic_map) {
+                graphics_device.bind_texture(geometry.material->metallic_map, 8);
+                data.bitfield |= 8;
+            }
+
+            if (geometry.material->emissive_map) {
+                graphics_device.bind_texture(geometry.material->emissive_map, 9);
+                data.bitfield |= 16;
+            }
         } else {
             data.diffuse = { 1.0f, 1.0f, 1.0f };
             data.metallic = 0.0f;

@@ -14,8 +14,8 @@ public:
         auto base_texture = _asset_manager.load<rb::texture>("textures/rabbit_base.png");
         auto sphere_texture = _asset_manager.load<rb::texture>("textures/rabbit_sphere.png");
 
-        auto base_mesh = _asset_manager.load<rb::mesh>("rabbit_base.obj");
-        auto sphere_mesh = _asset_manager.load<rb::mesh>("rabbit_sphere.obj");
+        auto base_mesh = _asset_manager.load<rb::mesh>("meshes/rabbit_base.obj");
+        auto sphere_mesh = _asset_manager.load<rb::mesh>("meshes/rabbit_sphere.obj");
 
         auto base_material = std::make_shared<rb::material>();
         base_material->diffuse_map = base_texture;
@@ -38,6 +38,21 @@ public:
                 registry.emplace<rb::transform>(sphere).position = { i * 4.0f, 0.0f, j * 4.0f };
             }
         }
+
+        auto helmet_material = std::make_shared<rb::material>();
+        helmet_material->diffuse_map = _asset_manager.load<rb::texture>("textures/helmet/default_albedo_ao.png");
+        helmet_material->normal_map = _asset_manager.load<rb::texture>("textures/helmet/Default_normal.jpg");
+        helmet_material->roughness_map = _asset_manager.load<rb::texture>("textures/helmet/Default_roughness.png");
+        helmet_material->metallic_map = _asset_manager.load<rb::texture>("textures/helmet/Default_metal.png");
+        helmet_material->emissive_map = _asset_manager.load<rb::texture>("textures/helmet/Default_emissive.jpg");
+        helmet_material->roughness = 1.0f;
+        helmet_material->metallic = 1.0f;
+
+        auto helmet_mesh = _asset_manager.load<rb::mesh>("meshes/helmet.obj");
+
+        auto helmet = registry.create();
+        registry.emplace<rb::geometry>(helmet, helmet_mesh, helmet_material);
+        registry.emplace<rb::transform>(helmet).position = { -6.0f, 0.0f, 0.0f };
 
         auto camera = registry.create();
         registry.emplace<rb::camera>(camera);

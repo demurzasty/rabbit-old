@@ -37,22 +37,28 @@ static std::map<texture_format, bool> depth_formats = {
 	{ texture_format::d24s8, true }
 };
 
+static int get_levels(const vec2i& size) {
+	return 1 + static_cast<int>(std::log2(std::max(size.x, size.y)));
+}
+
 texture_dx11::texture_dx11(ID3D11Device* device, ID3D11DeviceContext* context, const texture_desc& desc)
 	: rb::texture(desc)
 	, _device(device)
 	, _context(context) {
+	// Fill DirectX texture descriptor 
 	CD3D11_TEXTURE2D_DESC texture_desc;
 	texture_desc.Width = desc.size.x;
 	texture_desc.Height = desc.size.y;
-	texture_desc.MipLevels = 1;
-	texture_desc.ArraySize = 1;
-	texture_desc.Format = formats.at(desc.format);
+	texture_desc.MipLevels = desc.generate_mipmaps ? 0 : 1; // 0 - generate all mipmap levels, 1 - use one level (no mipmaps at all).
+	texture_desc.ArraySize = 1;                             // One layer in 2d texture.
+	texture_desc.Format = formats.at(desc.format);          // Map RabBit format to DirectX format.
 	texture_desc.SampleDesc.Count = 1;
 	texture_desc.SampleDesc.Quality = 0;
 	texture_desc.MiscFlags = 0;
 	texture_desc.BindFlags = 0;
 	texture_desc.CPUAccessFlags = 0;
 
+	// Prepare texture for writing or not.
 	if (desc.is_mutable) {
 		texture_desc.Usage = D3D11_USAGE_DYNAMIC;
 		texture_desc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
@@ -61,37 +67,44 @@ texture_dx11::texture_dx11(ID3D11Device* device, ID3D11DeviceContext* context, c
 		texture_desc.CPUAccessFlags = 0;
 	}
 
+	// Depth texture?
 	if (depth_formats.at(desc.format)) {
 		texture_desc.BindFlags |= D3D11_BIND_DEPTH_STENCIL;
 	} else {
 		texture_desc.BindFlags |= D3D11_BIND_SHADER_RESOURCE;
 	}
 
+	// Set flags used for mipmap generation.
+	if (desc.generate_mipmaps) {
+		texture_desc.MiscFlags |= D3D11_RESOURCE_MISC_GENERATE_MIPS;
+		texture_desc.BindFlags |= D3D11_BIND_RENDER_TARGET;
+	}
+
 	if (desc.is_render_target) {
 		texture_desc.BindFlags |= D3D11_BIND_RENDER_TARGET;
 	}
 
-	D3D11_SUBRESOURCE_DATA subresource_data;
-	ZeroMemory(&subresource_data, sizeof(subresource_data));
+	//HRESULT result = device->CreateTexture2D(&texture_desc, !desc.data.empty() ? &subresource_data : nullptr, &_texture);
+	HRESULT result = device->CreateTexture2D(&texture_desc, nullptr, &_texture);
+	assert(SUCCEEDED(result)); // todo: exception
 
 	if (!desc.data.empty()) {
-		subresource_data.pSysMem = desc.data.data();
-		subresource_data.SysMemPitch = bytes_per_pixels.at(desc.format) * desc.size.x;
-		subresource_data.SysMemSlicePitch = subresource_data.SysMemPitch;
+		_context->UpdateSubresource(_texture, 0, 0, desc.data.data(), bytes_per_pixels.at(desc.format) * desc.size.x, 0);
 	}
-
-	HRESULT result = device->CreateTexture2D(&texture_desc, !desc.data.empty() ? &subresource_data : nullptr, &_texture);
-	assert(SUCCEEDED(result)); // todo: exception
 
 	if (texture_desc.BindFlags & D3D11_BIND_SHADER_RESOURCE) {
 		CD3D11_SHADER_RESOURCE_VIEW_DESC srv_esc;
 		srv_esc.Format = texture_desc.Format;
 		srv_esc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
-		srv_esc.Texture2D.MipLevels = 1;
+		srv_esc.Texture2D.MipLevels = desc.generate_mipmaps ? -1 : 1;
 		srv_esc.Texture2D.MostDetailedMip = 0;
 
 		result = device->CreateShaderResourceView(_texture, &srv_esc, &_shader_resource_view);
 		assert(SUCCEEDED(result)); // todo: exception
+
+		if (desc.generate_mipmaps) {
+			_context->GenerateMips(_shader_resource_view);
+		}
 
 		auto sampler_desc = CD3D11_SAMPLER_DESC(CD3D11_DEFAULT());
 		sampler_desc.Filter = filters.at(desc.filter);
@@ -101,7 +114,10 @@ texture_dx11::texture_dx11(ID3D11Device* device, ID3D11DeviceContext* context, c
 		sampler_desc.MipLODBias = 0.0f;
 		sampler_desc.MaxAnisotropy = 1;
 		sampler_desc.ComparisonFunc = D3D11_COMPARISON_ALWAYS;
-		sampler_desc.BorderColor[0] = sampler_desc.BorderColor[1] = sampler_desc.BorderColor[2] = sampler_desc.BorderColor[3] = 0;
+		sampler_desc.BorderColor[0] = 0.0f;
+		sampler_desc.BorderColor[1] = 0.0f;
+		sampler_desc.BorderColor[2] = 0.0f;
+		sampler_desc.BorderColor[3] = 0.0f;
 		sampler_desc.MinLOD = 0;
 		sampler_desc.MaxLOD = D3D11_FLOAT32_MAX;
 
