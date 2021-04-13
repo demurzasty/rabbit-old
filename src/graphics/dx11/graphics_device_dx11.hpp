@@ -1,7 +1,7 @@
 #pragma once 
 
-#include <rabbit/graphics_device.hpp>
-#include <rabbit/window.hpp>
+#include <rabbit/graphics/graphics_device.hpp>
+#include <rabbit/platform/window.hpp>
 
 #include <d3d11.h>
 #include <d3d11_1.h>
@@ -17,6 +17,8 @@ namespace rb {
         ~graphics_device_dx11();
 
         std::shared_ptr<texture> make_texture(const texture_desc& desc) override;
+
+        std::shared_ptr<texture_cube> make_texture(const texture_cube_desc& texture_desc) override;
 
         std::shared_ptr<buffer> make_buffer(const buffer_desc& buffer_desc) override;
 
@@ -40,7 +42,13 @@ namespace rb {
 
         void set_render_target(const std::shared_ptr<texture>& render_target) override;
 
+        void set_render_target(const std::shared_ptr<texture_cube>& render_target, texture_cube_face face, int level) override;
+
         void bind_buffer_base(const std::shared_ptr<buffer>& buffer, std::size_t binding_index) override;
+
+        void bind_texture(const std::shared_ptr<texture>& texture, std::size_t binding_index) override;
+        
+        void bind_texture(const std::shared_ptr<texture_cube>& texture, std::size_t binding_index) override;
 
         void draw(const std::shared_ptr<mesh>& vertex_buffer, const std::shared_ptr<shader>& shader) override;
 
@@ -59,6 +67,7 @@ namespace rb {
         ID3D11DepthStencilView* _depth_stencil_view = nullptr;
         ID3D11RasterizerState* _rasterizer_state = nullptr;
         D3D11_TEXTURE2D_DESC _depth_desc = {};
+        ID3D11DepthStencilState* _depth_stencil_state{ nullptr };
         D3D11_DEPTH_STENCIL_VIEW_DESC _depth_stencil_view_desc = {};
         std::map<uint64_t, ID3D11BlendState*> _blend_states;
         bool _depth_test = false;

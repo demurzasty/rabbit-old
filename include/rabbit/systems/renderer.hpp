@@ -18,34 +18,34 @@ namespace rb {
         void draw(registry& registry, graphics_device& graphics_device);
 
     private:
-        struct matrices_buffer_data {
+        struct alignas(16) matrices_buffer_data {
             mat4f world;
             mat4f view;
             mat4f projection;
         };
 
-        struct object_data {
+        struct alignas(16) object_data {
             vec3f diffuse;
             float roughness;
             float metallic;
             int bitfield;
         };
 
-        struct light_data {
+        struct alignas(16) light_data {
             vec3f direction;
             float intensity;
             vec3f color;
         };
 
-        struct camera_data {
+        struct alignas(16) camera_data {
             vec3f position;
         };
 
-        struct irradiance_data {
+        struct alignas(16) irradiance_data {
             int cube_face = 0;
         };
 
-        struct prefilter_data {
+        struct alignas(16) prefilter_data {
             int cube_face = 0;
             float roughness = 1.0f;
         };

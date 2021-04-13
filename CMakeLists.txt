@@ -28,7 +28,7 @@ set (RB_AUDIO_BACKEND_OPENAL FALSE)
 if (RB_EMSCRIPTEN)
 	set (RB_GRAPHICS_BACKEND_OPENGL TRUE)
 elseif (RB_WINDOWS)
-	if (NOT) # (MSVC)
+	if (MSVC)
 		set (RB_GRAPHICS_BACKEND_DIRECTX TRUE)
 	else ()
 		set (RB_GRAPHICS_BACKEND_OPENGL TRUE)
@@ -84,11 +84,11 @@ foreach (GLSL_SRC ${GLSL_SOURCE_FILES})
 		# GLSL -> C Header
 		COMMAND ${Python_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/scripts/bin2h.py" -i ${GLSL_SRC} -o ${GLSL_DST} -v "${FILE_NAME}.glsl"
 		# GLSL -> SPIR-V
-		COMMAND ${GLSL_VALIDATOR} -V ${GLSL_SRC} -o ${SPIRV}
+		COMMAND ${GLSL_VALIDATOR} -V ${GLSL_SRC} -DHLSL -o ${SPIRV}
 		# SPIR-V -> HLSL
 		COMMAND ${SPIRV_CROSS} --hlsl ${SPIRV} --shader-model 50 --set-hlsl-vertex-input-semantic 0 SV_POSITION --set-hlsl-vertex-input-semantic 1 TEXCOORD --set-hlsl-vertex-input-semantic 2 NORMAL --output ${HLSL} # Generate for DirectX 11
 		# HLSL -> DXBC
-		COMMAND ${FXC} /E"main" /T ${SHADER_TARGET} /Fo ${COMP} ${HLSL}
+		COMMAND ${FXC} /E"main" /O3 /T ${SHADER_TARGET} /Fo ${COMP} ${HLSL}
 		# DXBC -> C Header
 		COMMAND ${Python_EXECUTABLE} "${CMAKE_CURRENT_SOURCE_DIR}/scripts/bin2h.py" -i ${COMP} -o ${COMP_H} -v "${FILE_NAME}.comp"
 		DEPENDS ${GLSL_SRC}
@@ -164,6 +164,7 @@ if (RB_GRAPHICS_BACKEND_DIRECTX)
 		"src/graphics/dx11/buffer_dx11.cpp"
 		"src/graphics/dx11/builtin_shaders_dx11.cpp"
 		"src/graphics/dx11/graphics_device_dx11.cpp"
+		"src/graphics/dx11/texture_cube_dx11.cpp"
 		"src/graphics/dx11/texture_dx11.cpp"
 		"src/graphics/dx11/shader_dx11.cpp"
 	)

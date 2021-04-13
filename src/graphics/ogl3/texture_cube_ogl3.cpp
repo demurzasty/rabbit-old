@@ -68,7 +68,7 @@ texture_cube_ogl3::texture_cube_ogl3(const texture_cube_desc& desc)
 	glTextureParameteri(_id, GL_TEXTURE_WRAP_T, wraps.at(desc.wrap));
 	glTextureParameteri(_id, GL_TEXTURE_WRAP_R, wraps.at(desc.wrap));
 
-	glTextureStorage2D(_id, 4, GL_RGBA8, desc.size.x, desc.size.y);
+	glTextureStorage2D(_id, desc.mipmaps, GL_RGBA8, desc.size.x, desc.size.y);
 
 	for (const auto& [face, data] : desc.data) {
 		glTextureSubImage3D(_id, 0, 0, 0, (int)face, desc.size.x, desc.size.y, 1, formats.at(desc.format), GL_UNSIGNED_BYTE, data.data());

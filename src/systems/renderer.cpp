@@ -172,6 +172,7 @@ renderer::renderer(graphics_device& graphics_device, asset_manager& asset_manage
     texture_cube_desc.filter = texture_filter::linear;
     texture_cube_desc.format = texture_format::rgba8;
     texture_cube_desc.is_render_target = true;
+    texture_cube_desc.mipmaps = 1;
     _irradiance_map = graphics_device.make_texture(texture_cube_desc);
 
     buffer_desc.type = buffer_type::uniform;
@@ -187,6 +188,7 @@ renderer::renderer(graphics_device& graphics_device, asset_manager& asset_manage
     texture_cube_desc.is_render_target = true;
     texture_cube_desc.mipmaps = true;
     texture_cube_desc.generate_mipmap = true;
+    texture_cube_desc.mipmaps = 4;
     _prefilter_map = graphics_device.make_texture(texture_cube_desc);
 
     buffer_desc.type = buffer_type::uniform;
@@ -275,6 +277,7 @@ void renderer::draw(registry& registry, graphics_device& graphics_device) {
 
     _camera_buffer->update<renderer::camera_data>({ &camera_data, 1 });
 
+#if 1
     registry.view<transform, geometry>().each([this, &graphics_device, &matrices](transform& transform, geometry& geometry) {
         object_data data;
         data.bitfield = 0;
@@ -299,6 +302,7 @@ void renderer::draw(registry& registry, graphics_device& graphics_device) {
 
         graphics_device.draw(geometry.mesh, _forward);
     });
+#endif
 
     graphics_device.set_blend_state(blend_state::opaque());
     graphics_device.set_depth_test(true);
@@ -340,10 +344,10 @@ void renderer::_generate_prefilter_map() {
     prefilter_data data;
     while (mipmap < 4) {
         _graphics_device.set_backbuffer_size({ size, size });
+        data.roughness = mipmap / 4.0f;
 
         for (auto face : texture_cube_faces) {
             data.cube_face = static_cast<int>(face);
-            data.roughness = mipmap / 4.0f;
             _prefilter_buffer->update<prefilter_data>({ &data, 1 });
 
             _graphics_device.set_render_target(_prefilter_map, face, mipmap);

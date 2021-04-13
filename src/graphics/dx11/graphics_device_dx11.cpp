@@ -1,12 +1,11 @@
 #include "graphics_device_dx11.hpp"
 #include "texture_dx11.hpp"
+#include "texture_cube_dx11.hpp"
 #include "buffer_dx11.hpp"
 #include "utils_dx11.hpp"
 #include "shader_dx11.hpp"
 
-#include <rabbit/exception.hpp>
-
-#include <fmt/format.h>
+#include <rabbit/core/exception.hpp>
 
 #pragma comment (lib, "d3d11.lib")
 #pragma comment (lib, "Dxgi.lib")
@@ -174,13 +173,13 @@ graphics_device_dx11::graphics_device_dx11(config& config, window& window)
 
 	D3D11_RASTERIZER_DESC rasterizer_desc;
 	rasterizer_desc.AntialiasedLineEnable = FALSE;
-	rasterizer_desc.CullMode = D3D11_CULL_NONE;
+	rasterizer_desc.CullMode = D3D11_CULL_NONE; // fixme
 	rasterizer_desc.DepthBias = 0;
 	rasterizer_desc.DepthBiasClamp = 0.0f;
 	rasterizer_desc.DepthClipEnable = TRUE;
 	rasterizer_desc.FillMode = D3D11_FILL_SOLID;
 	rasterizer_desc.FrontCounterClockwise = FALSE;
-	rasterizer_desc.MultisampleEnable = config.window.msaa != msaa::none ? TRUE : FALSE;
+	rasterizer_desc.MultisampleEnable = FALSE;
 	rasterizer_desc.ScissorEnable = TRUE;
 	rasterizer_desc.SlopeScaledDepthBias = 0.0f;
 	result = _device->CreateRasterizerState(&rasterizer_desc, &_rasterizer_state);
@@ -188,6 +187,34 @@ graphics_device_dx11::graphics_device_dx11(config& config, window& window)
 		throw make_exception("[DX11] Cannot create rasterizer state");
 	}
 
+	D3D11_DEPTH_STENCIL_DESC dsDesc;
+
+	// Depth test parameters
+	dsDesc.DepthEnable = true;
+	dsDesc.DepthWriteMask = D3D11_DEPTH_WRITE_MASK_ALL;
+	dsDesc.DepthFunc = D3D11_COMPARISON_LESS_EQUAL;
+
+	// Stencil test parameters
+	dsDesc.StencilEnable = FALSE;
+	dsDesc.StencilReadMask = 0xFF;
+	dsDesc.StencilWriteMask = 0xFF;
+
+	// Stencil operations if pixel is front-facing
+	dsDesc.FrontFace.StencilFailOp = D3D11_STENCIL_OP_KEEP;
+	dsDesc.FrontFace.StencilDepthFailOp = D3D11_STENCIL_OP_INCR;
+	dsDesc.FrontFace.StencilPassOp = D3D11_STENCIL_OP_KEEP;
+	dsDesc.FrontFace.StencilFunc = D3D11_COMPARISON_ALWAYS;
+
+	// Stencil operations if pixel is back-facing
+	dsDesc.BackFace.StencilFailOp = D3D11_STENCIL_OP_KEEP;
+	dsDesc.BackFace.StencilDepthFailOp = D3D11_STENCIL_OP_DECR;
+	dsDesc.BackFace.StencilPassOp = D3D11_STENCIL_OP_KEEP;
+	dsDesc.BackFace.StencilFunc = D3D11_COMPARISON_ALWAYS;
+
+	// Create depth stencil state
+	_device->CreateDepthStencilState(&dsDesc, &_depth_stencil_state);
+	_device_context->OMSetDepthStencilState(_depth_stencil_state, 1);
+	
 	D3D11_VIEWPORT viewport = { 0 };
 
 	viewport.TopLeftX = 0;
@@ -220,10 +247,15 @@ graphics_device_dx11::~graphics_device_dx11() {
 	safe_release(_swap_chain);
 	safe_release(_render_target);
 	safe_release(_rasterizer_state);
+	safe_release(_depth_stencil_state);
 }
 
 std::shared_ptr<texture> graphics_device_dx11::make_texture(const texture_desc& texture_desc) {
 	return std::make_shared<texture_dx11>(_device, _device_context, texture_desc);
+}
+
+std::shared_ptr<texture_cube> graphics_device_dx11::make_texture(const texture_cube_desc& texture_desc) {
+	return std::make_shared<texture_cube_dx11>(_device, _device_context, texture_desc);
 }
 
 std::shared_ptr<buffer> graphics_device_dx11::make_buffer(const buffer_desc& buffer_desc) {
@@ -298,34 +330,36 @@ void graphics_device_dx11::set_depth_test(bool depth_test) {
 }
 
 void graphics_device_dx11::set_backbuffer_size(const vec2i& size) {
-	_render_target->Release();
+	if (!_offscreen_render_target) {
+		_render_target->Release();
 
-	_swap_chain->ResizeBuffers(0, size.x, size.y, DXGI_FORMAT_UNKNOWN, 0);
+		_swap_chain->ResizeBuffers(0, size.x, size.y, DXGI_FORMAT_UNKNOWN, 0);
 
-	ID3D11Texture2D* buffer;
-	_swap_chain->GetBuffer(0, __uuidof(ID3D11Texture2D), (void**)&buffer);
-	auto result = _device->CreateRenderTargetView(buffer, NULL, &_render_target);
-	if (FAILED(result)) {
-		throw make_exception("[DX11] Cannot create render target view");
-	}
+		ID3D11Texture2D* buffer;
+		_swap_chain->GetBuffer(0, __uuidof(ID3D11Texture2D), (void**)&buffer);
+		auto result = _device->CreateRenderTargetView(buffer, NULL, &_render_target);
+		if (FAILED(result)) {
+			throw make_exception("[DX11] Cannot create render target view");
+		}
 
-	buffer->Release();
+		buffer->Release();
 
-	_depth_stencil_texture->Release();
+		_depth_stencil_texture->Release();
 
-	_depth_desc.Width = size.x;
-	_depth_desc.Height = size.y;
+		_depth_desc.Width = size.x;
+		_depth_desc.Height = size.y;
 
-	result = _device->CreateTexture2D(&_depth_desc, NULL, &_depth_stencil_texture);
-	if (FAILED(result)) {
-		throw make_exception("[DX11] Cannot create depth stencil texture");
-	}
+		result = _device->CreateTexture2D(&_depth_desc, NULL, &_depth_stencil_texture);
+		if (FAILED(result)) {
+			throw make_exception("[DX11] Cannot create depth stencil texture");
+		}
 
-	_depth_stencil_view->Release();
+		_depth_stencil_view->Release();
 
-	result = _device->CreateDepthStencilView(_depth_stencil_texture, &_depth_stencil_view_desc, &_depth_stencil_view);
-	if (FAILED(result)) {
-		throw make_exception("[DX11] Cannot create depth stencil view");
+		result = _device->CreateDepthStencilView(_depth_stencil_texture, &_depth_stencil_view_desc, &_depth_stencil_view);
+		if (FAILED(result)) {
+			throw make_exception("[DX11] Cannot create depth stencil view");
+		}
 	}
 
 	D3D11_VIEWPORT viewport = { 0 };
@@ -396,11 +430,43 @@ void graphics_device_dx11::set_render_target(const std::shared_ptr<texture>& tex
 	}
 }
 
+void graphics_device_dx11::set_render_target(const std::shared_ptr<texture_cube>& render_target, texture_cube_face face, int level) {
+	auto native_texture = std::static_pointer_cast<texture_cube_dx11>(render_target);
+	if (native_texture && native_texture->is_render_target()) {
+		_offscreen_render_target = native_texture->render_target(face, level);
+
+		_device_context->OMSetRenderTargets(1, &_offscreen_render_target, nullptr);
+	} else {
+		set_render_target(nullptr);
+	}
+}
+
 void graphics_device_dx11::bind_buffer_base(const std::shared_ptr<buffer>& buffer, std::size_t binding_index) {
 	const auto native_buffer = std::static_pointer_cast<buffer_dx11>(buffer)->buffer();
 
 	// todo: which shader should be used? vs or ps?
 	_device_context->VSSetConstantBuffers(binding_index, 1, &native_buffer);
+	_device_context->PSSetConstantBuffers(binding_index, 1, &native_buffer);
+}
+
+void graphics_device_dx11::bind_texture(const std::shared_ptr<texture>& texture, std::size_t binding_index) {
+	const auto native_texture = std::static_pointer_cast<texture_dx11>(texture);
+
+	const auto shader_resource_view = native_texture->shader_resource_view();
+	const auto sampler_state = native_texture->sampler();
+
+	_device_context->PSSetShaderResources(binding_index, 1, &shader_resource_view);
+	_device_context->PSSetSamplers(binding_index, 1, &sampler_state);
+}
+        
+void graphics_device_dx11::bind_texture(const std::shared_ptr<texture_cube>& texture, std::size_t binding_index) {
+	const auto native_texture = std::static_pointer_cast<texture_cube_dx11>(texture);
+
+	const auto shader_resource_view = native_texture->shader_resource_view();
+	const auto sampler_state = native_texture->sampler();
+
+	_device_context->PSSetShaderResources(binding_index, 1, &shader_resource_view);
+	_device_context->PSSetSamplers(binding_index, 1, &sampler_state);
 }
 
 void graphics_device_dx11::draw(const std::shared_ptr<mesh>& mesh, const std::shared_ptr<shader>& shader) {
@@ -419,7 +485,13 @@ void graphics_device_dx11::draw(const std::shared_ptr<mesh>& mesh, const std::sh
 
 	_device_context->IASetPrimitiveTopology(topologies.at(mesh->topology()));
 
-	_device_context->Draw((UINT)mesh->vertex_buffer()->count(), 0);
+	if (mesh->index_buffer()) {
+		const auto native_index_buffer = std::static_pointer_cast<buffer_dx11>(mesh->index_buffer())->buffer();
+		_device_context->IASetIndexBuffer(native_index_buffer, DXGI_FORMAT_R32_UINT, 0);
+		_device_context->DrawIndexed((UINT)mesh->index_buffer()->count(), 0, 0);
+	} else {
+		_device_context->Draw((UINT)mesh->vertex_buffer()->count(), 0);
+	}
 }
 
 ID3D11Device* graphics_device_dx11::device() const {

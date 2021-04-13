@@ -14,25 +14,30 @@ public:
         auto base_texture = _asset_manager.load<rb::texture>("textures/rabbit_base.png");
         auto sphere_texture = _asset_manager.load<rb::texture>("textures/rabbit_sphere.png");
 
-        auto base_material = std::make_shared<rb::material>();
-        auto sphere_material = std::make_shared<rb::material>();
-
-        base_material->diffuse_map = base_texture;
-        sphere_material->diffuse_map = sphere_texture;
-        sphere_material->diffuse = { 0.5f, 0.8f, 1.0f };
-        sphere_material->metallic = 1.0f;
-        sphere_material->roughness = 0.0f;
-
         auto base_mesh = _asset_manager.load<rb::mesh>("rabbit_base.obj");
         auto sphere_mesh = _asset_manager.load<rb::mesh>("rabbit_sphere.obj");
 
-        auto base = registry.create();
-        registry.emplace<rb::geometry>(base, base_mesh, base_material);
-        registry.emplace<rb::transform>(base);
+        auto base_material = std::make_shared<rb::material>();
+        base_material->diffuse_map = base_texture;
 
-        auto sphere = registry.create();
-        registry.emplace<rb::geometry>(sphere, sphere_mesh, sphere_material);
-        registry.emplace<rb::transform>(sphere);
+        for (auto i = 0; i < 5; ++i) {
+            for (auto j = 0; j < 5; ++j) {
+                auto sphere_material = std::make_shared<rb::material>();
+
+                sphere_material->diffuse_map = sphere_texture;
+                sphere_material->diffuse = { 0.5f, 0.8f, 1.0f };
+                sphere_material->metallic = j / 4.0f;
+                sphere_material->roughness = i / 4.0f;
+
+                auto base = registry.create();
+                registry.emplace<rb::geometry>(base, base_mesh, base_material);
+                registry.emplace<rb::transform>(base).position = { i * 4.0f, 0.0f, j * 4.0f };
+
+                auto sphere = registry.create();
+                registry.emplace<rb::geometry>(sphere, sphere_mesh, sphere_material);
+                registry.emplace<rb::transform>(sphere).position = { i * 4.0f, 0.0f, j * 4.0f };
+            }
+        }
 
         auto camera = registry.create();
         registry.emplace<rb::camera>(camera);

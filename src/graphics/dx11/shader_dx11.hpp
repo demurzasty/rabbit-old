@@ -1,6 +1,6 @@
 #pragma once 
 
-#include <rabbit/shader.hpp>
+#include <rabbit/graphics/shader.hpp>
 
 #include <d3d11.h>
 

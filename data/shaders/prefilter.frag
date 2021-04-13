@@ -5,7 +5,7 @@
 layout (location = 0) in vec2 var_position;
 
 layout (std140, binding = 2) uniform PrefilterData {
-    int cubeFace;
+    int cube_face;
     float roughness;
 };
 
@@ -84,19 +84,35 @@ vec3 importanceSampleGGX(vec2 xi, vec3 n, float roughness) {
 	return normalize(sampleVec);
 }
 
-void main() {		
-    vec3 N = normalize( vec3(var_position.x, -var_position.y, 1) );
-    if(cubeFace==2)
-        N = normalize( vec3(var_position.x,  1, var_position.y) );
-    else if(cubeFace==3)
-        N = normalize( vec3(var_position.x, -1,  -var_position.y) );
-    else if(cubeFace==0)
-        N = normalize( vec3(  1, -var_position.y,-var_position.x) );
-    else if(cubeFace==1)
-        N = normalize( vec3( -1, -var_position.y, var_position.x) );
-    else if(cubeFace==5)
-        N = normalize( vec3(-var_position.x, -var_position.y, -1) );
+void main() {	
+#ifdef HLSL
+    vec3 N = normalize(vec3(var_position.x, var_position.y, 1));
 	
+    if (cube_face == 2) {
+        N = normalize(vec3(var_position.x,  1, -var_position.y));
+    } else if (cube_face == 3) {
+        N = normalize(vec3(var_position.x, -1,  var_position.y));
+    } else if (cube_face == 0) {
+        N = normalize(vec3(  1, var_position.y,-var_position.x));
+    } else if (cube_face == 1) {
+        N = normalize(vec3( -1, var_position.y, var_position.x));
+    } else if (cube_face == 5) {
+        N = normalize(vec3(-var_position.x, var_position.y, -1));
+	}
+#else	
+    vec3 N = normalize( vec3(var_position.x, -var_position.y, 1) );
+    if(cube_face==2)
+        N = normalize( vec3(var_position.x,  1, var_position.y) );
+    else if(cube_face==3)
+        N = normalize( vec3(var_position.x, -1,  -var_position.y) );
+    else if(cube_face==0)
+        N = normalize( vec3(  1, -var_position.y,-var_position.x) );
+    else if(cube_face==1)
+        N = normalize( vec3( -1, -var_position.y, var_position.x) );
+    else if(cube_face==5)
+        N = normalize( vec3(-var_position.x, -var_position.y, -1) );
+#endif
+
     // make the simplyfying assumption that V equals R equals the normal 
     vec3 R = N;
     vec3 V = R;
@@ -105,7 +121,7 @@ void main() {
     vec3 prefilteredColor = vec3(0.0);
     float totalWeight = 0.0;
     
-    float resolution = 1024.0; // resolution of source cubemap (per face)
+    float resolution = 512.0; // resolution of source cubemap (per face)
     float saTexel  = 4.0 * PI / (6.0 * resolution * resolution);
 			
     for (uint i = 0u; i < SAMPLE_COUNT; ++i)

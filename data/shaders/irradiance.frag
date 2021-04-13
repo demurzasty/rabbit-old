@@ -16,6 +16,22 @@ layout (binding = 1) uniform samplerCube radianceMap;
 layout (location = 0) out vec4 out_color;
 
 void main() {
+
+#ifdef HLSL
+    vec3 N = normalize(vec3(var_position.x, var_position.y, 1));
+	
+    if (cube_face == 2) {
+        N = normalize(vec3(var_position.x,  1, -var_position.y));
+    } else if (cube_face == 3) {
+        N = normalize(vec3(var_position.x, -1,  var_position.y));
+    } else if (cube_face == 0) {
+        N = normalize(vec3(  1, var_position.y,-var_position.x));
+    } else if (cube_face == 1) {
+        N = normalize(vec3( -1, var_position.y, var_position.x));
+    } else if (cube_face == 5) {
+        N = normalize(vec3(-var_position.x, var_position.y, -1));
+	}
+#else
     vec3 N = normalize(vec3(var_position.x, -var_position.y, 1));
 	
     if (cube_face == 2) {
@@ -29,10 +45,11 @@ void main() {
     } else if (cube_face == 5) {
         N = normalize(vec3(-var_position.x, -var_position.y, -1));
 	}
-		
+#endif
+
 	vec3 up = vec3(0,1,0);
-    vec3 right = normalize(cross(up,N));
-    up = cross(N,right);
+    vec3 right = normalize(cross(up, N));
+    up = cross(N, right);
 	
 	vec3 sampledColour = vec3(0,0,0);
     float index = 0.0;

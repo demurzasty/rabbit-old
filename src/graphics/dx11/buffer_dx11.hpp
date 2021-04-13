@@ -1,6 +1,6 @@
 #pragma once 
 
-#include <rabbit/buffer.hpp>
+#include <rabbit/graphics/buffer.hpp>
 
 #include <d3d11.h>
 

@@ -1,55 +1,60 @@
-#include "texture_dx11.hpp"
+#include "texture_cube_dx11.hpp"
 #include "utils_dx11.hpp"
+
+#include <rabbit/core/exception.hpp>
 
 #include <cassert>
 #include <map>
 
 using namespace rb;
 
-static std::map<texture_format, DXGI_FORMAT> formats = {
-	{ texture_format::r8, DXGI_FORMAT_R8_UNORM },
-	{ texture_format::rg8, DXGI_FORMAT_R8G8_UNORM },
-	{ texture_format::rgba8, DXGI_FORMAT_R8G8B8A8_UNORM },
-	{ texture_format::d24s8, DXGI_FORMAT_D24_UNORM_S8_UINT } // DXGI_FORMAT_D32_FLOAT_S8X24_UINT ?
-};
+namespace {
+	std::map<texture_format, DXGI_FORMAT> formats = {
+		{ texture_format::r8, DXGI_FORMAT_R8_UNORM },
+		{ texture_format::rg8, DXGI_FORMAT_R8G8_SNORM },
+		{ texture_format::rgba8, DXGI_FORMAT_R8G8B8A8_UNORM },
+		{ texture_format::d24s8, DXGI_FORMAT_D24_UNORM_S8_UINT } // DXGI_FORMAT_D32_FLOAT_S8X24_UINT ?
+	};
 
-static std::map<texture_filter, D3D11_FILTER> filters = {
-	{ texture_filter::nearest, D3D11_FILTER_MIN_MAG_MIP_POINT },
-	{ texture_filter::linear, D3D11_FILTER_MIN_MAG_MIP_LINEAR },
-};
+	std::map<texture_filter, D3D11_FILTER> filters = {
+		{ texture_filter::nearest, D3D11_FILTER_MIN_MAG_MIP_POINT },
+		{ texture_filter::linear, D3D11_FILTER_MIN_MAG_MIP_LINEAR },
+	};
 
-static std::map<texture_wrap, D3D11_TEXTURE_ADDRESS_MODE> wraps = {
-	{ texture_wrap::clamp, D3D11_TEXTURE_ADDRESS_CLAMP },
-	{ texture_wrap::repeat, D3D11_TEXTURE_ADDRESS_WRAP },
-};
+	std::map<texture_wrap, D3D11_TEXTURE_ADDRESS_MODE> wraps = {
+		{ texture_wrap::clamp, D3D11_TEXTURE_ADDRESS_CLAMP },
+		{ texture_wrap::repeat, D3D11_TEXTURE_ADDRESS_WRAP },
+	};
 
-static std::map<texture_format, int> bytes_per_pixels = {
-	{ texture_format::r8, 1 },
-	{ texture_format::rg8, 2 },
-	{ texture_format::rgba8, 4 },
-	{ texture_format::d24s8, 4 }
-};
+	std::map<texture_format, int> bytes_per_pixels = {
+		{ texture_format::r8, 1 },
+		{ texture_format::rg8, 2 },
+		{ texture_format::rgba8, 4 },
+		{ texture_format::d24s8, 4 }
+	};
 
-static std::map<texture_format, bool> depth_formats = {
-	{ texture_format::r8, false },
-	{ texture_format::rg8, false },
-	{ texture_format::rgba8, false },
-	{ texture_format::d24s8, true }
-};
+	std::map<texture_format, bool> depth_formats = {
+		{ texture_format::r8, false },
+		{ texture_format::rg8, false },
+		{ texture_format::rgba8, false },
+		{ texture_format::d24s8, true }
+	};
+}
 
-texture_dx11::texture_dx11(ID3D11Device* device, ID3D11DeviceContext* context, const texture_desc& desc)
-	: rb::texture(desc)
+texture_cube_dx11::texture_cube_dx11(ID3D11Device* device, ID3D11DeviceContext* context, const texture_cube_desc& desc)
+	: rb::texture_cube(desc)
 	, _device(device)
-	, _context(context) {
+	, _context(context)
+	, _render_targets() {
 	CD3D11_TEXTURE2D_DESC texture_desc;
 	texture_desc.Width = desc.size.x;
 	texture_desc.Height = desc.size.y;
-	texture_desc.MipLevels = 1;
-	texture_desc.ArraySize = 1;
+	texture_desc.MipLevels = desc.mipmaps;
+	texture_desc.ArraySize = 6;
 	texture_desc.Format = formats.at(desc.format);
 	texture_desc.SampleDesc.Count = 1;
 	texture_desc.SampleDesc.Quality = 0;
-	texture_desc.MiscFlags = 0;
+	texture_desc.MiscFlags = D3D11_RESOURCE_MISC_TEXTURECUBE;
 	texture_desc.BindFlags = 0;
 	texture_desc.CPUAccessFlags = 0;
 
@@ -71,24 +76,30 @@ texture_dx11::texture_dx11(ID3D11Device* device, ID3D11DeviceContext* context, c
 		texture_desc.BindFlags |= D3D11_BIND_RENDER_TARGET;
 	}
 
-	D3D11_SUBRESOURCE_DATA subresource_data;
-	ZeroMemory(&subresource_data, sizeof(subresource_data));
-
-	if (!desc.data.empty()) {
-		subresource_data.pSysMem = desc.data.data();
-		subresource_data.SysMemPitch = bytes_per_pixels.at(desc.format) * desc.size.x;
-		subresource_data.SysMemSlicePitch = subresource_data.SysMemPitch;
+	if (desc.generate_mipmap) {
+		texture_desc.MiscFlags |= D3D11_RESOURCE_MISC_GENERATE_MIPS;
 	}
 
-	HRESULT result = device->CreateTexture2D(&texture_desc, !desc.data.empty() ? &subresource_data : nullptr, &_texture);
-	assert(SUCCEEDED(result)); // todo: exception
+	D3D11_SUBRESOURCE_DATA subresource_data[6];
+	ZeroMemory(&subresource_data, sizeof(subresource_data));
+
+	for (auto& [face, data] : desc.data) {
+		subresource_data[(int)face].pSysMem = !data.empty() ? data.data() : nullptr;
+		subresource_data[(int)face].SysMemPitch = bytes_per_pixels.at(desc.format) * desc.size.x;
+		subresource_data[(int)face].SysMemSlicePitch = subresource_data[(int)face].SysMemPitch;
+	}
+
+	HRESULT result = device->CreateTexture2D(&texture_desc, desc.data.empty() ? nullptr : &subresource_data[0], &_texture);
+	if (FAILED(result)) {
+		throw make_exception("Cannot create texture");
+	}
 
 	if (texture_desc.BindFlags & D3D11_BIND_SHADER_RESOURCE) {
 		CD3D11_SHADER_RESOURCE_VIEW_DESC srv_esc;
 		srv_esc.Format = texture_desc.Format;
-		srv_esc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURE2D;
-		srv_esc.Texture2D.MipLevels = 1;
-		srv_esc.Texture2D.MostDetailedMip = 0;
+		srv_esc.ViewDimension = D3D11_SRV_DIMENSION_TEXTURECUBE;
+		srv_esc.TextureCube.MipLevels = desc.mipmaps;
+		srv_esc.TextureCube.MostDetailedMip = 0;
 
 		result = device->CreateShaderResourceView(_texture, &srv_esc, &_shader_resource_view);
 		assert(SUCCEEDED(result)); // todo: exception
@@ -112,22 +123,35 @@ texture_dx11::texture_dx11(ID3D11Device* device, ID3D11DeviceContext* context, c
 	if (desc.is_render_target) {
 		D3D11_RENDER_TARGET_VIEW_DESC render_target_view_desc;
 		render_target_view_desc.Format = texture_desc.Format;
-		render_target_view_desc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
-		render_target_view_desc.Texture2D.MipSlice = 0;
+		render_target_view_desc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2DARRAY;
+		render_target_view_desc.Texture2DArray.FirstArraySlice = 0;
+		render_target_view_desc.Texture2DArray.ArraySize = 1;
+		render_target_view_desc.Texture2DArray.MipSlice = 0;
 
 		result = device->CreateRenderTargetView(_texture, &render_target_view_desc, &_render_target);
 		assert(SUCCEEDED(result)); // todo: exception
+
+		for (int i = 0; i < 6; ++i) {
+			for (int j = 0; j < desc.mipmaps; ++j) {
+				render_target_view_desc.Texture2DArray.FirstArraySlice = i;
+				render_target_view_desc.Texture2DArray.ArraySize = 1;
+				render_target_view_desc.Texture2DArray.MipSlice = j;
+
+				result = device->CreateRenderTargetView(_texture, &render_target_view_desc, &_render_targets[i][j]);
+				assert(SUCCEEDED(result)); // todo: exception
+			}
+		}
 	}
 }
 
-texture_dx11::~texture_dx11() {
+texture_cube_dx11::~texture_cube_dx11() {
 	safe_release(_render_target);
 	safe_release(_sampler_state);
 	safe_release(_shader_resource_view);
 	safe_release(_texture);
 }
 
-void texture_dx11::update(const span<const std::uint8_t>& pixels, const vec4i& rect) {
+void texture_cube_dx11::update(texture_cube_face face, const span<const std::uint8_t>& pixels, const vec4i& rect) {
 	D3D11_TEXTURE2D_DESC staging_texture_desc;
 	_texture->GetDesc(&staging_texture_desc);
 
@@ -158,18 +182,18 @@ void texture_dx11::update(const span<const std::uint8_t>& pixels, const vec4i& r
 	staging_texture->Release();
 }
 
-ID3D11Texture2D* texture_dx11::texture() const {
+ID3D11Texture2D* texture_cube_dx11::texture() const {
 	return _texture;
 }
 
-ID3D11ShaderResourceView* texture_dx11::shader_resource_view() const {
+ID3D11ShaderResourceView* texture_cube_dx11::shader_resource_view() const {
 	return _shader_resource_view;
 }
 
-ID3D11SamplerState* texture_dx11::sampler() const {
+ID3D11SamplerState* texture_cube_dx11::sampler() const {
 	return _sampler_state;
 }
 
-ID3D11RenderTargetView* texture_dx11::render_target() const {
-	return _render_target;
+ID3D11RenderTargetView* texture_cube_dx11::render_target(texture_cube_face face, int level) const {
+	return _render_targets[(int)face][level];
 }
