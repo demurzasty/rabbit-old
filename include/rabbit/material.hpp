@@ -16,8 +16,7 @@ namespace rb {
 
     enum class material_binding_type {
         uniform_buffer,
-        texture,
-        sampler
+        texture
     };
 
     struct material_binding_desc { 

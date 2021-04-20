@@ -10,7 +10,10 @@ layout (binding = 0) uniform Matrices {
     mat4 world;
 };
 
+layout (location = 0) out vec2 v_texcoord;
+
 void main() {
+    v_texcoord = in_texcoord;
     gl_Position = world * vec4(in_position, 1.0);
 }
 

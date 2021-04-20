@@ -6,6 +6,8 @@ add_subdirectory ("gsl-3.1.0")
 
 add_subdirectory ("json-3.9.1")
 
+add_subdirectory ("stb")
+
 if (WIN32)
    set(VOLK_STATIC_DEFINES VK_USE_PLATFORM_WIN32_KHR)
 endif()

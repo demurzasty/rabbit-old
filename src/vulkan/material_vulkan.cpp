@@ -7,13 +7,11 @@
 
 using namespace rb;
 
-material_vulkan::material_vulkan(VkDevice device, VkDescriptorPool descriptor_pool, VkRenderPass render_pass, VkExtent2D swapchain_extent, const material_desc& desc)
+material_vulkan::material_vulkan(VkDevice device, VkRenderPass render_pass, VkExtent2D swapchain_extent, const material_desc& desc)
     : material(desc)
-    , _device(device)
-    , _descriptor_pool(descriptor_pool) {
+    , _device(device) {
     _create_descriptor_set_layout(desc);
     _create_pipeline_layout(desc);
-    _create_descriptor_set(desc);
 
     auto vertex_shader_module = _create_shader_module(desc.vertex_bytecode);
     auto fragment_shader_module = _create_shader_module(desc.fragment_bytecode);
@@ -36,11 +34,13 @@ material_vulkan::material_vulkan(VkDevice device, VkDescriptorPool descriptor_po
     };
 
     _create_pipeline(shader_stages, render_pass, swapchain_extent, desc);
+
+    vkDestroyShaderModule(_device, fragment_shader_module, nullptr);
+    vkDestroyShaderModule(_device, vertex_shader_module, nullptr);
 }
 
 material_vulkan::~material_vulkan() {
     vkDestroyPipeline(_device, _pipeline, nullptr);
-    vkFreeDescriptorSets(_device, _descriptor_pool, 1, &_descriptor_set);
     vkDestroyPipelineLayout(_device, _pipeline_layout, nullptr);
     vkDestroyDescriptorSetLayout(_device, _descriptor_set_layout, nullptr);
 }
@@ -103,18 +103,6 @@ VkShaderModule material_vulkan::_create_shader_module(const span<const std::uint
     RB_ASSERT(result == VK_SUCCESS, "Failed to create shader module!");
 
     return shader_module;
-}
-
-void material_vulkan::_create_descriptor_set(const material_desc& desc) {
-    VkDescriptorSetAllocateInfo descriptor_set_allocate_info{};
-    descriptor_set_allocate_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
-    descriptor_set_allocate_info.pNext = nullptr;
-    descriptor_set_allocate_info.descriptorPool = _descriptor_pool;
-    descriptor_set_allocate_info.descriptorSetCount = 1;
-    descriptor_set_allocate_info.pSetLayouts = &_descriptor_set_layout;
-
-    RB_MAYBE_UNUSED auto result = vkAllocateDescriptorSets(_device, &descriptor_set_allocate_info, &_descriptor_set);
-    RB_ASSERT(result == VK_SUCCESS, "Failed to create Vulkan descriptor set");
 }
 
 void material_vulkan::_create_pipeline(const span<const VkPipelineShaderStageCreateInfo>& shader_stages, VkRenderPass render_pass, VkExtent2D swapchain_extent, const material_desc& desc) {

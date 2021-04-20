@@ -7,6 +7,7 @@
 #include "mesh.hpp"
 #include "material.hpp"
 #include "resource_heap.hpp"
+#include "texture.hpp"
 
 #include <memory>
 
@@ -30,6 +31,8 @@ namespace rb {
         RB_NODISCARD virtual std::shared_ptr<material> make_material(const material_desc& desc) = 0;
 
         RB_NODISCARD virtual std::shared_ptr<resource_heap> make_resource_heap(const resource_heap_desc& desc) = 0;
+
+        RB_NODISCARD virtual std::shared_ptr<texture> make_texture(const texture_desc& desc) = 0;
 
         virtual void begin() = 0;
 

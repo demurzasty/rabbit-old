@@ -48,6 +48,7 @@ set (SRC
     "src/mesh.cpp"
     "src/resource_heap.cpp"
     "src/system.cpp"
+    "src/texture.cpp"
     "src/vertex.cpp"
     "src/window.cpp"
 )
@@ -64,6 +65,7 @@ if (TRUE)
         "src/vulkan/graphics_device_vulkan.cpp"
         "src/vulkan/material_vulkan.cpp"
         "src/vulkan/resource_heap_vulkan.cpp"
+        "src/vulkan/texture_vulkan.cpp"
         "src/vulkan/utils_vulkan.cpp"
     )
 endif ()
@@ -72,7 +74,7 @@ add_library (rabbit STATIC ${SRC})
 target_include_directories (rabbit PUBLIC "include")
 target_include_directories (rabbit PRIVATE "generated/include")
 target_compile_features (rabbit PUBLIC cxx_std_17)
-target_link_libraries (rabbit PUBLIC vma volk gsl json entt)
+target_link_libraries (rabbit PUBLIC vma volk stb gsl json entt)
 target_compile_definitions (rabbit PRIVATE VMA_STATIC_VULKAN_FUNCTIONS NOMINMAX VK_USE_PLATFORM_WIN32_KHR)
 add_dependencies (rabbit shaders)
 

@@ -55,12 +55,22 @@ VkFormat utils_vulkan::format(const vertex_format& format) RB_NOEXCEPT {
     return VK_FORMAT_UNDEFINED;
 }
 
+VkFormat utils_vulkan::format(const texture_format& format) RB_NOEXCEPT {
+    switch (format) {
+        case texture_format::r8: return VK_FORMAT_R8_UNORM;
+        case texture_format::rg8: return VK_FORMAT_R8G8_UNORM;
+        case texture_format::rgba8: return VK_FORMAT_R8G8B8A8_UNORM;
+        case texture_format::d24s8: return VK_FORMAT_D24_UNORM_S8_UINT;
+    }
+
+    RB_ASSERT(false, "Failed to map Vulkan format");
+    return VK_FORMAT_UNDEFINED;
+}
+
 VkDescriptorType utils_vulkan::descriptor_type(const material_binding_type& type) RB_NOEXCEPT {
     switch (type) {
-        case material_binding_type::sampler:
-            return VK_DESCRIPTOR_TYPE_SAMPLER;
         case material_binding_type::texture:
-            return VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE;
+            return VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
         case material_binding_type::uniform_buffer:
             return VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
     }

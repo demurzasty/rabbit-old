@@ -2,6 +2,7 @@
 
 #include "material.hpp"
 #include "buffer.hpp"
+#include "texture.hpp"
 
 #include <vector>
 #include <memory>
@@ -10,6 +11,7 @@ namespace rb {
     struct resource_view_desc {
         material_binding_type type{ material_binding_type::uniform_buffer };
         std::shared_ptr<buffer> buffer;
+        std::shared_ptr<texture> texture;
     };
 
     struct resource_heap_desc {

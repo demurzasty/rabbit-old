@@ -9,15 +9,19 @@ buffer_vulkan::buffer_vulkan(VkPhysicalDevice physical_device, VkDevice device, 
     : rb::buffer(desc)
     , _device(device)
     , _allocator(allocator) {
-    VkBufferCreateInfo buffer_info{};
+    VkBufferCreateInfo buffer_info;
     buffer_info.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+    buffer_info.pNext = nullptr;
+    buffer_info.flags = 0;
     buffer_info.size = desc.size;
     buffer_info.usage = utils_vulkan::buffer_usage_flags(desc.type) | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
     buffer_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-
-    VmaAllocationCreateInfo vmaallocInfo = {};
-	vmaallocInfo.usage = VMA_MEMORY_USAGE_CPU_ONLY;
-    RB_MAYBE_UNUSED auto result = vmaCreateBuffer(allocator, &buffer_info, &vmaallocInfo, &_buffer, &_allocation, nullptr);
+    buffer_info.queueFamilyIndexCount = 0;
+    buffer_info.pQueueFamilyIndices = nullptr;
+    
+    VmaAllocationCreateInfo allocation_info = {};
+	allocation_info.usage = VMA_MEMORY_USAGE_CPU_ONLY;
+    RB_MAYBE_UNUSED auto result = vmaCreateBuffer(allocator, &buffer_info, &allocation_info, &_buffer, &_allocation, nullptr);
 
     if (desc.data) {
         void* data;

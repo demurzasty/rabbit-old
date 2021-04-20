@@ -2,6 +2,7 @@
 #include "buffer_vulkan.hpp"
 #include "material_vulkan.hpp"
 #include "resource_heap_vulkan.hpp"
+#include "texture_vulkan.hpp"
 
 #include <rabbit/config.hpp>
 #include <rabbit/version.hpp>
@@ -452,11 +453,15 @@ std::shared_ptr<mesh> graphics_device_vulkan::make_mesh(const mesh_desc& desc) {
 }
 
 std::shared_ptr<material> graphics_device_vulkan::make_material(const material_desc& desc) {
-    return std::make_shared<material_vulkan>(_device, _descriptor_pool, _render_pass, _swapchain_extent, desc);
+    return std::make_shared<material_vulkan>(_device, _render_pass, _swapchain_extent, desc);
 }
 
 std::shared_ptr<resource_heap> graphics_device_vulkan::make_resource_heap(const resource_heap_desc& desc) {
     return std::make_shared<resource_heap_vulkan>(_device, desc);
+}
+        
+std::shared_ptr<texture> graphics_device_vulkan::make_texture(const texture_desc& desc) {
+    return std::make_shared<texture_vulkan>(_device, _graphics_queue, _command_pool, _allocator, desc);
 }
 
 void graphics_device_vulkan::begin() {

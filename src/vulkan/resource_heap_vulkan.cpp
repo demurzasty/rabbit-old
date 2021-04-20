@@ -2,6 +2,7 @@
 #include "utils_vulkan.hpp"
 #include "material_vulkan.hpp"
 #include "buffer_vulkan.hpp"
+#include "texture_vulkan.hpp"
 
 #include <rabbit/range.hpp>
 
@@ -65,6 +66,7 @@ void resource_heap_vulkan::_create_descriptor_sets(const resource_heap_desc& des
 void resource_heap_vulkan::_update_descriptor_sets(const resource_heap_desc& desc, const std::vector<material_binding_desc>& bindings) {
     auto container = std::make_unique<VkWriteDescriptorSet[]>(desc.resource_views.size());
     auto buffer_infos = std::make_unique<VkDescriptorBufferInfo[]>(desc.resource_views.size());
+    auto image_infos = std::make_unique<VkDescriptorImageInfo[]>(desc.resource_views.size());
 
     for (auto index : rb::make_range<std::size_t>(0u, desc.resource_views.size())) {
         const auto& binding = bindings[index % bindings.size()];
@@ -80,6 +82,7 @@ void resource_heap_vulkan::_update_descriptor_sets(const resource_heap_desc& des
         container[index].pImageInfo = nullptr;
         container[index].pTexelBufferView = nullptr;
         container[index].dstSet = _descriptor_sets[index / bindings.size()];
+        container[index].descriptorType = utils_vulkan::descriptor_type(binding.binding_type);
 
         switch (binding.binding_type) {
             case material_binding_type::uniform_buffer: {
@@ -87,15 +90,15 @@ void resource_heap_vulkan::_update_descriptor_sets(const resource_heap_desc& des
                 buffer_infos[index].offset = 0;
                 buffer_infos[index].range = resource_view.buffer->size();
                 
-                container[index].descriptorType = utils_vulkan::descriptor_type(binding.binding_type);
                 container[index].pBufferInfo = &buffer_infos[index];
                 break;
             }
-            case material_binding_type::sampler:
-                
-                break;
             case material_binding_type::texture:
-                
+                image_infos[index].sampler = std::static_pointer_cast<texture_vulkan>(resource_view.texture)->sampler();
+                image_infos[index].imageView = std::static_pointer_cast<texture_vulkan>(resource_view.texture)->image_view();
+                image_infos[index].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+                container[index].pImageInfo = &image_infos[index];
                 break;
         }
     }

@@ -25,6 +25,8 @@ namespace rb {
         std::shared_ptr<material> make_material(const material_desc& desc) override;
 
         std::shared_ptr<resource_heap> make_resource_heap(const resource_heap_desc& desc) override;
+        
+        std::shared_ptr<texture> make_texture(const texture_desc& desc) override;
 
         void begin() override;
 

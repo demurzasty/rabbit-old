@@ -8,6 +8,9 @@
 #include <rabbit/generated/shaders/forward.vert.spv.h>
 #include <rabbit/generated/shaders/forward.frag.spv.h>
 
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb_image.h>
+
 #include <chrono>
 
 using namespace rb;
@@ -52,6 +55,18 @@ int application::run() {
     buffer_desc.stride = sizeof(vertex);
     auto vertex_buffer = graphics_device.make_buffer(buffer_desc);
 
+    int w, h, c;
+    auto image_data = stbi_load("C:/Users/Demurzasty/Projects/rabbit6/example/data/textures/rabbit_base.png", &w, &h, &c, STBI_rgb_alpha);
+    RB_ASSERT(image_data, "Failed to load image");
+
+    texture_desc texture_desc;
+    texture_desc.data = image_data;
+    texture_desc.format = texture_format::rgba8;
+    texture_desc.size = { (std::uint32_t)w, (std::uint32_t)h };
+    auto texture = graphics_device.make_texture(texture_desc);
+
+    stbi_image_free(image_data);
+
     struct matrices {
         mat4f proj;
         mat4f view;
@@ -74,10 +89,11 @@ int application::run() {
     material_desc.vertex_bytecode = forward_vert;
     material_desc.fragment_bytecode = forward_frag;
     material_desc.bindings = {
-        { material_binding_type::uniform_buffer, shader_stage_flags::vertex, 0, 1 }
+        { material_binding_type::uniform_buffer, shader_stage_flags::vertex, 0, 1 },
+        { material_binding_type::texture, shader_stage_flags::fragment, 1, 1 }
     };
     auto material = graphics_device.make_material(material_desc);
-
+ 
     mesh_desc mesh_desc;
     mesh_desc.vertex_buffer = vertex_buffer;
     mesh_desc.vertex_desc = vertex_desc;
@@ -86,7 +102,8 @@ int application::run() {
     resource_heap_desc resource_heap_desc;
     resource_heap_desc.material = material;
     resource_heap_desc.resource_views = {
-        { material_binding_type::uniform_buffer, uniform_buffer }
+        { material_binding_type::uniform_buffer, uniform_buffer },
+        { material_binding_type::texture, nullptr, texture }
     };
     auto resource_heap = graphics_device.make_resource_heap(resource_heap_desc);
 
