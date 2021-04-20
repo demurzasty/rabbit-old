@@ -8,7 +8,6 @@
 #include <rabbit/generated/shaders/forward.vert.spv.h>
 #include <rabbit/generated/shaders/forward.frag.spv.h>
 
-#define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 
 #include <chrono>
@@ -129,6 +128,8 @@ int application::run() {
         }
 
         matrices.world = rb::mat4f::translation({ std::sinf(frame_index * 0.002f), 0.0f, 0.0f });
+        matrices.proj = rb::mat4f::perspective(45.0f, 1280.0f / 720.0f, 0.1f, 100.0f);
+        matrices.view = rb::mat4f::translation({ 0.0f, 0.0f, -10.0f });
 
         graphics_device.begin();
 

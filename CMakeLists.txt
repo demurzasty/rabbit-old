@@ -41,13 +41,16 @@ add_subdirectory ("lib")
 
 set (SRC 
     "src/application.cpp"
+    "src/asset_manager.cpp"
     "src/buffer.cpp"
     "src/builder.cpp"
     "src/graphics_device.cpp"
     "src/material.cpp"
+    "Src/mesh_loader.cpp"
     "src/mesh.cpp"
     "src/resource_heap.cpp"
     "src/system.cpp"
+    "src/texture_loader.cpp"
     "src/texture.cpp"
     "src/vertex.cpp"
     "src/window.cpp"

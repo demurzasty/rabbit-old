@@ -4,6 +4,7 @@
 #include "config.hpp"
 #include "di.hpp"
 #include "system.hpp"
+#include "asset_manager.hpp"
 
 #include <list>
 #include <memory>
@@ -35,6 +36,17 @@ namespace rb {
         builder& singleton(Func func) {
             _installations.push_back([func](injector& injector) {
                 injector.install<Interface>(func);
+            });
+            return *this;
+        }
+
+
+        template<typename Asset, typename Loader, typename... Extensions>
+        builder& loader(Extensions&&... extensions) {
+            _installations.push_back([extensions...](injector& injector) {
+                injector.invoke([extensions...](asset_manager& asset_manager) {
+                    asset_manager.add_loader<Asset, Loader>(std::forward<Extensions>(extensions)...);
+                });
             });
             return *this;
         }
