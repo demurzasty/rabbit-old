@@ -41,11 +41,11 @@ namespace rb {
         }
 
 
-        template<typename Asset, typename Loader, typename... Extensions>
-        builder& loader(Extensions&&... extensions) {
-            _installations.push_back([extensions...](injector& injector) {
-                injector.invoke([extensions...](asset_manager& asset_manager) {
-                    asset_manager.add_loader<Asset, Loader>(std::forward<Extensions>(extensions)...);
+        template<typename Asset, typename Loader>
+        builder& loader() {
+            _installations.push_back([](injector& injector) {
+                injector.invoke([](asset_manager& asset_manager) {
+                    asset_manager.add_loader<Asset, Loader>();
                 });
             });
             return *this;

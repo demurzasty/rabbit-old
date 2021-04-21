@@ -10,6 +10,8 @@ elseif (APPLE)
 	set (RB_OSX TRUE)
 endif()
 
+set (RB_VULKAN TRUE)
+
 find_package (Python COMPONENTS Interpreter)
 
 set (GLSL_VALIDATOR "${CMAKE_CURRENT_SOURCE_DIR}/bin/glslangValidator.exe")
@@ -88,6 +90,9 @@ endif ()
 target_compile_definitions (rabbit PUBLIC RB_WINDOWS=$<BOOL:${RB_WINDOWS}>)
 target_compile_definitions (rabbit PUBLIC RB_LINUX=$<BOOL:${RB_LINUX}>)
 target_compile_definitions (rabbit PUBLIC RB_MACOS=$<BOOL:${RB_MACOS}>)
+
+target_compile_definitions (rabbit PUBLIC RB_VULKAN=$<BOOL:${RB_VULKAN}>)
+
 
 if (CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
     add_subdirectory ("example")

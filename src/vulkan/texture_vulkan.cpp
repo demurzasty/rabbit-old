@@ -69,7 +69,7 @@ void texture_vulkan::_update_image(VkQueue graphics_queue, VkCommandPool command
     buffer_info.pNext = nullptr;
     buffer_info.flags = 0;
     buffer_info.size = desc.size.x * desc.size.y * bytes_per_pixel();
-    buffer_info.usage = VK_BUFFER_USAGE_TRANSFER_DST_BIT;
+    buffer_info.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
     buffer_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
     buffer_info.queueFamilyIndexCount = 0;
     buffer_info.pQueueFamilyIndices = nullptr;

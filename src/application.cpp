@@ -3,12 +3,11 @@
 #include <rabbit/window.hpp>
 #include <rabbit/graphics_device.hpp>
 #include <rabbit/mat4.hpp>
+#include <rabbit/asset_manager.hpp>
 
 #include <cstdint>
 #include <rabbit/generated/shaders/forward.vert.spv.h>
 #include <rabbit/generated/shaders/forward.frag.spv.h>
-
-#include <stb_image.h>
 
 #include <chrono>
 
@@ -28,6 +27,7 @@ int application::run() {
     auto& state = _injector.get<application_state>();
     auto& window = _injector.get<rb::window>();
     auto& graphics_device = _injector.get<rb::graphics_device>();
+    auto& asset_manager = _injector.get<rb::asset_manager>();
 
     vertex_desc vertex_desc = {
         { vertex_attribute::position, vertex_format::vec3f() },
@@ -54,17 +54,7 @@ int application::run() {
     buffer_desc.stride = sizeof(vertex);
     auto vertex_buffer = graphics_device.make_buffer(buffer_desc);
 
-    int w, h, c;
-    auto image_data = stbi_load("C:/Users/Demurzasty/Projects/rabbit6/example/data/textures/rabbit_base.png", &w, &h, &c, STBI_rgb_alpha);
-    RB_ASSERT(image_data, "Failed to load image");
-
-    texture_desc texture_desc;
-    texture_desc.data = image_data;
-    texture_desc.format = texture_format::rgba8;
-    texture_desc.size = { (std::uint32_t)w, (std::uint32_t)h };
-    auto texture = graphics_device.make_texture(texture_desc);
-
-    stbi_image_free(image_data);
+    auto texture = asset_manager.load<rb::texture>("C:/Users/Demurzasty/Projects/rabbit6/example/data/textures/rabbit_base.png");
 
     struct matrices {
         mat4f proj;
@@ -96,7 +86,8 @@ int application::run() {
     mesh_desc mesh_desc;
     mesh_desc.vertex_buffer = vertex_buffer;
     mesh_desc.vertex_desc = vertex_desc;
-    auto mesh = graphics_device.make_mesh(mesh_desc);
+    // auto mesh = graphics_device.make_mesh(mesh_desc);
+    auto mesh = asset_manager.load<rb::mesh>("C:/Users/Demurzasty/Projects/rabbit6/example/data/meshes/rabbit_base.obj");
 
     resource_heap_desc resource_heap_desc;
     resource_heap_desc.material = material;
@@ -127,9 +118,10 @@ int application::run() {
             last_time = curr_time;
         }
 
-        matrices.world = rb::mat4f::translation({ std::sinf(frame_index * 0.002f), 0.0f, 0.0f });
+        matrices.world = rb::mat4f::rotation_y(frame_index * 0.002f);
         matrices.proj = rb::mat4f::perspective(45.0f, 1280.0f / 720.0f, 0.1f, 100.0f);
-        matrices.view = rb::mat4f::translation({ 0.0f, 0.0f, -10.0f });
+       // matrices.proj[5] = -matrices.proj[5];
+        matrices.view = rb::mat4f::translation({ 0.0f, -3.0f, -10.0f });
 
         graphics_device.begin();
 

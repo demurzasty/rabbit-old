@@ -16,8 +16,8 @@ builder rb::make_builder() {
         .singleton<window>(&window::install)
         .singleton<graphics_device>(&graphics_device::install)
         .singleton<asset_manager>()
-        .loader<texture, texture_loader>(".png", ".bmp", ".jpg")
-        .loader<mesh, mesh_loader>(".obj");
+        .loader<texture, texture_loader>()
+        .loader<mesh, mesh_loader>();
 }
 
 application builder::build() const {

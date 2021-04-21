@@ -130,12 +130,21 @@ namespace rb {
 
             const auto cotangent = std::cos(r) / s;
 
+#if RB_VULKAN
+            return { {
+                cotangent / aspect, 0, 0, 0,
+                0, -cotangent, 0, 0,
+                0, 0, (min + max) / delta, -1,
+                0, 0, (2 * min * max) / delta, 0
+            } };
+#else
             return { {
                 cotangent / aspect, 0, 0, 0,
                 0, cotangent, 0, 0,
                 0, 0, (min + max) / delta, -1,
                 0, 0, (2 * min * max) / delta, 0
             } };
+#endif
         }
     };
 
