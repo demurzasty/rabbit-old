@@ -165,6 +165,14 @@ void material_vulkan::_create_pipeline(const span<const VkPipelineShaderStageCre
     multisampling_state_info.sampleShadingEnable = VK_FALSE;
     multisampling_state_info.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
 
+    VkPipelineDepthStencilStateCreateInfo depth_stencil_state_info{};
+    depth_stencil_state_info.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+    depth_stencil_state_info.depthTestEnable = VK_TRUE;
+    depth_stencil_state_info.depthWriteEnable = VK_TRUE;
+    depth_stencil_state_info.depthCompareOp = VK_COMPARE_OP_LESS;
+    depth_stencil_state_info.depthBoundsTestEnable = VK_FALSE;
+    depth_stencil_state_info.stencilTestEnable = VK_FALSE;
+
     VkPipelineColorBlendAttachmentState color_blend_attachment_state_info{};
     color_blend_attachment_state_info.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
     color_blend_attachment_state_info.blendEnable = VK_FALSE;
@@ -190,6 +198,7 @@ void material_vulkan::_create_pipeline(const span<const VkPipelineShaderStageCre
     pipeline_info.pRasterizationState = &rasterizer_state_info;
     pipeline_info.pMultisampleState = &multisampling_state_info;
     pipeline_info.pColorBlendState = &color_blend_state_info;
+    pipeline_info.pDepthStencilState = &depth_stencil_state_info;
     pipeline_info.layout = _pipeline_layout;
     pipeline_info.renderPass = render_pass;
     pipeline_info.subpass = 0;

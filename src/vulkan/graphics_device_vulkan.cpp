@@ -310,6 +310,44 @@ graphics_device_vulkan::graphics_device_vulkan(application_config& config, windo
         RB_ASSERT(result == VK_SUCCESS, "Failed to create image view");
     }
 
+    const VkFormat depth_formats[] = {
+        VK_FORMAT_D24_UNORM_S8_UINT
+    };
+
+    VkImageCreateInfo depth_image_info{};
+    depth_image_info.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+    depth_image_info.imageType = VK_IMAGE_TYPE_2D;
+    depth_image_info.extent.width = _swapchain_extent.width;
+    depth_image_info.extent.height = _swapchain_extent.height;
+    depth_image_info.extent.depth = 1;
+    depth_image_info.mipLevels = 1;
+    depth_image_info.arrayLayers = 1;
+    depth_image_info.format = VK_FORMAT_D24_UNORM_S8_UINT;
+    depth_image_info.tiling = VK_IMAGE_TILING_OPTIMAL;
+    depth_image_info.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    depth_image_info.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT;
+    depth_image_info.samples = VK_SAMPLE_COUNT_1_BIT;
+    depth_image_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+    VmaAllocationCreateInfo depth_allocation_info = {};
+	depth_allocation_info.usage = VMA_MEMORY_USAGE_GPU_ONLY;
+    result = vmaCreateImage(_allocator, &depth_image_info, &depth_allocation_info, &_depth_image, &_depth_image_allocation, nullptr);
+    RB_ASSERT(result == VK_SUCCESS, "Failed to create Vulkan depth image");
+
+    VkImageViewCreateInfo depth_image_view_info{};
+    depth_image_view_info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+    depth_image_view_info.image = _depth_image;
+    depth_image_view_info.viewType = VK_IMAGE_VIEW_TYPE_2D;
+    depth_image_view_info.format = VK_FORMAT_D24_UNORM_S8_UINT;
+    depth_image_view_info.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
+    depth_image_view_info.subresourceRange.baseMipLevel = 0;
+    depth_image_view_info.subresourceRange.levelCount = 1;
+    depth_image_view_info.subresourceRange.baseArrayLayer = 0;
+    depth_image_view_info.subresourceRange.layerCount = 1;
+
+    result = vkCreateImageView(_device, &depth_image_view_info, nullptr, &_depth_image_view);
+    RB_ASSERT(result == VK_SUCCESS, "Failed to create Vulkan depth image view");
+
     VkAttachmentDescription color_attachment;
     color_attachment.flags = 0;
     color_attachment.format = _surface_format.format;
@@ -321,34 +359,61 @@ graphics_device_vulkan::graphics_device_vulkan(application_config& config, windo
     color_attachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
     color_attachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 
+    VkAttachmentDescription depth_attachment{};
+    depth_attachment.format = VK_FORMAT_D24_UNORM_S8_UINT;
+    depth_attachment.samples = VK_SAMPLE_COUNT_1_BIT;
+    depth_attachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+    depth_attachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+    depth_attachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+    depth_attachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+    depth_attachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    depth_attachment.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
     VkAttachmentReference color_attachment_reference;
     color_attachment_reference.attachment = 0;
     color_attachment_reference.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+    VkAttachmentReference depth_attachment_reference{};
+    depth_attachment_reference.attachment = 1;
+    depth_attachment_reference.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
     VkSubpassDescription subpass{};
     subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
     subpass.colorAttachmentCount = 1;
     subpass.pColorAttachments = &color_attachment_reference;
+    subpass.pDepthStencilAttachment = &depth_attachment_reference;
+
+    VkSubpassDependency subpass_dependency{};
+    subpass_dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
+    subpass_dependency.dstSubpass = 0;
+    subpass_dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+    subpass_dependency.srcAccessMask = 0;
+    subpass_dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+    subpass_dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+
+    VkAttachmentDescription attachments[] = { color_attachment, depth_attachment }; 
 
     VkRenderPassCreateInfo render_pass_info{};
     render_pass_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-    render_pass_info.attachmentCount = 1;
-    render_pass_info.pAttachments = &color_attachment;
+    render_pass_info.attachmentCount = sizeof(attachments) / sizeof(*attachments);
+    render_pass_info.pAttachments = attachments;
     render_pass_info.subpassCount = 1;
     render_pass_info.pSubpasses = &subpass;
+    render_pass_info.dependencyCount = 1;
+    render_pass_info.pDependencies = &subpass_dependency;
 
     result = vkCreateRenderPass(_device, &render_pass_info, nullptr, &_render_pass);
     RB_ASSERT(result == VK_SUCCESS, "Failed to create render pass");
 
     _framebuffers.resize(_image_views.size());
     for (auto index : rb::make_range<std::size_t>(0u, _images.size())) {
-        VkImageView attachments[] = { _image_views[index] };
+        VkImageView framebuffer_attachments[] = { _image_views[index], _depth_image_view };
 
         VkFramebufferCreateInfo framebuffer_info{};
         framebuffer_info.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
         framebuffer_info.renderPass = _render_pass;
-        framebuffer_info.attachmentCount = 1;
-        framebuffer_info.pAttachments = &_image_views[index];
+        framebuffer_info.attachmentCount = sizeof(framebuffer_attachments) / sizeof(*framebuffer_attachments);
+        framebuffer_info.pAttachments = framebuffer_attachments;
         framebuffer_info.width = _swapchain_extent.width;
         framebuffer_info.height = _swapchain_extent.height;
         framebuffer_info.layers = 1;
@@ -419,6 +484,8 @@ graphics_device_vulkan::~graphics_device_vulkan() {
     vkDestroyDescriptorPool(_device, _descriptor_pool, nullptr);
 
     vkDestroyRenderPass(_device, _render_pass, nullptr);
+
+    vmaDestroyImage(_allocator, _depth_image, _depth_image_allocation);
 
     for (auto framebuffer : _framebuffers) {
         vkDestroyFramebuffer(_device, framebuffer, nullptr);
@@ -518,9 +585,10 @@ void graphics_device_vulkan::end() {
 }
 
 void graphics_device_vulkan::begin_render_pass() {
-	VkClearValue clear_value;
-	clear_value.color = { { 0.0f, 0.0f, 0.0f, 1.0f } };
-
+	VkClearValue clear_values[2];
+	clear_values[0].color = { { 0.0f, 0.0f, 0.0f, 1.0f } };
+    clear_values[1].depthStencil = { 1.0f, 0 };
+    
 	// Start the main renderpass. 
 	// We will use the clear color from above, and the framebuffer of the index the swapchain gave us
 	VkRenderPassBeginInfo render_pass_begin_info = {};
@@ -530,8 +598,8 @@ void graphics_device_vulkan::begin_render_pass() {
 	render_pass_begin_info.renderArea.offset = { 0, 0 };
 	render_pass_begin_info.renderArea.extent = _swapchain_extent;
 	render_pass_begin_info.framebuffer = _framebuffers[_image_index];
-	render_pass_begin_info.clearValueCount = 1;
-	render_pass_begin_info.pClearValues = &clear_value;
+	render_pass_begin_info.clearValueCount = sizeof(clear_values) / sizeof(*clear_values);
+	render_pass_begin_info.pClearValues = clear_values;
 
 	vkCmdBeginRenderPass(_command_buffer, &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
 }

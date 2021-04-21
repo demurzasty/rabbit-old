@@ -53,9 +53,6 @@ void texture_vulkan::_create_image(const texture_desc& desc) {
     image_info.pQueueFamilyIndices = 0;
     image_info.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 
-    auto result2 = vkCreateImage(_device, &image_info, nullptr, &_image);
-    RB_ASSERT(result2 == VK_SUCCESS, "Failed to create Vulkan image");
-
     VmaAllocationCreateInfo allocation_info = {};
 	allocation_info.usage = VMA_MEMORY_USAGE_GPU_ONLY;
     RB_MAYBE_UNUSED auto result = vmaCreateImage(_allocator, &image_info, &allocation_info, &_image, &_allocation, nullptr);

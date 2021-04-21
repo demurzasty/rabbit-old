@@ -61,7 +61,8 @@ namespace rb {
         VkRenderPass _render_pass{ VK_NULL_HANDLE };
         std::vector<VkFramebuffer> _framebuffers;
         VkImage _depth_image{ VK_NULL_HANDLE };
-        VkDeviceMemory _depth_image_memory{ VK_NULL_HANDLE };
+        VmaAllocation _depth_image_allocation{ VK_NULL_HANDLE };
+        // VkDeviceMemory _depth_image_memory{ VK_NULL_HANDLE };
         VkImageView _depth_image_view{ VK_NULL_HANDLE };
         VkDescriptorPool _descriptor_pool{ VK_NULL_HANDLE };
         VkCommandPool _command_pool{ VK_NULL_HANDLE };
