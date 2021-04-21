@@ -37,5 +37,6 @@ namespace rb {
     private:
         injector _injector;
         std::list<std::shared_ptr<rb::system>> _systems;
+        registry _registry;
     };
 }
