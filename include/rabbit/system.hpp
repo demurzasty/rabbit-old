@@ -8,6 +8,8 @@ namespace rb {
     public:
         virtual ~system() = default;
 
+        virtual void initialize(registry& registry);
+
         virtual void update(registry& registry, float elapsed_time);
 
         virtual void fixed_update(registry& registry, float elapsed_time);

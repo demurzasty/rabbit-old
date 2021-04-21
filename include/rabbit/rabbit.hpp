@@ -6,6 +6,7 @@
 #include "config.hpp"
 #include "di.hpp"
 #include "entity.hpp"
+#include "geometry.hpp"
 #include "graphics_device.hpp"
 #include "json.hpp"
 #include "loader.hpp"

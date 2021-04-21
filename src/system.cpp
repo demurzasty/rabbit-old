@@ -2,6 +2,9 @@
 
 using namespace rb;
 
+void system::initialize(registry& registry) {
+}
+
 void system::update(registry& registry, float elapsed_time) {
 }
 

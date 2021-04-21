@@ -6,6 +6,7 @@
 #include <rabbit/texture_loader.hpp>
 #include <rabbit/mesh.hpp>
 #include <rabbit/mesh_loader.hpp>
+#include <rabbit/renderer.hpp>
 
 using namespace rb;
 
@@ -17,7 +18,8 @@ builder rb::make_builder() {
         .singleton<graphics_device>(&graphics_device::install)
         .singleton<asset_manager>()
         .loader<texture, texture_loader>()
-        .loader<mesh, mesh_loader>();
+        .loader<mesh, mesh_loader>()
+        .system<renderer>();
 }
 
 application builder::build() const {

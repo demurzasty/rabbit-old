@@ -50,6 +50,7 @@ set (SRC
     "src/material.cpp"
     "Src/mesh_loader.cpp"
     "src/mesh.cpp"
+    "src/renderer.cpp"
     "src/resource_heap.cpp"
     "src/system.cpp"
     "src/texture_loader.cpp"

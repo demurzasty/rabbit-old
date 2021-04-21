@@ -54,7 +54,7 @@ namespace rb {
         template<typename System>
         builder& system() {
             _system_factories.push_back([](injector& injector) {
-                return injector.create<std::shared_ptr<System>>();
+                return injector.resolve<System>();
             });
             return *this;
         }

@@ -28,9 +28,17 @@ int application::run() {
     auto& window = _injector.get<rb::window>();
     auto& graphics_device = _injector.get<rb::graphics_device>();
 
+    for (auto& system : _systems) {
+        system->initialize(_registry);
+    }
+
     while (state.running && window.is_open()) {
         window.poll_events();
 
+        for (auto& system : _systems) {
+            system->update(_registry, 0.0f);
+        }
+        
         graphics_device.begin();
 
         for (auto& system : _systems) {
