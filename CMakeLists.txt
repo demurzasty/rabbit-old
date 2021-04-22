@@ -24,7 +24,7 @@ foreach (GLSL_SRC ${GLSL_SOURCE_FILES})
 
     set (GENERATED_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/generated/include/rabbit/generated/shaders")
 	set (SPIRV_H "${GENERATED_DIRECTORY}/${FILE_NAME}.spv.h")
-    
+
     string (REPLACE "." "_" VARIABLE_NAME ${FILE_NAME})
 
 	add_custom_command (
@@ -41,38 +41,39 @@ add_custom_target (shaders DEPENDS ${SPIRV_BINARY_FILES})
 
 add_subdirectory ("lib")
 
-set (SRC 
-    "src/application.cpp"
-    "src/asset_manager.cpp"
-    "src/buffer.cpp"
-    "src/builder.cpp"
-    "src/graphics_device.cpp"
-    "src/material.cpp"
-    "Src/mesh_loader.cpp"
-    "src/mesh.cpp"
-    "src/renderer.cpp"
-    "src/resource_heap.cpp"
-    "src/system.cpp"
-    "src/texture_loader.cpp"
-    "src/texture.cpp"
-    "src/vertex.cpp"
-    "src/window.cpp"
+set (SRC
+    "src/engine/application.cpp"
+    "src/asset/asset_manager.cpp"
+    "src/graphics/buffer.cpp"
+    "src/engine/builder.cpp"
+    "src/graphics/graphics_device.cpp"
+    "src/graphics/material.cpp"
+    "Src/loaders/mesh_loader.cpp"
+    "src/graphics/mesh.cpp"
+    "src/systems/renderer.cpp"
+    "src/graphics/shader_data.cpp"
+    "src/graphics/shader.cpp"
+    "src/engine/system.cpp"
+    "src/loaders/texture_loader.cpp"
+    "src/graphics/texture.cpp"
+    "src/graphics/vertex.cpp"
+    "src/platform/window.cpp"
 )
 
 if (RB_WINDOWS)
-    set (SRC ${SRC} 
-        "src/win32/window_win32.cpp"
+    set (SRC ${SRC}
+        "src/platform/win32/window_win32.cpp"
     )
 endif ()
 
 if (TRUE)
-    set (SRC ${SRC} 
-        "src/vulkan/buffer_vulkan.cpp"
-        "src/vulkan/graphics_device_vulkan.cpp"
-        "src/vulkan/material_vulkan.cpp"
-        "src/vulkan/resource_heap_vulkan.cpp"
-        "src/vulkan/texture_vulkan.cpp"
-        "src/vulkan/utils_vulkan.cpp"
+    set (SRC ${SRC}
+        "src/graphics/vulkan/buffer_vulkan.cpp"
+        "src/graphics/vulkan/graphics_device_vulkan.cpp"
+        "src/graphics/vulkan/shader_data_vulkan.cpp"
+        "src/graphics/vulkan/shader_vulkan.cpp"
+        "src/graphics/vulkan/texture_vulkan.cpp"
+        "src/graphics/vulkan/utils_vulkan.cpp"
     )
 endif ()
 

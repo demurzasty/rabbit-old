@@ -3,8 +3,9 @@
 #include <filesystem>
 
 struct initialize_system : public rb::system {
-    initialize_system(rb::asset_manager& asset_manager)
-        : _asset_manager(asset_manager) {
+    initialize_system(rb::asset_manager& asset_manager, rb::graphics_device& graphics_device)
+        : _asset_manager(asset_manager)
+        , _graphics_device(graphics_device) {
     }
 
     void initialize(rb::registry& registry) override {
@@ -14,17 +15,31 @@ struct initialize_system : public rb::system {
         auto base_texture = _asset_manager.load<rb::texture>("textures/rabbit_base.png");
         auto sphere_texture = _asset_manager.load<rb::texture>("textures/rabbit_sphere.png");
 
-        auto base_entity = registry.create();
-        auto sphere_entity = registry.create();
+        auto forward_shader = _graphics_device.make_shader(rb::builtin_shader::forward);
 
-        registry.emplace<rb::transform>(base_entity);
-        registry.emplace<rb::transform>(sphere_entity);
+        rb::material_desc material_desc;
+        material_desc.albedo_map = base_texture;
+        auto base_material = _graphics_device.make_material(material_desc);
 
-        registry.emplace<rb::geometry>(base_entity, base_mesh, nullptr, nullptr, base_texture);
-        registry.emplace<rb::geometry>(sphere_entity, sphere_mesh, nullptr, nullptr, sphere_texture);
+        material_desc.albedo_map = nullptr;
+        material_desc.base_color = { 0.2f, 0.5f, 0.8f };
+        material_desc.albedo_map = sphere_texture;
+        auto sphere_material = _graphics_device.make_material(material_desc);
+
+        for (auto index : rb::make_range(0, 3)) {
+            auto base_entity = registry.create();
+            auto sphere_entity = registry.create();
+
+            registry.emplace<rb::transform>(base_entity).position = { -3.0f + index * 3.0f, 0.0f, 0.0f };
+            registry.emplace<rb::transform>(sphere_entity).position = { -3.0f + index * 3.0f, 0.0f, 0.0f };
+
+            registry.emplace<rb::geometry>(base_entity, base_mesh, base_material);
+            registry.emplace<rb::geometry>(sphere_entity, sphere_mesh, sphere_material);
+        }
     }
 
     rb::asset_manager& _asset_manager;
+    rb::graphics_device& _graphics_device;
 };
 
 int main(int argc, char* argv[]) {

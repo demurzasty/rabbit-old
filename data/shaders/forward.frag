@@ -4,10 +4,16 @@
 
 layout (location = 0) in vec2 v_texcoord;
 
-layout(binding = 1) uniform sampler2D u_texture;
+layout (binding = 2) uniform MaterialData {
+    vec3 u_base_color;
+    float u_roughness;
+    float u_metallic;
+};
+
+layout(binding = 3) uniform sampler2D u_albedo_map;
 
 layout (location = 0) out vec4 out_color;
 
 void main() {
-    out_color = vec4(texture(u_texture, v_texcoord).rgb, 1.0);
+    out_color = vec4(u_base_color * texture(u_albedo_map, v_texcoord).rgb, 1.0);
 }
