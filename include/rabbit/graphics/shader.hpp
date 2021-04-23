@@ -25,35 +25,6 @@ namespace rb {
         };
     };
 
-    enum class shader_parameter_type {
-        floating_point,
-        integer,
-        vec2f,
-        vec3f,
-        vec4f,
-        vec2i,
-        vec3i,
-        vec4i,
-        mat4f,
-        texture2d
-    };
-
-    /**
-     * @brief Shader paramter type. Order of templates parameters must match shader_parameter_type enum.
-     */
-    using shader_parameter = std::variant<float, int, vec2f, vec3f, vec4f, vec2i, vec3i, vec4i, mat4f, std::shared_ptr<texture>>;
-
-    /**
-     * @brief
-     */
-    struct shader_parameter_desc {
-        std::string name;
-        shader_parameter_type type{ shader_parameter_type::floating_point };
-        std::size_t offset{ 0 };
-        std::size_t slot{ 0 };
-        shader_parameter default_value;
-    };
-
     enum class shader_binding_type {
         uniform_buffer,
         texture
@@ -75,7 +46,6 @@ namespace rb {
         span<const std::uint32_t> vertex_bytecode;
         span<const std::uint32_t> fragment_bytecode;
         std::vector<shader_binding_desc> bindings;
-        std::vector<shader_parameter_desc> parameters;
     };
 
     class shader {
@@ -90,11 +60,8 @@ namespace rb {
 
         RB_NODISCARD const std::vector<shader_binding_desc>& bindings() const RB_NOEXCEPT;
 
-        RB_NODISCARD const std::vector<shader_parameter_desc>& parameters() const RB_NOEXCEPT;
-
     private:
         rb::vertex_desc _vertex_desc;
         std::vector<shader_binding_desc> _bindings;
-        std::vector<shader_parameter_desc> _parameters;
     };
 }
