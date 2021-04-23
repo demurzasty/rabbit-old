@@ -30,27 +30,27 @@ namespace rb {
             }
         };
 
-        static inline constexpr vertex_format vec2f() RB_NOEXCEPT {
+        RB_NODISCARD static inline constexpr vertex_format vec2f() RB_NOEXCEPT {
             return { vertex_format_type::floating_point, 2, sizeof(rb::vec2f), false };
         }
 
-        static inline constexpr vertex_format vec3f() RB_NOEXCEPT {
+        RB_NODISCARD static inline constexpr vertex_format vec3f() RB_NOEXCEPT {
             return { vertex_format_type::floating_point, 3, sizeof(rb::vec3f), false };
         }
 
-        static inline constexpr vertex_format vec4f() RB_NOEXCEPT {
+        RB_NODISCARD static inline constexpr vertex_format vec4f() RB_NOEXCEPT {
             return { vertex_format_type::floating_point, 4, sizeof(rb::vec4f), false };
         }
 
-        static inline constexpr vertex_format vec2i() RB_NOEXCEPT {
+        RB_NODISCARD static inline constexpr vertex_format vec2i() RB_NOEXCEPT {
             return { vertex_format_type::integer, 2, sizeof(rb::vec2i), false };
         }
 
-        static inline constexpr vertex_format vec3i() RB_NOEXCEPT {
+        RB_NODISCARD static inline constexpr vertex_format vec3i() RB_NOEXCEPT {
             return { vertex_format_type::integer, 3, sizeof(rb::vec3i), false };
         }
 
-        static inline constexpr vertex_format vec4i() RB_NOEXCEPT {
+        RB_NODISCARD static inline constexpr vertex_format vec4i() RB_NOEXCEPT {
             return { vertex_format_type::integer, 4, sizeof(rb::vec4i), false };
         }
 
