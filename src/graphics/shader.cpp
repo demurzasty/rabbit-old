@@ -4,8 +4,7 @@ using namespace rb;
 
 shader::shader(const shader_desc& desc)
     : _vertex_desc(desc.vertex_desc)
-    , _bindings(desc.bindings)
-    , _parameters(desc.parameters) {
+    , _bindings(desc.bindings) {
     RB_ASSERT(!_vertex_desc.empty(), "Vertex description is not provided");
 }
 
@@ -25,8 +24,4 @@ std::optional<shader_binding_desc> shader::binding(std::size_t slot) const RB_NO
 
 const std::vector<shader_binding_desc>& shader::bindings() const RB_NOEXCEPT {
     return _bindings;
-}
-
-const std::vector<shader_parameter_desc>& shader::parameters() const RB_NOEXCEPT {
-    return _parameters;
 }
