@@ -27,11 +27,11 @@ To be able to use `RabBit`, users must provide a full-featured compiler that sup
 #include <rabbit/rabbit.hpp>
 
 int main(int argc, char* argv[]) {
-	rb::app::setup();
+    rb::app::setup();
 
     // Initialization code goes here.
 
-	rb::app::run();
+    rb::app::run();
 }
 ```
 
