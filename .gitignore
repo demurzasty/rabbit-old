@@ -1,5 +1,7 @@
+/.vs
+/.vscode
+
 /out
 /build
-/.vs
-/.idea
-/cmake-build-debug
+/generated
+/CMakeSettings.json

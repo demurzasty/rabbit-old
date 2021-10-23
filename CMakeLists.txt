@@ -2,9 +2,7 @@ cmake_minimum_required (VERSION 3.16)
 
 project (rabbit)
 
-if (EMSCRIPTEN)
-	set (RB_EMSCRIPTEN TRUE)
-elseif (WIN32)
+if (WIN32)
 	set (RB_WINDOWS TRUE)
 elseif (UNIX AND NOT APPLE)
 	set (RB_LINUX TRUE)
@@ -12,156 +10,91 @@ elseif (APPLE)
 	set (RB_OSX TRUE)
 endif()
 
-set (RB_GRAPHICS_BACKEND_DIRECTX FALSE)
-set (RB_GRAPHICS_BACKEND_OPENGL FALSE)
-set (RB_GRAPHICS_BACKEND_METAL FALSE)
-
-set (RB_PLATFORM_BACKEND_SDL2 FALSE)
-
-set (RB_GAMEPAD_BACKEND_XINPUT FALSE)
-set (RB_GAMEPAD_BACKEND_SDL2 FALSE)
-
-set (RB_AUDIO_BACKEND_XAUDIO FALSE)
-set (RB_AUDIO_BACKEND_OPENAL FALSE)
-
-if (RB_EMSCRIPTEN)
-	set (RB_GRAPHICS_BACKEND_OPENGL TRUE)
-elseif (RB_WINDOWS)
-	if (MSVC)
-		set (RB_GRAPHICS_BACKEND_DIRECTX TRUE)
-	else ()
-		set (RB_GRAPHICS_BACKEND_OPENGL TRUE)
-	endif ()
-
-	set (RB_PLATFORM_BACKEND_SDL2 TRUE)
-	set (RB_GAMEPAD_BACKEND_SDL2 TRUE)
-	set (RB_AUDIO_BACKEND_XAUDIO TRUE)
-elseif (RB_LINUX)
-	set (RB_GRAPHICS_BACKEND_OPENGL TRUE)
-	set (RB_PLATFORM_BACKEND_SDL2 TRUE)
-	set (RB_GAMEPAD_BACKEND_SDL2 TRUE)
-	set (RB_AUDIO_BACKEND_OPENAL TRUE)
-elseif (RB_OSX)
-	set (RB_GRAPHICS_BACKEND_METAL TRUE)
-	set (RB_PLATFORM_BACKEND_SDL2 TRUE)
-	set (RB_GAMEPAD_BACKEND_SDL2 TRUE)
-	set (RB_AUDIO_BACKEND_OPENAL TRUE)
-endif ()
-
-option (RB_PROD_BUILD "Enable production build" OFF)
+set (RB_VULKAN TRUE)
+set (RB_DIRECTX12 FALSE) 
 
 add_subdirectory ("lib")
 
+set (GLSLANG_VALIDATOR "${CMAKE_CURRENT_SOURCE_DIR}/bin/win32/glslangValidator.exe")
+
+file (GLOB_RECURSE GLSL_SOURCE_FILES "data/shaders/*.vert" "data/shaders/*.frag")
+
+foreach (GLSL_SRC ${GLSL_SOURCE_FILES})
+	get_filename_component (FILE_NAME ${GLSL_SRC} NAME)
+	get_filename_component (FILE_EXT ${GLSL_SRC} EXT)
+
+	set (GENERATED_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/generated/include/rabbit/generated/shaders")
+	set (SPIRV_H "${GENERATED_DIRECTORY}/${FILE_NAME}.spv.h")
+
+	string (REPLACE "." "_" VARIABLE_NAME ${FILE_NAME})
+
+	add_custom_command (
+		OUTPUT ${SPIRV_H}
+		COMMAND ${CMAKE_COMMAND} -E make_directory ${GENERATED_DIRECTORY}
+		# GLSL -> SPIR-V -> C Header
+		COMMAND ${GLSLANG_VALIDATOR} -V ${GLSL_SRC} --vn "${VARIABLE_NAME}" -o ${SPIRV_H}
+		DEPENDS ${GLSL_SRC}
+	)
+	list (APPEND SPIRV_BINARY_FILES ${SPIRV_H})
+endforeach (GLSL_SRC)
+
+add_custom_target (shaders DEPENDS ${SPIRV_BINARY_FILES})
+
 set (SRC 
-	"src/exception.cpp"
-	"src/uuid.cpp"
-	"src/clock.cpp"
-	"src/window.cpp"
-	"src/keyboard.cpp"
-	"src/mouse.cpp"
-	"src/gamepad.cpp"
-	"src/game.cpp"
+	"src/app.cpp"
+	"src/assets.cpp"
+	"src/environment.cpp"
+	"src/graphics.cpp"
+	"src/input.cpp"
+	"src/material.cpp"
+	"src/mesh.cpp"
+	"src/renderer.cpp"
+	"src/settings.cpp"
+	"src/system.cpp"
 	"src/texture.cpp"
-	"src/buffer.cpp"
-	"src/texture_loader.cpp"
-	"src/graphics_device.cpp"
-	"src/sprite_batch.cpp"
-	"src/asset_manager.cpp"
-	"src/loader.cpp"
-	"src/image.cpp"
-	"src/state.cpp"
-	"src/state_manager.cpp"
-	"src/dummy/gamepad_dummy.cpp"
-	"src/dummy/keyboard_dummy.cpp"
-	"src/dummy/mouse_dummy.cpp"
+	"src/window.cpp"
 )
 
-if (RB_PLATFORM_BACKEND_WIN32) 
+if (RB_WINDOWS) 
 	set (SRC ${SRC}
+		"src/win32/input_win32.cpp"
 		"src/win32/window_win32.cpp"
-		"src/win32/keyboard_win32.cpp"
-		"src/win32/mouse_win32.cpp"
 	)
 endif ()
 
-if (RB_PLATFORM_BACKEND_SDL2)
+if (RB_VULKAN) 
 	set (SRC ${SRC}
-		"src/sdl2/window_sdl2.cpp"
-		"src/sdl2/keyboard_sdl2.cpp"
-		"src/sdl2/mouse_sdl2.cpp"
-		"src/sdl2/gamepad_sdl2.cpp"
-		"src/sdl2/gamecontrollerdb_sdl2.cpp"
-	)
-endif ()
-
-if (RB_GAMEPAD_BACKEND_XINPUT) 
-	set (SRC ${SRC}
-		"src/xinput/gamepad_xinput.cpp"
-	)
-endif ()
-
-if (RB_GRAPHICS_BACKEND_DIRECTX) 
-	set (SRC ${SRC}
-		"src/dx11/graphics_device_dx11.cpp"
-		"src/dx11/texture_dx11.cpp"
-		"src/dx11/buffer_dx11.cpp"
-		"src/dx11/standard_shaders_dx11.cpp"
-	)
-endif ()
-
-if (RB_GRAPHICS_BACKEND_OPENGL) 
-	set (SRC ${SRC}
-		"src/ogl3/graphics_device_ogl3.cpp"
-		"src/ogl3/texture_ogl3.cpp"
-		"src/ogl3/buffer_ogl3.cpp"
-		"src/ogl3/standard_shaders_ogl3.cpp"
+		"src/vulkan/environment_vulkan.cpp"
+		"src/vulkan/graphics_vulkan.cpp"
+		"src/vulkan/material_vulkan.cpp"
+		"src/vulkan/mesh_vulkan.cpp"
+		"src/vulkan/texture_vulkan.cpp"
+		"src/vulkan/utils_vulkan.cpp"
 	)
 endif ()
 
 add_library (rabbit STATIC ${SRC})
 target_compile_features (rabbit PUBLIC cxx_std_17)
-target_include_directories (rabbit PUBLIC "include")
-target_link_libraries (rabbit PUBLIC fmt stb json gsl)
+target_include_directories (rabbit PUBLIC "include" PRIVATE "generated/include")
+target_link_libraries (rabbit PUBLIC meshoptimizer stb fmt gsl json entt)
+add_dependencies (rabbit shaders)
 
-if (MSVC) 
-	target_compile_definitions (rabbit PUBLIC NOMINMAX _CRT_SECURE_NO_WARNINGS)
+if (MSVC)
+	target_compile_definitions (rabbit PRIVATE NOMINMAX _CRT_SECURE_NO_WARNINGS)
 endif ()
 
-if (NOT RB_EMSCRIPTEN AND RB_PLATFORM_BACKEND_SDL2)
-	target_link_libraries (rabbit PUBLIC SDL2-static)
+if (RB_VULKAN)
+	target_link_libraries (rabbit PUBLIC vma volk)
+	target_compile_definitions (rabbit PRIVATE VMA_STATIC_VULKAN_FUNCTIONS VK_USE_PLATFORM_WIN32_KHR)
 endif ()
 
-if (NOT RB_EMSCRIPTEN AND RB_GRAPHICS_BACKEND_OPENGL) 
-	target_link_libraries (rabbit PRIVATE glew)
+target_compile_definitions (rabbit PUBLIC RB_WINDOWS=$<BOOL:${RB_WINDOWS}>)
+target_compile_definitions (rabbit PUBLIC RB_LINUX=$<BOOL:${RB_LINUX}>)
+target_compile_definitions (rabbit PUBLIC RB_MACOS=$<BOOL:${RB_MACOS}>)
 
-	if (RB_WINDOWS)
-		target_link_libraries (rabbit PRIVATE opengl32)
-	elseif (RB_LINUX)
-		target_link_libraries (rabbit PRIVATE GL)
-	endif ()
-endif ()
-
-target_compile_definitions (rabbit PUBLIC -DRB_EMSCRIPTEN=$<BOOL:${RB_EMSCRIPTEN}>)
-target_compile_definitions (rabbit PUBLIC -DRB_WINDOWS=$<BOOL:${RB_WINDOWS}>)
-target_compile_definitions (rabbit PUBLIC -DRB_LINUX=$<BOOL:${RB_LINUX}>)
-target_compile_definitions (rabbit PUBLIC -DRB_MACOS=$<BOOL:${RB_MACOS}>)
-target_compile_definitions (rabbit PUBLIC -DRB_SWITCH=$<BOOL:${RB_SWITCH}>)
-
-target_compile_definitions (rabbit PUBLIC -DRB_PLATFORM_BACKEND_WIN32=$<BOOL:${RB_PLATFORM_BACKEND_WIN32}>)
-target_compile_definitions (rabbit PUBLIC -DRB_PLATFORM_BACKEND_SDL2=$<BOOL:${RB_PLATFORM_BACKEND_SDL2}>)
-
-target_compile_definitions (rabbit PUBLIC -DRB_GAMEPAD_BACKEND_SDL2=$<BOOL:${RB_GAMEPAD_BACKEND_SDL2}>)
-target_compile_definitions (rabbit PUBLIC -DRB_GAMEPAD_BACKEND_XINPUT=$<BOOL:${RB_GAMEPAD_BACKEND_XINPUT}>)
-
-target_compile_definitions (rabbit PUBLIC -DRB_GRAPHICS_BACKEND_DIRECTX=$<BOOL:${RB_GRAPHICS_BACKEND_DIRECTX}>)
-target_compile_definitions (rabbit PUBLIC -DRB_GRAPHICS_BACKEND_OPENGL=$<BOOL:${RB_GRAPHICS_BACKEND_OPENGL}>)
-target_compile_definitions (rabbit PUBLIC -DRB_GRAPHICS_BACKEND_METAL=$<BOOL:${RB_GRAPHICS_BACKEND_METAL}>)
-
-target_compile_definitions (rabbit PUBLIC -DRB_AUDIO_BACKEND_XAUDIO=$<BOOL:${RB_AUDIO_BACKEND_XAUDIO}>)
-target_compile_definitions (rabbit PUBLIC -DRB_AUDIO_BACKEND_OPENAL=$<BOOL:${RB_AUDIO_BACKEND_OPENAL}>)
-
-target_compile_definitions (rabbit PUBLIC -DRB_PROD_BUILD=$<BOOL:${RB_PROD_BUILD}>)
+target_compile_definitions (rabbit PUBLIC RB_VULKAN=$<BOOL:${RB_VULKAN}>)
+target_compile_definitions (rabbit PUBLIC RB_DIRECTX12=$<BOOL:${RB_DIRECTX12}>)
 
 if (CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
-	add_subdirectory ("examples")
+	add_subdirectory ("example")
 endif ()

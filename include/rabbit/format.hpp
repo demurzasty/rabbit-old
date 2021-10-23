@@ -3,5 +3,6 @@
 #include <fmt/format.h>
 
 namespace rb {
-    using fmt::format;
+	using fmt::format;
+	using fmt::print;
 }

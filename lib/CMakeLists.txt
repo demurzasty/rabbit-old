@@ -1,15 +1,25 @@
 cmake_minimum_required (VERSION 3.8.2)
 
+set (BUILD_SHARED_LIBS OFF)
+
+add_subdirectory ("entt-3.7.1")
+
+add_subdirectory ("fmt-7.1.3")
+
 add_subdirectory ("gsl-3.1.0")
+
 add_subdirectory ("json-3.9.1")
+
+add_subdirectory ("magic_enum-0.7.3")
+
+add_subdirectory ("meshoptimizer-0.16")
+
 add_subdirectory ("stb")
-add_subdirectory ("fmt-7.1.2")
 
-if (NOT EMSCRIPTEN AND (RB_WINDOWS OR RB_LINUX OR RB_OSX))
-	set (SDL_SHARED_ENABLED_BY_DEFAULT OFF)
-	add_subdirectory ("SDL2-2.0.12")
+if (WIN32)
+   set(VOLK_STATIC_DEFINES VK_USE_PLATFORM_WIN32_KHR)
+endif()
 
-	if (RB_GRAPHICS_BACKEND_OPENGL) 
-		add_subdirectory ("glew-2.1.0")
-	endif ()
-endif ()
+add_subdirectory ("volk-1.2.170")
+
+add_subdirectory ("vma-2.3.0")

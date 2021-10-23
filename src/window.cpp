@@ -1,12 +1,35 @@
 #include <rabbit/window.hpp>
 
-#if RB_PLATFORM_BACKEND_SDL2
-#include "sdl2/window_sdl2.hpp"
-namespace rb { using window_impl = window_sdl2; }
+#if RB_WINDOWS
+#	include "win32/window_win32.hpp"
 #endif
 
 using namespace rb;
 
-std::shared_ptr<window> rb::make_window(config& config) {
-    return std::make_shared<window_impl>(config);
+std::shared_ptr<window_impl> window::_impl;
+
+void window::init() {
+#if RB_WINDOWS
+	_impl = std::make_shared<window_win32>();
+#endif
+}
+
+void window::release() {
+	_impl.reset();
+}
+
+void window::poll_events() {
+	_impl->poll_events();
+}
+
+window_handle window::native_handle() {
+	return _impl->native_handle();
+}
+
+bool window::is_open() {
+	return _impl->is_open();
+}
+
+vec2u window::size() {
+	return _impl->size();
 }

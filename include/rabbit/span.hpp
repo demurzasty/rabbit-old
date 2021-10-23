@@ -3,6 +3,5 @@
 #include <gsl/gsl>
 
 namespace rb {
-    template<typename T>
-    using span = gsl::span<T>;
+	using gsl::span;
 }

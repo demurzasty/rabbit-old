@@ -1,23 +1,63 @@
 #include <rabbit/texture.hpp>
+#include <rabbit/config.hpp>
+#include <rabbit/graphics.hpp>
+
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb_image.h>
 
 using namespace rb;
 
-texture::texture(const texture_desc& desc)
-	: _size(desc.size)
-	, _format(desc.format)
-	, _filter(desc.filter)
-	, _wrap(desc.wrap)
-	, _is_render_target(desc.is_render_target)
-	, _is_mutable(desc.is_mutable) {
+inline std::size_t calculate_mipmap_levels(const vec2u& texture_size) {
+	return (std::size_t)std::log2(std::max(texture_size.x, texture_size.y));
 }
 
-const vec2i& texture::size() const {
+inline std::size_t calculate_bytes_per_pixel(texture_format format) {
+	switch (format) {
+		case texture_format::r8: return 1;
+		case texture_format::rg8: return 2;
+		case texture_format::rgba8: return 4;
+	}
+
+	return 0;
+}
+
+std::shared_ptr<texture> texture::load(const std::string& filename, json& metadata) {
+	int width, height, components;
+	std::unique_ptr<stbi_uc, decltype(&stbi_image_free)> pixels{
+		stbi_load(filename.c_str(), &width, &height, &components, STBI_rgb_alpha),
+		&stbi_image_free
+	};
+
+	RB_ASSERT(pixels, "Cannot load image: {}", filename);
+
+	texture_desc desc;
+	desc.data = pixels.get();
+	desc.size = { static_cast<unsigned int>(width), static_cast<unsigned int>(height) };
+	desc.format = texture_format::rgba8;
+	desc.filter = texture_filter::linear;
+	desc.wrap = texture_wrap::repeat;
+	desc.mipmaps = 0;
+	return graphics::make_texture(desc);
+}
+
+std::shared_ptr<texture> texture::make_one_color(const color& color, const vec2u& size) {
+	const auto pixels = std::make_unique<rb::color[]>(size.x * size.y);
+	for (auto i = 0u; i < size.x * size.y; ++i) {
+		pixels[i] = color;
+	}
+
+	texture_desc desc;
+	desc.filter = texture_filter::linear;
+	desc.wrap = texture_wrap::repeat;
+	desc.mipmaps = 1;
+	desc.size = size;
+	desc.format = texture_format::rgba8;
+	desc.data = pixels.get();
+	return graphics::make_texture(desc);
+}
+
+const vec2u& texture::size() const {
 	return _size;
-}
-
-vec2f texture::texel() const {
-	const auto& size = this->size();
-	return { 1.0f / size.x, 1.0f / size.y };
 }
 
 texture_format texture::format() const {
@@ -32,10 +72,19 @@ texture_wrap texture::wrap() const {
 	return _wrap;
 }
 
-bool texture::is_render_target() const {
-	return _is_render_target;
+std::size_t texture::mipmaps() const {
+	return _mipmaps;
 }
 
-bool texture::is_mutable() const {
-	return _is_mutable;
+std::size_t texture::bytes_per_pixel() const {
+	return _bytes_per_pixel;
+}
+
+texture::texture(const texture_desc& desc)
+	: _size(desc.size)
+	, _format(desc.format)
+	, _filter(desc.filter)
+	, _wrap(desc.wrap)
+	, _mipmaps(desc.mipmaps > 0 ? desc.mipmaps : calculate_mipmap_levels(desc.size))
+	, _bytes_per_pixel(calculate_bytes_per_pixel(desc.format)) {
 }
