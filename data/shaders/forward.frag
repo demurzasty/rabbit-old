@@ -14,22 +14,23 @@ layout (std140, set = 0, binding = 0) uniform CameraData {
     vec3 u_camera_position;
 };
 
-layout (std140, set = 1, binding = 2) uniform MaterialData {
+layout (std140, set = 1, binding = 0) uniform MaterialData {
     vec3 u_base_color;
     float u_roughness;
     float u_metallic;
 };
 
-layout(set = 1, binding = 3) uniform sampler2D u_albedo_map;
-layout(set = 2, binding = 4) uniform samplerCube u_radiance_map;
-layout(set = 2, binding = 5) uniform samplerCube u_irradiance_map;
-layout(set = 2, binding = 6) uniform samplerCube u_prefilter_map;
-layout(set = 0, binding = 7) uniform sampler2D u_brdf_map;
+layout(set = 0, binding = 1) uniform sampler2D u_brdf_map;
 
-layout(set = 1, binding = 8) uniform sampler2D u_normal_map;
-layout(set = 1, binding = 9) uniform sampler2D u_roughness_map;
-layout(set = 1, binding = 10) uniform sampler2D u_metallic_map;
-layout(set = 1, binding = 11) uniform sampler2D u_emissive_map;
+layout(set = 2, binding = 0) uniform samplerCube u_radiance_map;
+layout(set = 2, binding = 1) uniform samplerCube u_irradiance_map;
+layout(set = 2, binding = 2) uniform samplerCube u_prefilter_map;
+
+layout(set = 1, binding = 1) uniform sampler2D u_albedo_map;
+layout(set = 1, binding = 2) uniform sampler2D u_normal_map;
+layout(set = 1, binding = 3) uniform sampler2D u_roughness_map;
+layout(set = 1, binding = 4) uniform sampler2D u_metallic_map;
+layout(set = 1, binding = 5) uniform sampler2D u_emissive_map;
 
 layout (location = 0) out vec4 out_color;
 
