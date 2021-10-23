@@ -2,6 +2,8 @@
 
 `RabBit` is a easy to use, multiplatform engine for game develop written in **C++17**.
 
+![Screenshot](/data/screenshot.png)
+
 ## Goals
 
 - Provide platform implementations as many as possible.
