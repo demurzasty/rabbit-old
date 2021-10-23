@@ -52,8 +52,6 @@ namespace rb {
 
 		std::size_t mipmaps() const;
 
-		std::size_t mipmap_count() const;
-
 		std::size_t bytes_per_pixel() const;
 
 	protected:
