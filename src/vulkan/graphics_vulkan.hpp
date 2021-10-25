@@ -5,6 +5,7 @@
 #include <rabbit/settings.hpp>
 #include <rabbit/mat4.hpp>
 #include <rabbit/vec3.hpp>
+#include <rabbit/vec4.hpp>
 #include <rabbit/math.hpp>
 
 #include "environment_vulkan.hpp"
@@ -23,6 +24,19 @@ namespace rb {
 			vec3f camera_position;
 		};
 
+		struct alignas(16) light_data {
+			vec3f dir_or_pos;
+			float radius;
+			vec3f color;
+			int type;
+		};
+
+		struct alignas(16) light_list_data {
+			light_data lights[16];
+			mat4f light_proj_view;
+			int light_count;
+		};
+
 		struct alignas(16) local_data {
 			mat4f world;
 		};
@@ -34,6 +48,10 @@ namespace rb {
 		struct alignas(16) prefilter_data {
 			int cube_face;
 			float roughness;
+		};
+
+		struct alignas(16) shadow_data {
+			mat4f proj_view_world;
 		};
 
 	public:
@@ -51,17 +69,27 @@ namespace rb {
 
 		void begin() override;
 
-		void end() override;
+		void set_camera(const transform& transform, const camera& camera) override;
+
+		void add_directional_light(transform& transform, light& light, directional_light& directional_light) override;
+
+		void add_point_light(transform& transform, light& light, point_light& point_light) override;
+
+		void begin_shadow_pass() override;
+
+		void draw_shadow(const transform& transform, const geometry& geometry) override;
+
+		void end_shadow_pass() override;
 
 		void begin_render_pass() override;
-
-		void end_render_pass() override;
-
-		void set_camera(const transform& transform, const camera& camera) override;
 
 		void draw_geometry(const transform& transform, const geometry& geometry) override;
 
 		void draw_skybox(const std::shared_ptr<environment>& environment) override;
+
+		void end_render_pass() override;
+
+		void end() override;
 
 		void present() override;
 
@@ -105,6 +133,8 @@ namespace rb {
 		void _create_prefilter_pipeline();
 
 		void _bake_prefilter(const std::shared_ptr<environment>& environment);
+
+		void _create_shadow_map();
 
 		void _create_forward_pipeline();
 
@@ -175,6 +205,9 @@ namespace rb {
 		VkBuffer _camera_buffer;
 		VmaAllocation _camera_allocation;
 
+		VkBuffer _light_buffer;
+		VmaAllocation _light_allocation;
+
 		camera_data _camera_data;
 
 		VkBuffer _skybox_vertex_buffer;
@@ -199,6 +232,16 @@ namespace rb {
 		VkRenderPass _prefilter_render_pass;
 		VkPipeline _prefilter_pipeline;
 
+		VkImage _shadow_image;
+		VkImageView _shadow_image_view;
+		VmaAllocation _shadow_allocation;
+		VkSampler _shadow_sampler;
+		VkRenderPass _shadow_render_pass;
+		VkFramebuffer _shadow_framebuffer;
+		VkPipelineLayout _shadow_pipeline_layout;
+		VkShaderModule _shadow_shader_module;
+		VkPipeline _shadow_pipeline;
+
 		VkDescriptorPool _forward_descriptor_pool;
 		VkDescriptorSet _forward_descriptor_set;
 		VkDescriptorSetLayout _forward_descriptor_set_layout[3];
@@ -213,6 +256,8 @@ namespace rb {
 		VkCommandBuffer _command_buffers[3];
 		VkFence _fences[3];
 		std::size_t _command_index{ 0 };
+
+		light_list_data _light_list_data;
 
 		std::shared_ptr<environment_vulkan> _environment;
 	};

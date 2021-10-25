@@ -2,6 +2,7 @@
 #include <rabbit/config.hpp>
 #include <rabbit/graphics.hpp>
 
+#define STBI_MAX_DIMENSIONS 8192
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 

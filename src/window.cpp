@@ -33,3 +33,11 @@ bool window::is_open() {
 vec2u window::size() {
 	return _impl->size();
 }
+
+void window::set_title(const std::string& title) {
+	_impl->set_title(title);
+}
+
+std::string window::title() {
+	return _impl->title();
+}

@@ -40,20 +40,32 @@ void graphics::begin() {
 	_impl->begin();
 }
 
-void graphics::end() {
-	_impl->end();
+void graphics::set_camera(const transform& transform, const camera& camera) {
+	_impl->set_camera(transform, camera);
+}
+
+void graphics::add_directional_light(transform& transform, light& light, directional_light& directional_light) {
+	_impl->add_directional_light(transform, light, directional_light);
+}
+
+void graphics::add_point_light(transform& transform, light& light, point_light& point_light) {
+	_impl->add_point_light(transform, light, point_light);
+}
+
+void graphics::begin_shadow_pass() {
+	_impl->begin_shadow_pass();
+}
+
+void graphics::draw_shadow(const transform& transform, const geometry& geometry) {
+	_impl->draw_shadow(transform, geometry);
+}
+
+void graphics::end_shadow_pass() {
+	_impl->end_shadow_pass();
 }
 
 void graphics::begin_render_pass() {
 	_impl->begin_render_pass();
-}
-
-void graphics::end_render_pass() {
-	_impl->end_render_pass();
-}
-
-void graphics::set_camera(const transform& transform, const camera& camera) {
-	_impl->set_camera(transform, camera);
 }
 
 void graphics::draw_geometry(const transform& transform, const geometry& geometry) {
@@ -66,6 +78,14 @@ void graphics::draw_skybox(const std::shared_ptr<environment>& environment) {
 	if (environment) {
 		_impl->draw_skybox(environment);
 	}
+}
+
+void graphics::end_render_pass() {
+	_impl->end_render_pass();
+}
+
+void graphics::end() {
+	_impl->end();
 }
 
 void graphics::present() {

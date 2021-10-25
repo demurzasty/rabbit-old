@@ -2,6 +2,7 @@
 
 #include "vec2.hpp"
 
+#include <string>
 #include <memory>
 
 #if RB_WINDOWS
@@ -24,6 +25,10 @@ namespace rb {
 		virtual bool is_open() const = 0;
 
 		virtual vec2u size() const = 0;
+
+		virtual void set_title(const std::string& title) = 0;
+
+		virtual std::string title() const = 0;
 	};
 
 	class window {
@@ -39,6 +44,10 @@ namespace rb {
 		static bool is_open();
 
 		static vec2u size();
+
+		static void set_title(const std::string& title);
+
+		static std::string title();
 
 	private:
 		static std::shared_ptr<window_impl> _impl;

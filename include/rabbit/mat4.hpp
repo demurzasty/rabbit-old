@@ -35,12 +35,47 @@ namespace rb {
             };
         }
 
+        static constexpr mat4<T> orthographic(T left, T right, T bottom, T top, T near, T far) {
+            const auto tx = -((right + left) / (right - left));
+            const auto ty = -((top + bottom) / (top - bottom));
+            const auto tz = -((far + near) / (far - near));
+
+            return {
+                2 / (right - left), 0, 0, 0,
+                0, 2 / (top - bottom), 0, 0,
+                0, 0, -2 / (far - near), 0,
+                tx, ty, tz, 1
+            };
+        }
+
         static constexpr mat4<T> translation(const vec3<T>& position) {
             return {
                 1, 0, 0, 0,
                 0, 1, 0, 0,
                 0, 0, 1, 0,
                 position.x, position.y, position.z, 1
+            };
+        }
+
+        static constexpr mat4<T> scaling(const vec3<T>& scaling) {
+            return {
+                scaling.x, 0, 0, 0,
+                0, scaling.y, 0, 0,
+                0, 0, scaling.z, 0,
+                0, 0, 0, 1
+            };
+        }
+
+        static mat4<T> look_at(const vec3<T>& eye, const vec3<T>& target, const vec3<T>& up) {
+            vec3<T> f = normalize(target - eye);
+            vec3<T> s = normalize(cross(f, up));
+            vec3<T> u = cross(s, f);
+
+            return {
+                s.x, u.x, -f.x, 0,
+                s.y, u.y, -f.y, 0,
+                s.z, u.z, -f.z, 0,
+                -dot(s, eye), -dot(u, eye), dot(f, eye), 1.0f
             };
         }
 
@@ -219,6 +254,15 @@ namespace rb {
             out[4] * inv_det, out[5] * inv_det, out[6] * inv_det, out[7] * inv_det,
             out[8] * inv_det, out[9] * inv_det, out[10] * inv_det, out[11] * inv_det,
             out[12] * inv_det, out[13] * inv_det, out[14] * inv_det, out[15] * inv_det
+        };
+    }
+
+    template<typename T>
+    constexpr vec3<T> transform_normal(const mat4<T>& a, const vec3<T>& b) {
+        return {
+            b.x * a[0] + b.y * a[4] + b.z * a[8],
+            b.x * a[1] + b.y * a[5] + b.z * a[9],
+            b.x * a[2] + b.y * a[6] + b.z * a[10]
         };
     }
 

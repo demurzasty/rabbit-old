@@ -67,6 +67,16 @@ vec2u window_win32::size() const {
 	};
 }
 
+void window_win32::set_title(const std::string& title) {
+	SetWindowText(_hwnd, title.c_str());
+}
+
+std::string window_win32::title() const {
+	char buffer[128];
+	GetWindowText(_hwnd, buffer, sizeof(buffer));
+	return buffer;
+}
+
 void window_win32::close() {
 	_open = false;
 }

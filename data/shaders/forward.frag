@@ -4,14 +4,28 @@
 
 #define PI 3.14159265359
 
+struct Light {
+	vec3 dir_or_pos;
+	float radius;
+	vec3 color;
+	int type;
+};
+
 layout (location = 0) in vec3 v_position;
 layout (location = 1) in vec2 v_texcoord;
 layout (location = 2) in vec3 v_normal;
+layout (location = 3) in vec4 v_shadow_coord;
 
 layout (std140, set = 0, binding = 0) uniform CameraData {
     mat4 proj;
     mat4 view;
     vec3 u_camera_position;
+};
+
+layout (std140, set = 0, binding = 2) uniform LightListData {
+    Light lights[16];
+    mat4 light_proj_view;
+    int light_count;
 };
 
 layout (std140, set = 1, binding = 0) uniform MaterialData {
@@ -21,6 +35,7 @@ layout (std140, set = 1, binding = 0) uniform MaterialData {
 };
 
 layout(set = 0, binding = 1) uniform sampler2D u_brdf_map;
+layout(set = 0, binding = 3) uniform sampler2D u_shadow_map;
 
 layout(set = 2, binding = 0) uniform samplerCube u_radiance_map;
 layout(set = 2, binding = 1) uniform samplerCube u_irradiance_map;
@@ -98,6 +113,18 @@ vec3 perturb(vec3 map, vec3 n, vec3 v, vec2 texcoord) {
   return normalize(tbn * map);
 }
 
+float compute_shadow() {
+    vec3 shadow_position = (v_shadow_coord.xyz / v_shadow_coord.w);
+
+    vec2 shadow_coord = vec2(shadow_position.x, shadow_position.y) * 0.5 + 0.5;
+    if (shadow_coord.x < 0.0 || shadow_coord.x > 1.0 ||
+        shadow_coord.y < 0.0 || shadow_coord.y > 1.0) {
+        return 1.0;
+    }
+
+    return step(shadow_position.z, texture(u_shadow_map, shadow_coord).x);
+}
+
 void main() {
     vec3 albedo = u_base_color * texture(u_albedo_map, v_texcoord).rgb;
     float roughness = u_roughness * texture(u_roughness_map, v_texcoord).r;
@@ -114,13 +141,25 @@ void main() {
 
     vec3 lo = vec3(0.0);
 
+    float shadow = compute_shadow(); // texture_proj(v_shadow_coord / v_shadow_coord.w, vec2(0.0));
+
     // TODO: Iterate through nearest lights.
+    for (int i = 0; i < light_count; ++i)
     {
         // TODO: Light color and intensity.
-        vec3 radiance = vec3(1.0);
+        vec3 radiance = lights[i].color.xyz;
         float intensity = 1.0;
 
-        vec3 l = -normalize(vec3(-1.0, -1.0, -1.0));
+        vec3 l = vec3(0.0);
+        
+        if (lights[i].type == 0) {
+            l = -normalize(lights[i].dir_or_pos.xyz);
+        } else if (lights[i].type == 1) {
+            l = normalize(lights[i].dir_or_pos.xyz - v_position);
+            float distance = length(lights[i].dir_or_pos.xyz - v_position);
+            float attenuation = pow(clamp(1.0 - pow(distance / lights[i].radius, 4.0), 0.0, 1.0), 2.0) / (distance * distance + 1.0);
+            radiance *= attenuation;
+        }
 
         vec3 h = normalize(v + l);
         vec3 f = fresnel_schlick(max(dot(h, v), 0.0), f0);
@@ -137,7 +176,7 @@ void main() {
         float denominator = 4.0 * n_dot_v * n_dot_l + 0.001;
         vec3 specular = nominator / denominator;
 
-        lo += (kd * albedo / PI + specular) * radiance * intensity * n_dot_l;
+        lo += (kd * albedo / PI + specular) * radiance * intensity * n_dot_l * shadow;
     }
 
     vec3 ks = fresnel_schlick_roughness(max(dot(n, v), 0.0), f0, roughness);

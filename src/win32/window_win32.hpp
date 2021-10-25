@@ -20,6 +20,10 @@ namespace rb {
 
 		vec2u size() const override;
 
+		void set_title(const std::string& title) override;
+
+		std::string title() const override;
+
 		void close();
 
 	private:
