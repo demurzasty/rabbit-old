@@ -32,7 +32,7 @@ namespace rb {
 		};
 
 		struct alignas(16) light_list_data {
-			light_data lights[16];
+			light_data lights[graphics_limits::max_lights];
 			mat4f light_proj_view;
 			int light_count;
 		};

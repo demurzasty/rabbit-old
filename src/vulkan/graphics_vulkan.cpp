@@ -235,7 +235,7 @@ void graphics_vulkan::begin_shadow_pass() {
     render_pass_begin_info.renderPass = _shadow_render_pass;
     render_pass_begin_info.framebuffer = _shadow_framebuffer;
     render_pass_begin_info.renderArea.offset = { 0, 0 };
-    render_pass_begin_info.renderArea.extent = { 2048, 2048 };
+    render_pass_begin_info.renderArea.extent = { graphics_limits::shadow_map_size, graphics_limits::shadow_map_size };
     render_pass_begin_info.clearValueCount = sizeof(clear_values) / sizeof(*clear_values);
     render_pass_begin_info.pClearValues = clear_values;
 
@@ -1036,7 +1036,7 @@ void graphics_vulkan::_generate_brdf_image() {
     image_info.flags = 0;
     image_info.imageType = VK_IMAGE_TYPE_2D;
     image_info.format = VK_FORMAT_R8G8_UNORM;
-    image_info.extent = { 512, 512, 1 };
+    image_info.extent = { graphics_limits::brdf_map_size, graphics_limits::brdf_map_size, 1 };
     image_info.mipLevels = 1;
     image_info.arrayLayers = 1;
     image_info.samples = VK_SAMPLE_COUNT_1_BIT;
@@ -1226,14 +1226,14 @@ void graphics_vulkan::_generate_brdf_image() {
     VkViewport viewport;
     viewport.x = 0.0f;
     viewport.y = 0.0f;
-    viewport.width = 512.0f;
-    viewport.height = 512.0f;
+    viewport.width = graphics_limits::brdf_map_size;
+    viewport.height = graphics_limits::brdf_map_size;
     viewport.minDepth = 0.0f;
     viewport.maxDepth = 1.0f;
 
     VkRect2D scissor;
     scissor.offset = { 0, 0 };
-    scissor.extent = { 512, 512 };
+    scissor.extent = { graphics_limits::brdf_map_size, graphics_limits::brdf_map_size };
 
     VkPipelineViewportStateCreateInfo viewport_state_info;
     viewport_state_info.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
@@ -1340,8 +1340,8 @@ void graphics_vulkan::_generate_brdf_image() {
     framebuffer_info.renderPass = render_pass;
     framebuffer_info.attachmentCount = 1;
     framebuffer_info.pAttachments = &_brdf_image_view;
-    framebuffer_info.width = 512;
-    framebuffer_info.height = 512;
+    framebuffer_info.width = graphics_limits::brdf_map_size;
+    framebuffer_info.height = graphics_limits::brdf_map_size;
     framebuffer_info.layers = 1;
 
     VkFramebuffer framebuffer;
@@ -1377,7 +1377,7 @@ void graphics_vulkan::_generate_brdf_image() {
     render_pass_begin_info.renderPass = render_pass;
     render_pass_begin_info.framebuffer = framebuffer;
     render_pass_begin_info.renderArea.offset = { 0, 0 };
-    render_pass_begin_info.renderArea.extent = { 512, 512 };
+    render_pass_begin_info.renderArea.extent = { graphics_limits::brdf_map_size, graphics_limits::brdf_map_size };
     render_pass_begin_info.clearValueCount = sizeof(clear_values) / sizeof(*clear_values);
     render_pass_begin_info.pClearValues = clear_values;
 
@@ -1698,14 +1698,14 @@ void graphics_vulkan::_create_irradiance_pipeline() {
     VkViewport viewport;
     viewport.x = 0.0f;
     viewport.y = 0.0f;
-    viewport.width = 64.0f;
-    viewport.height = 64.0f;
+    viewport.width = graphics_limits::irradiance_map_size;
+    viewport.height = graphics_limits::irradiance_map_size;
     viewport.minDepth = 0.0f;
     viewport.maxDepth = 1.0f;
 
     VkRect2D scissor;
     scissor.offset = { 0, 0 };
-    scissor.extent = { 64, 64 };
+    scissor.extent = { graphics_limits::irradiance_map_size, graphics_limits::irradiance_map_size };
 
     VkPipelineViewportStateCreateInfo viewport_state_info;
     viewport_state_info.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
@@ -1837,8 +1837,8 @@ void graphics_vulkan::_bake_irradiance(const std::shared_ptr<environment>& envir
         framebuffer_info.renderPass = _irradiance_render_pass;
         framebuffer_info.attachmentCount = 1;
         framebuffer_info.pAttachments = &irradiance_framebuffer_image_views[i];
-        framebuffer_info.width = 64;
-        framebuffer_info.height = 64;
+        framebuffer_info.width = graphics_limits::irradiance_map_size;
+        framebuffer_info.height = graphics_limits::irradiance_map_size;
         framebuffer_info.layers = 1;
         RB_VK(vkCreateFramebuffer(_device, &framebuffer_info, nullptr, &irradiance_framebuffers[i]),
             "Failed to create Vulkan framebuffer");
@@ -1936,7 +1936,7 @@ void graphics_vulkan::_bake_irradiance(const std::shared_ptr<environment>& envir
         render_pass_begin_info.renderPass = _irradiance_render_pass;
         render_pass_begin_info.framebuffer = irradiance_framebuffers[i];
         render_pass_begin_info.renderArea.offset = { 0, 0 };
-        render_pass_begin_info.renderArea.extent = { 64, 64 };
+        render_pass_begin_info.renderArea.extent = { graphics_limits::irradiance_map_size, graphics_limits::irradiance_map_size };
         render_pass_begin_info.clearValueCount = sizeof(clear_values) / sizeof(*clear_values);
         render_pass_begin_info.pClearValues = clear_values;
         vkCmdBeginRenderPass(command_buffer, &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
@@ -2132,14 +2132,14 @@ void graphics_vulkan::_create_prefilter_pipeline() {
     VkViewport viewport;
     viewport.x = 0.0f;
     viewport.y = 0.0f;
-    viewport.width = 128.0f;
-    viewport.height = 128.0f;
+    viewport.width = graphics_limits::prefilter_map_size;
+    viewport.height = graphics_limits::prefilter_map_size;
     viewport.minDepth = 0.0f;
     viewport.maxDepth = 1.0f;
 
     VkRect2D scissor;
     scissor.offset = { 0, 0 };
-    scissor.extent = { 128, 128 };
+    scissor.extent = { graphics_limits::prefilter_map_size, graphics_limits::prefilter_map_size };
 
     VkPipelineViewportStateCreateInfo viewport_state_info;
     viewport_state_info.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
@@ -2253,7 +2253,7 @@ void graphics_vulkan::_bake_prefilter(const std::shared_ptr<environment>& enviro
     VkImageView prefilter_framebuffer_image_views[6][6];
     VkFramebuffer prefilter_framebuffers[6][6];
 
-    vec2u resolution{ 128, 128 };
+    vec2u resolution{ graphics_limits::prefilter_map_size, graphics_limits::prefilter_map_size };
     for (auto i = 0; i < 6; ++i) {
         for (auto j = 0; j < 6; ++j) {
             VkImageViewCreateInfo image_view_info;
@@ -2349,7 +2349,7 @@ void graphics_vulkan::_bake_prefilter(const std::shared_ptr<environment>& enviro
 
     prefilter_data data;
 
-    resolution = { 128, 128 };
+    resolution = { graphics_limits::prefilter_map_size, graphics_limits::prefilter_map_size };
     for (auto i = 0; i < 6; ++i) {
         for (auto j = 0; j < 6; ++j) {
             // Create temporary buffer
@@ -2445,7 +2445,7 @@ void graphics_vulkan::_create_shadow_map() {
     image_info.flags = 0;
     image_info.imageType = VK_IMAGE_TYPE_2D;
     image_info.format = VK_FORMAT_D16_UNORM; 
-    image_info.extent = { 2048, 2048, 1 };
+    image_info.extent = { graphics_limits::shadow_map_size, graphics_limits::shadow_map_size, 1 };
     image_info.mipLevels = 1;
     image_info.arrayLayers = 1;
     image_info.samples = VK_SAMPLE_COUNT_1_BIT;
@@ -2557,8 +2557,8 @@ void graphics_vulkan::_create_shadow_map() {
     framebuffer_info.renderPass = _shadow_render_pass;
     framebuffer_info.attachmentCount = 1;
     framebuffer_info.pAttachments = &_shadow_image_view;
-    framebuffer_info.width = 2048;
-    framebuffer_info.height = 2048;
+    framebuffer_info.width = graphics_limits::shadow_map_size;
+    framebuffer_info.height = graphics_limits::shadow_map_size;
     framebuffer_info.layers = 1;
     RB_VK(vkCreateFramebuffer(_device, &framebuffer_info, nullptr, &_shadow_framebuffer),
         "Failed to create Vulkan framebuffer");
@@ -2624,14 +2624,14 @@ void graphics_vulkan::_create_shadow_map() {
     VkViewport viewport;
     viewport.x = 0.0f;
     viewport.y = 0.0f;
-    viewport.width = 2048.0f;
-    viewport.height = 2048.0f;
+    viewport.width = graphics_limits::shadow_map_size;
+    viewport.height = graphics_limits::shadow_map_size;
     viewport.minDepth = 0.0f;
     viewport.maxDepth = 1.0f;
 
     VkRect2D scissor;
     scissor.offset = { 0, 0 };
-    scissor.extent = { 2048, 2048 };
+    scissor.extent = { graphics_limits::shadow_map_size, graphics_limits::shadow_map_size };
 
     VkPipelineViewportStateCreateInfo viewport_state_info;
     viewport_state_info.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;

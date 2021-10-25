@@ -16,6 +16,14 @@ namespace rb {
 		vulkan
 	};
 
+	struct graphics_limits {
+		static constexpr std::size_t max_lights{ 16 };
+		static constexpr std::size_t brdf_map_size{ 512 };
+		static constexpr std::size_t irradiance_map_size{ 64 };
+		static constexpr std::size_t prefilter_map_size{ 128 };
+		static constexpr std::size_t shadow_map_size{ 2048 };
+	};
+
 	class graphics_impl {
 	public:
 		virtual ~graphics_impl() = default;
