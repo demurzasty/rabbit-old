@@ -21,6 +21,7 @@ namespace rb {
 		struct alignas(16) camera_data {
 			mat4f projection;
 			mat4f view;
+			mat4f inv_proj_view;
 			vec3f camera_position;
 		};
 
@@ -54,6 +55,12 @@ namespace rb {
 			mat4f proj_view_world;
 		};
 
+		struct alignas(16) directional_light_data {
+			vec3f light_dir; float padding[1];
+			vec3f light_color; float padding2[1];
+			mat4f light_proj_view;
+		};
+
 	public:
 		graphics_vulkan();
 
@@ -71,11 +78,13 @@ namespace rb {
 
 		void set_camera(const transform& transform, const camera& camera) override;
 
-		void add_directional_light(transform& transform, light& light, directional_light& directional_light) override;
+		void begin_geometry_pass() override;
 
-		void add_point_light(transform& transform, light& light, point_light& point_light) override;
+		void draw_geometry(const transform& transform, const geometry& geometry) override;
 
-		void begin_shadow_pass() override;
+		void end_geometry_pass() override;
+
+		void begin_shadow_pass(const transform& transform, const light& light, const directional_light& directional_light) override;
 
 		void draw_shadow(const transform& transform, const geometry& geometry) override;
 
@@ -83,9 +92,11 @@ namespace rb {
 
 		void begin_render_pass() override;
 
-		void draw_geometry(const transform& transform, const geometry& geometry) override;
+		void draw_ambient() override;
 
-		void draw_skybox(const std::shared_ptr<environment>& environment) override;
+		void draw_directional_light(const transform& transform, const light& light, const directional_light& directional_light) override;
+
+		void draw_skybox() override;
 
 		void end_render_pass() override;
 
@@ -109,8 +120,6 @@ namespace rb {
 		void _create_allocator();
 
 		void _query_surface();
-
-		void _create_multisample_target();
 
 		void _create_swapchain();
 
@@ -137,6 +146,12 @@ namespace rb {
 		void _create_shadow_map();
 
 		void _create_forward_pipeline();
+
+		void _create_gbuffer();
+
+		void _create_ambient_pipeline();
+
+		void _create_directional_light_pipeline();
 
 		void _create_skybox_pipeline();
 
@@ -165,15 +180,6 @@ namespace rb {
 		VkSwapchainKHR _swapchain;
 		VkPresentModeKHR _present_mode;
 
-		VkSampleCountFlagBits _supported_samples{ VK_SAMPLE_COUNT_1_BIT };
-
-		VkImage _multisample_image;
-		VkImageView _multisample_image_view;
-		VmaAllocation _multisample_allocation;
-		VkImage _multisample_depth_image;
-		VkImageView _multisample_depth_image_view;
-		VmaAllocation _multisample_depth_allocation;
-
 		VkImage _depth_image;
 		VmaAllocation _depth_image_allocation;
 		VkImageView _depth_image_view;
@@ -183,6 +189,7 @@ namespace rb {
 		std::vector<VkFramebuffer> _framebuffers;
 
 		VkRenderPass _render_pass;
+		VkRenderPass _second_render_pass;
 
 		VkCommandPool _command_pool;
 
@@ -249,6 +256,26 @@ namespace rb {
 		VkShaderModule _forward_shader_modules[2];
 		VkPipeline _forward_pipeline;
 
+		VkImage _gbuffer[3];
+		VkImageView _gbuffer_views[3];
+		VmaAllocation _gbuffer_allocations[3];
+		VkSampler _gbuffer_sampler;
+		VkRenderPass _gbuffer_render_pass;
+		VkFramebuffer _gbuffer_framebuffer;
+		VkDescriptorPool _gbuffer_descriptor_pool;
+		VkDescriptorSet _gbuffer_descriptor_set;
+		VkDescriptorSetLayout _gbuffer_descriptor_set_layout;
+		VkPipelineLayout _gbuffer_pipeline_layout;
+		VkShaderModule _gbuffer_shader_modules[2];
+		VkPipeline _gbuffer_pipeline;
+
+		VkPipelineLayout _ambient_pipeline_layout;
+		VkShaderModule _ambient_shader_modules[2];
+		VkPipeline _ambient_pipeline;
+
+		VkPipelineLayout _directional_light_pipeline_layout;
+		VkPipeline _directional_light_pipeline;
+
 		VkPipelineLayout _skybox_pipeline_layout;
 		VkShaderModule _skybox_shader_modules[2];
 		VkPipeline _skybox_pipeline;
@@ -257,8 +284,8 @@ namespace rb {
 		VkFence _fences[3];
 		std::size_t _command_index{ 0 };
 
-		light_list_data _light_list_data;
-
+		bool _first_render_pass{ false };
+		mat4f _light_proj_view;
 		std::shared_ptr<environment_vulkan> _environment;
 	};
 }

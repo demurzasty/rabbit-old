@@ -38,15 +38,15 @@ namespace rb {
 
 		virtual void begin() = 0;
 
-		virtual void end() = 0;
-
 		virtual void set_camera(const transform& transform, const camera& camera) = 0;
 
-		virtual void add_directional_light(transform& transform, light& light, directional_light& directional_light) = 0;
+		virtual void begin_geometry_pass() = 0;
 
-		virtual void add_point_light(transform& transform, light& light, point_light& point_light) = 0;
+		virtual void draw_geometry(const transform& transform, const geometry& geometry) = 0;
 
-		virtual void begin_shadow_pass() = 0;
+		virtual void end_geometry_pass() = 0;
+
+		virtual void begin_shadow_pass(const transform& transform, const light& light, const directional_light& directional_light) = 0;
 
 		virtual void draw_shadow(const transform& transform, const geometry& geometry) = 0;
 
@@ -54,13 +54,17 @@ namespace rb {
 
 		virtual void begin_render_pass() = 0;
 
-		virtual void draw_geometry(const transform& transform, const geometry& geometry) = 0;
+		virtual void draw_ambient() = 0;
+
+		virtual void draw_directional_light(const transform& transform, const light& light, const directional_light& directional_light) = 0;
+
+		virtual void draw_skybox() = 0;
 
 		virtual void end_render_pass() = 0;
 
-		virtual void draw_skybox(const std::shared_ptr<environment>& environment) = 0;
-
 		virtual void present() = 0;
+
+		virtual void end() = 0;
 
 		virtual void flush() = 0;
 	};
@@ -83,11 +87,13 @@ namespace rb {
 
 		static void set_camera(const transform& transform, const camera& camera);
 
-		static void add_directional_light(transform& transform, light& light, directional_light& directional_light);
+		static void begin_geometry_pass();
 
-		static void add_point_light(transform& transform, light& light, point_light& point_light);
+		static void draw_geometry(const transform& transform, const geometry& geometry);
 
-		static void begin_shadow_pass();
+		static void end_geometry_pass();
+
+		static void begin_shadow_pass(const transform& transform, const light& light, const directional_light& directional_light);
 
 		static void draw_shadow(const transform& transform, const geometry& geometry);
 
@@ -95,9 +101,11 @@ namespace rb {
 
 		static void begin_render_pass();
 
-		static void draw_geometry(const transform& transform, const geometry& geometry);
+		static void draw_ambient();
 
-		static void draw_skybox(const std::shared_ptr<environment>& environment);
+		static void draw_directional_light(const transform& transform, const light& light, const directional_light& directional_light);
+
+		static void draw_skybox();
 
 		static void end_render_pass();
 

@@ -5,6 +5,7 @@ layout (location = 0) in vec3 in_position;
 layout (std140, set = 0, binding = 0) uniform CameraData {
     mat4 proj;
     mat4 view;
+    mat4 u_inv_proj_view;
     vec3 u_camera_position;
 };
 

@@ -68,6 +68,7 @@ if (RB_VULKAN)
 		"src/vulkan/graphics_vulkan.cpp"
 		"src/vulkan/material_vulkan.cpp"
 		"src/vulkan/mesh_vulkan.cpp"
+		"src/vulkan/shaders_vulkan.cpp"
 		"src/vulkan/texture_vulkan.cpp"
 		"src/vulkan/utils_vulkan.cpp"
 	)

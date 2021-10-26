@@ -44,16 +44,22 @@ void graphics::set_camera(const transform& transform, const camera& camera) {
 	_impl->set_camera(transform, camera);
 }
 
-void graphics::add_directional_light(transform& transform, light& light, directional_light& directional_light) {
-	_impl->add_directional_light(transform, light, directional_light);
+void graphics::begin_geometry_pass() {
+	_impl->begin_geometry_pass();
 }
 
-void graphics::add_point_light(transform& transform, light& light, point_light& point_light) {
-	_impl->add_point_light(transform, light, point_light);
+void graphics::draw_geometry(const transform& transform, const geometry& geometry) {
+	if (geometry.mesh && geometry.material) {
+		_impl->draw_geometry(transform, geometry);
+	}
 }
 
-void graphics::begin_shadow_pass() {
-	_impl->begin_shadow_pass();
+void graphics::end_geometry_pass() {
+	_impl->end_geometry_pass();
+}
+
+void graphics::begin_shadow_pass(const transform& transform, const light& light, const directional_light& directional_light) {
+	_impl->begin_shadow_pass(transform, light, directional_light);
 }
 
 void graphics::draw_shadow(const transform& transform, const geometry& geometry) {
@@ -68,16 +74,16 @@ void graphics::begin_render_pass() {
 	_impl->begin_render_pass();
 }
 
-void graphics::draw_geometry(const transform& transform, const geometry& geometry) {
-	if (geometry.mesh && geometry.material) {
-		_impl->draw_geometry(transform, geometry);
-	}
+void graphics::draw_ambient() {
+	_impl->draw_ambient();
 }
 
-void graphics::draw_skybox(const std::shared_ptr<environment>& environment) {
-	if (environment) {
-		_impl->draw_skybox(environment);
-	}
+void graphics::draw_directional_light(const transform& transform, const light& light, const directional_light& directional_light) {
+	_impl->draw_directional_light(transform, light, directional_light);
+}
+
+void graphics::draw_skybox() {
+	_impl->draw_skybox();
 }
 
 void graphics::end_render_pass() {
