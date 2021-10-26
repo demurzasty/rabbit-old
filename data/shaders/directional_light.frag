@@ -81,12 +81,13 @@ vec3 extract_position(sampler2D depth_map, vec2 texcoord) {
 }
 
 float compute_shadow(in vec3 position) {
-    vec4 shadow_position = u_light_proj_view * vec4(position, 1.0); // (v_shadow_coord.xyz / v_shadow_coord.w);
+    vec4 shadow_position = u_light_proj_view * vec4(position, 1.0);
     shadow_position.xyz = shadow_position.xyz / shadow_position.w;
 
     vec2 shadow_coord = vec2(shadow_position.x, shadow_position.y) * 0.5 + 0.5;
     if (shadow_coord.x < 0.0 || shadow_coord.x > 1.0 ||
-        shadow_coord.y < 0.0 || shadow_coord.y > 1.0) {
+        shadow_coord.y < 0.0 || shadow_coord.y > 1.0 ||
+        shadow_position.z < 0.0 || shadow_position.z > 1.0) {
         return 1.0;
     }
 
@@ -108,30 +109,27 @@ void main() {
 
     vec3 f0 = mix(vec3(0.04), albedo, metallic);
 
-    vec3 lo = vec3(0.0);
-    {
-        vec3 radiance = u_light_color;
-        float intensity = 1.0;
+    vec3 radiance = u_light_color;
+    float intensity = 1.0;
 
-        vec3 l = -normalize(u_light_dir);
+    vec3 l = -normalize(u_light_dir);
 
-        vec3 h = normalize(v + l);
-        vec3 f = fresnel_schlick(max(dot(h, v), 0.0), f0);
+    vec3 h = normalize(v + l);
+    vec3 f = fresnel_schlick(max(dot(h, v), 0.0), f0);
 
-        vec3 ks = f;
-        vec3 kd = (1.0 - ks) * (1.0 - metallic);
+    vec3 ks = f;
+    vec3 kd = (1.0 - ks) * (1.0 - metallic);
 
-        float ndf = distribution_ggx(normal, h, roughness);
-        float g = geometry_smith(normal, v, l, roughness);
+    float ndf = distribution_ggx(normal, h, roughness);
+    float g = geometry_smith(normal, v, l, roughness);
 
-        float n_dot_l = max(dot(normal, l), 0.0);
+    float n_dot_l = max(dot(normal, l), 0.0);
 
-        vec3 nominator = ndf * g * f;
-        float denominator = 4.0 * n_dot_v * n_dot_l + 0.001;
-        vec3 specular = nominator / denominator;
+    vec3 nominator = ndf * g * f;
+    float denominator = 4.0 * n_dot_v * n_dot_l + 0.001;
+    vec3 specular = nominator / denominator;
 
-        lo += (kd * albedo / PI + specular) * radiance * intensity * n_dot_l * compute_shadow(position);
-    }
+    vec3 lo = (kd * albedo / PI + specular) * radiance * intensity * n_dot_l * compute_shadow(position);
 
     o_color = vec4(lo, 1.0);
 }
