@@ -23,6 +23,8 @@ void renderer::draw(registry& registry) {
 
 	graphics::draw_ambient();
 
+	graphics::draw_skybox();
+
 	graphics::end_render_pass();
 
 	for (auto entity : registry.view<transform, light>()) {
@@ -45,12 +47,6 @@ void renderer::draw(registry& registry) {
 			graphics::end_render_pass();
 		}
 	}
-
-	graphics::begin_render_pass();
-
-	graphics::draw_skybox();
-
-	graphics::end_render_pass();
 
 	graphics::end();
 }
