@@ -19,6 +19,7 @@ namespace rb {
 		static span<const std::uint32_t> skybox_frag();
 		static span<const std::uint32_t> ambient_frag();
 		static span<const std::uint32_t> directional_light_frag();
+		static span<const std::uint32_t> point_light_frag();
 		static span<const std::uint32_t> shadowmap_vert();
 	};
 }

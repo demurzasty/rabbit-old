@@ -25,6 +25,8 @@
 
 #include <rabbit/generated/shaders/directional_light.frag.spv.h>
 
+#include <rabbit/generated/shaders/point_light.frag.spv.h>
+
 using namespace rb;
 
 span<const std::uint32_t> shaders_vulkan::quad_vert() {
@@ -85,4 +87,8 @@ span<const std::uint32_t> shaders_vulkan::shadowmap_vert() {
 
 span<const std::uint32_t> shaders_vulkan::directional_light_frag() {
 	return ::directional_light_frag;
+}
+
+span<const std::uint32_t> shaders_vulkan::point_light_frag() {
+	return ::point_light_frag;
 }

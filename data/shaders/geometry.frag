@@ -46,7 +46,7 @@ mat3 cotangent_frame(vec3 n, vec3 p, vec2 uv) {
 }
 
 vec3 perturb(vec3 map, vec3 n, vec3 v, vec2 texcoord) {
-    mat3 tbn = cotangent_frame(n, -v, texcoord);
+    mat3 tbn = cotangent_frame(n, v, texcoord);
     return normalize(tbn * map);
 }
 

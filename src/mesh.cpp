@@ -80,6 +80,70 @@ std::shared_ptr<mesh> mesh::load(const std::string& filename, json& metadata) {
     return graphics::make_mesh(desc);
 }
 
+std::shared_ptr<mesh> mesh::make_box(const vec3f& extent, const vec2f& uv_scale) {
+    vertex vertices[24]{
+        { { -extent.x, extent.y, extent.z }, { 0.0f, 0.0f }, { 0.0f, 0.0f, 1.0f } },
+        { { -extent.x, -extent.y, extent.z }, { 0.0f, 1.0f }, { 0.0f, 0.0f, 1.0f } },
+        { { extent.x, -extent.y, extent.z }, { 1.0f, 1.0f }, { 0.0f, 0.0f, 1.0f } },
+        { { extent.x, extent.y, extent.z }, { 1.0f, 0.0f }, { 0.0f, 0.0f, 1.0f } },
+
+        { { extent.x, extent.y, extent.z }, { 0.0f, 0.0f }, { 1.0f, 0.0f, 0.0f } },
+        { { extent.x, -extent.y, extent.z }, { 0.0f, 1.0f }, { 1.0f, 0.0f, 0.0f } },
+        { { extent.x, -extent.y, -extent.z }, { 1.0f, 1.0f }, { 1.0f, 0.0f, 0.0f } },
+        { { extent.x, extent.y, -extent.z }, { 1.0f, 0.0f }, { 1.0f, 0.0f, 0.0f } },
+
+        { { extent.x, extent.y, extent.z }, { 0.0f, 0.0f }, { 0.0f, 0.0f, -1.0f } },
+        { { extent.x, -extent.y, extent.z }, { 0.0f, 1.0f }, { 0.0f, 0.0f, -1.0f } },
+        { { -extent.x, -extent.y, extent.z }, { 1.0f, 1.0f }, { 0.0f, 0.0f, -1.0f } },
+        { { -extent.x, extent.y, extent.z }, { 1.0f, 0.0f }, { 0.0f, 0.0f, -1.0f } },
+
+        { { -extent.x, extent.y, -extent.z }, { 0.0f, 0.0f }, { -1.0f, 0.0f, 0.0f } },
+        { { -extent.x, -extent.y, -extent.z }, { 0.0f, 1.0f }, { -1.0f, 0.0f, 0.0f } },
+        { { -extent.x, -extent.y, extent.z }, { 1.0f, 1.0f }, { -1.0f, 0.0f, 0.0f } },
+        { { -extent.x, extent.y, extent.z }, { 1.0f, 0.0f }, { -1.0f, 0.0f, 0.0f } },
+
+        { { -extent.x, extent.y, -extent.z }, { 0.0f, 0.0f }, { 0.0f, 1.0f, 0.0f } },
+        { { -extent.x, extent.y, extent.z }, { 0.0f, 1.0f }, { 0.0f, 1.0f, 0.0f } },
+        { { extent.x, extent.y, extent.z }, { 1.0f, 1.0f }, { 0.0f, 1.0f, 0.0f } },
+        { { extent.x, extent.y, -extent.z }, { 1.0f, 0.0f }, { 0.0f, 1.0f, 0.0f } },
+
+        { { -extent.x, -extent.y, extent.z }, { 0.0f, 0.0f }, { 0.0f, -1.0f, 0.0f } },
+        { { -extent.x, -extent.y, -extent.z }, { 0.0f, 1.0f }, { 0.0f, -1.0f, 0.0f } },
+        { { extent.x, -extent.y, -extent.z }, { 1.0f, 1.0f }, { 0.0f, -1.0f, 0.0f } },
+        { { extent.x, -extent.y, extent.z }, { 1.0f, 0.0f }, { 0.0f, -1.0f, 0.0f } },
+    };
+
+    for (auto& vertex : vertices) {
+        vertex.texcoord.x *= uv_scale.x;
+        vertex.texcoord.y *= uv_scale.y;
+    }
+
+    std::uint32_t indices[36]{
+        0, 1, 2,
+        2, 3, 0,
+
+        4, 5, 6,
+        6, 7, 4,
+
+        8, 9, 10,
+        10, 11, 8,
+
+        12, 13, 14,
+        14, 15, 12,
+
+        16, 17, 18,
+        18, 19, 16,
+
+        20, 21, 22,
+        22, 23, 20
+    };
+
+    mesh_desc desc;
+    desc.vertices = vertices;
+    desc.indices = indices;
+    return graphics::make_mesh(desc);
+}
+
 span<const vertex> mesh::vertices() const {
 	return _vertices;
 }

@@ -27,26 +27,29 @@ void renderer::draw(registry& registry) {
 
 	graphics::end_render_pass();
 
-	for (auto entity : registry.view<transform, light>()) {
-		auto& light = registry.get<rb::light>(entity);
+	registry.view<transform, light, directional_light>().each([&registry](transform& transform, light& light, directional_light& directional_light) {
+		graphics::begin_shadow_pass(transform, light, directional_light);
 
-		if (registry.any_of<directional_light>(entity)) {
-			auto& [light_transform, directional_light] = registry.get<transform, rb::directional_light>(entity);
-			graphics::begin_shadow_pass(light_transform, light, directional_light);
+		registry.view<rb::transform, geometry>().each([](rb::transform& transform, geometry& geometry) {
+			graphics::draw_shadow(transform, geometry);
+		});
 
-			registry.view<transform, geometry>().each([](transform& transform, geometry& geometry) {
-				graphics::draw_shadow(transform, geometry);
-			});
+		graphics::end_shadow_pass();
 
-			graphics::end_shadow_pass();
+		graphics::begin_render_pass();
 
-			graphics::begin_render_pass();
+		graphics::draw_directional_light(transform, light, directional_light);
 
-			graphics::draw_directional_light(light_transform, light, directional_light);
+		graphics::end_render_pass();
+	});
 
-			graphics::end_render_pass();
-		}
-	}
+	graphics::begin_render_pass();
+
+	registry.view<transform, light, point_light>().each([](transform& transform, light& light, point_light& point_light) {
+		graphics::draw_point_light(transform, light, point_light);
+	});
+
+	graphics::end_render_pass();
 
 	graphics::end();
 }

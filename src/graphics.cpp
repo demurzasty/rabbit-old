@@ -82,6 +82,10 @@ void graphics::draw_directional_light(const transform& transform, const light& l
 	_impl->draw_directional_light(transform, light, directional_light);
 }
 
+void graphics::draw_point_light(const transform& transform, const light& light, const point_light& point_light) {
+	_impl->draw_point_light(transform, light, point_light);
+}
+
 void graphics::draw_skybox() {
 	_impl->draw_skybox();
 }

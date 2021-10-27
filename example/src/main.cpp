@@ -16,7 +16,8 @@ public:
 		auto& box_transform = registry.emplace<transform>(box);
 		auto& box_geometry = registry.emplace<geometry>(box);
 
-		box_geometry.mesh = assets::load<mesh>("data/meshes/box.obj");
+		box_transform.position.y = -1.0f;
+		box_geometry.mesh = mesh::make_box(vec3f{ 2.0f, 1.0f, 2.0f }, { 1.0f, 1.0f });
 		box_geometry.material = assets::load<material>("data/materials/box.json");
 
 		auto main_light = registry.create();

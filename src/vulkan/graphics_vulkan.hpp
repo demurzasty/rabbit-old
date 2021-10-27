@@ -61,6 +61,12 @@ namespace rb {
 			mat4f light_proj_view;
 		};
 
+		struct alignas(16) point_light_data {
+			vec3f light_position;
+			float light_radius;
+			vec3f light_color; 
+		};
+
 	public:
 		graphics_vulkan();
 
@@ -95,6 +101,8 @@ namespace rb {
 		void draw_ambient() override;
 
 		void draw_directional_light(const transform& transform, const light& light, const directional_light& directional_light) override;
+
+		void draw_point_light(const transform& transform, const light& light, const point_light& point_light) override;
 
 		void draw_skybox() override;
 
@@ -152,6 +160,8 @@ namespace rb {
 		void _create_ambient_pipeline();
 
 		void _create_directional_light_pipeline();
+
+		void _create_point_light_pipeline();
 
 		void _create_skybox_pipeline();
 
@@ -275,6 +285,9 @@ namespace rb {
 
 		VkPipelineLayout _directional_light_pipeline_layout;
 		VkPipeline _directional_light_pipeline;
+
+		VkPipelineLayout _point_light_pipeline_layout;
+		VkPipeline _point_light_pipeline;
 
 		VkPipelineLayout _skybox_pipeline_layout;
 		VkShaderModule _skybox_shader_modules[2];
