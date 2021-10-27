@@ -9,10 +9,6 @@ layout (std140, push_constant) uniform ShadowData {
     mat4 proj_view_world;
 };
 
-out gl_PerVertex {
-    vec4 gl_Position;   
-};
-
 void main() {
 	gl_Position =  proj_view_world * vec4(in_position, 1.0);
 }

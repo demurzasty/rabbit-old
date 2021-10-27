@@ -3,6 +3,14 @@
 namespace rb {
 	template<typename T>
 	struct vec2 {
+		constexpr const T& operator[](std::size_t index) const {
+			return (&x)[index];
+		}
+
+		constexpr T& operator[](std::size_t index) {
+			return (&x)[index];
+		}
+
 		T x, y;
 	};
 

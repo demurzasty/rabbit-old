@@ -16,7 +16,7 @@ layout (std140, set = 0, binding = 0) uniform camera_data {
 };
 
 layout(set = 0, binding = 1) uniform sampler2D u_brdf_map;
-layout(set = 0, binding = 3) uniform sampler2D u_shadow_map;
+layout(set = 0, binding = 3) uniform sampler2DShadow u_shadow_map;
 
 layout (set = 1, binding = 0) uniform sampler2D u_albedo_map;
 layout (set = 1, binding = 1) uniform sampler2D u_normal_map;
@@ -91,7 +91,7 @@ float compute_shadow(in vec3 position) {
         return 1.0;
     }
 
-    return step(shadow_position.z, texture(u_shadow_map, shadow_coord).x);
+    return texture(u_shadow_map, vec3(shadow_coord.xy, shadow_position.z));
 }
 
 void main() {
@@ -108,6 +108,8 @@ void main() {
     float n_dot_v = abs(dot(normal, v)) + 1e-5;
 
     vec3 f0 = mix(vec3(0.04), albedo, metallic);
+
+    float shadow = compute_shadow(position);
 
     vec3 radiance = u_light_color;
     float intensity = 1.0;
@@ -129,7 +131,7 @@ void main() {
     float denominator = 4.0 * n_dot_v * n_dot_l + 0.001;
     vec3 specular = nominator / denominator;
 
-    vec3 lo = (kd * albedo / PI + specular) * radiance * intensity * n_dot_l * compute_shadow(position);
+    vec3 lo = (kd * albedo / PI + specular) * radiance * intensity * n_dot_l * shadow;
 
     o_color = vec4(lo, 1.0);
 }

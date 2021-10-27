@@ -60,13 +60,13 @@ std::shared_ptr<mesh> mesh::load(const std::string& filename, json& metadata) {
         }
     }
 
-    auto remap = std::make_unique<std::uint32_t[]>(vertices.size());
+    const auto remap = std::make_unique<std::uint32_t[]>(vertices.size());
     const auto vertex_size = meshopt_generateVertexRemap(remap.get(), nullptr, vertices.size(), vertices.data(), vertices.size(), sizeof(vertex));
 
-    auto indices = std::make_unique<std::uint32_t[]>(vertices.size());
+    const auto indices = std::make_unique<std::uint32_t[]>(vertices.size());
     meshopt_remapIndexBuffer(indices.get(), nullptr, vertices.size(), remap.get());
 
-    auto indexed_vertices = std::make_unique<vertex[]>(vertex_size);
+    const auto indexed_vertices = std::make_unique<vertex[]>(vertex_size);
     meshopt_remapVertexBuffer(indexed_vertices.get(), vertices.data(), vertices.size(), sizeof(vertex), remap.get());
 
     meshopt_optimizeVertexCache(indices.get(), indices.get(), vertices.size(), vertex_size);

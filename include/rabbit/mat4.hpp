@@ -1,6 +1,7 @@
 #pragma once 
 
 #include "vec3.hpp"
+#include "vec4.hpp"
 
 #include <cmath>
 
@@ -267,6 +268,26 @@ namespace rb {
     }
 
     template<typename T>
+    constexpr vec3<T> operator*(const mat4<T>& a, const vec3<T>& b) {
+        vec4<T> vec;
+        vec.x = b.x * a[0] + b.y * a[4] + b.z * a[8] + a[12];
+        vec.y = b.x * a[1] + b.y * a[5] + b.z * a[9] + a[13];
+        vec.z = b.x * a[2] + b.y * a[6] + b.z * a[10] + a[14];
+        vec.w = b.x * a[3] + b.y * a[7] + b.z * a[11] + a[15];
+        return { vec.x / vec.w, vec.y / vec.w, vec.z / vec.w };
+    }
+
+    template<typename T>
+    constexpr vec4<T> operator*(const mat4<T>& a, const vec4<T>& b) {
+        return {
+            b.x * a[0] + b.y * a[4] + b.z * a[8] + b.w * a[12],
+            b.x * a[1] + b.y * a[5] + b.z * a[9] + b.w * a[13],
+            b.x * a[2] + b.y * a[6] + b.z * a[10] + b.w * a[14],
+            b.x * a[3] + b.y * a[7] + b.z * a[11] + b.w * a[15]
+        };
+    }
+
+    template<typename T>
     constexpr mat4<T> operator*(const mat4<T>& a, const mat4<T>& b) {
         return {
             a[0] * b[0] + a[4] * b[1] + a[8] * b[2] + a[12] * b[3],
@@ -288,6 +309,15 @@ namespace rb {
             a[1] * b[12] + a[5] * b[13] + a[9] * b[14] + a[13] * b[15],
             a[2] * b[12] + a[6] * b[13] + a[10] * b[14] + a[14] * b[15],
             a[3] * b[12] + a[7] * b[13] + a[11] * b[14] + a[15] * b[15]
+        };
+    }
+
+    template<typename T>
+    vec3<T> unproject(const vec3<T>& vec, const vec4<T>& viewport, const mat4<T>& mat) {
+        return mat * vec3<T>{
+            (((vec.x - viewport.x) / viewport.z) * 2) - 1,
+            -((((vec.y - viewport.y) / viewport.w) * 2) - 1),
+            vec.z // (vector.z - minZ) / (maxZ - minZ)
         };
     }
 
