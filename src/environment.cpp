@@ -18,17 +18,27 @@ static std::array<const char*, 6> faces = {
     "back"
 };
 
-std::shared_ptr<environment> environment::load(const std::string& filename, json& metadata) {
+std::shared_ptr<environment> environment::load(bstream& stream) {
+    environment_desc desc;
+    stream.read(desc.size);
+
+    const auto data = std::make_unique<std::uint8_t[]>(desc.size.x * desc.size.y * 4 * 6);
+    stream.read(data.get(), desc.size.x * desc.size.y * 4 * 6);
+    desc.data = data.get();
+    return graphics::make_environment(desc);
+}
+
+void environment::import(const std::string& input, const std::string& output, const json& metadata) {
     // Try to open file.
-    std::fstream stream{ filename, std::ios::in };
-    RB_ASSERT(stream.is_open(), "Cannot open file");
+    std::fstream istream{ input, std::ios::in };
+    RB_ASSERT(istream.is_open(), "Cannot open file");
 
     // Load json from file.
     json json;
-    stream >> json;
+    istream >> json;
 
     // We do not need open stream anymore.
-    stream.close();
+    istream.close();
 
     // Get individual faces texture filenames.
     std::array<std::string, 6> filenames;
@@ -36,27 +46,24 @@ std::shared_ptr<environment> environment::load(const std::string& filename, json
         filenames[index] = json[faces[index]];
     }
 
-    environment_desc desc;
+    vec2u size;
 
     std::map<std::size_t, stbi_uc*> data;
     for (std::size_t index{ 0 }; index < 6; ++index) {
         int width, height, components;
         data[index] = stbi_load(filenames[index].c_str(), &width, &height, &components, STBI_rgb_alpha);
-        desc.size = { static_cast<unsigned int>(width), static_cast<unsigned int>(height) };
+        size = { static_cast<unsigned int>(width), static_cast<unsigned int>(height) };
     }
 
-    auto buffer = std::make_unique<stbi_uc[]>(desc.size.x * desc.size.y * 4 * 6);
+    auto buffer = std::make_unique<stbi_uc[]>(size.x * size.y * 4 * 6);
     for (auto& [index, pixels] : data) {
-        std::memcpy(buffer.get() + index * (desc.size.x * desc.size.y * 4), pixels, desc.size.x * desc.size.y * 4);
+        std::memcpy(buffer.get() + index * (size.x * size.y * 4), pixels, size.x * size.y * 4);
         stbi_image_free(pixels);
     }
 
-    desc.data = buffer.get();
-    return graphics::make_environment(desc);
-}
-
-void environment::import(const std::string& input, const std::string& output, const json& metadata) {
-
+    bstream stream{ output, bstream_mode::write };
+    stream.write(size);
+    stream.write(buffer.get(), size.x * size.y * 4 * 6);
 }
 
 const vec2u& environment::size() const {

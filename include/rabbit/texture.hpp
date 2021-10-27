@@ -4,6 +4,7 @@
 #include "vec2.hpp"
 #include "json.hpp"
 #include "color.hpp"
+#include "bstream.hpp"
 
 #include <string>
 #include <memory>
@@ -36,7 +37,7 @@ namespace rb {
 
 	class texture {
 	public:
-		static std::shared_ptr<texture> load(const std::string& filename, json& metadata);
+		static std::shared_ptr<texture> load(bstream& stream);
 
 		static void import(const std::string& input, const std::string& output, const json& metadata);
 

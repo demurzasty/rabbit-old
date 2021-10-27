@@ -29,6 +29,7 @@
 #include "texture.hpp"
 #include "transform.hpp"
 #include "triangle.hpp"
+#include "uuid.hpp"
 #include "vec2.hpp"
 #include "vec3.hpp"
 #include "vec4.hpp"

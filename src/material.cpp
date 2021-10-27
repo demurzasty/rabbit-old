@@ -2,60 +2,51 @@
 #include <rabbit/graphics.hpp>
 #include <rabbit/assets.hpp>
 #include <rabbit/config.hpp>
+#include <rabbit/uuid.hpp>
 
 #include <array>
 #include <fstream>
 
 using namespace rb;
 
-std::shared_ptr<material> material::load(const std::string& filename, json& metadata) {
-    std::ifstream stream{ filename, std::ios::in };
-    RB_ASSERT(stream.is_open(), "Cannot open file");
-
-    json json;
-    stream >> json;
-    stream.close();
+std::shared_ptr<material> material::load(bstream& stream) {
     material_desc desc;
+    stream.read(desc.base_color);
+    stream.read(desc.roughness);
+    stream.read(desc.metallic);
 
-    if (json.contains("base_color")) {
-        auto& base_color = json["base_color"];
-        desc.base_color = { base_color[0], base_color[1], base_color[2] };
-    }
+    auto read_uuid = [](bstream& stream) -> uuid {
+        std::uint8_t data[16];
+        stream.read(data, sizeof(data));
+        return uuid{ data };
+    };
 
-    if (json.contains("roughness")) {
-        desc.roughness = json["roughness"];
-    }
-
-    if (json.contains("metallic")) {
-        desc.metallic = json["metallic"];
-    }
-
-    if (json.contains("albedo_map")) {
-        desc.albedo_map = assets::load<texture>(json["albedo_map"]);
+    if (const auto uuid = read_uuid(stream); uuid) {
+        desc.albedo_map = assets::load<texture>(uuid);
     } else {
         desc.albedo_map = texture::make_one_color(color::white(), { 2, 2 });
     }
 
-    if (json.contains("normal_map")) {
-        desc.normal_map = assets::load<texture>(json["normal_map"]);
+    if (const auto uuid = read_uuid(stream); uuid) {
+        desc.normal_map = assets::load<texture>(uuid);
     } else {
         desc.normal_map = texture::make_one_color({ 127, 127, 255, 255 }, { 2, 2 });
     }
 
-    if (json.contains("roughness_map")) {
-        desc.roughness_map = assets::load<texture>(json["roughness_map"]);
+    if (const auto uuid = read_uuid(stream); uuid) {
+        desc.roughness_map = assets::load<texture>(uuid);
     } else {
         desc.roughness_map = texture::make_one_color(color::white(), { 2, 2 });
     }
 
-    if (json.contains("metallic_map")) {
-        desc.metallic_map = assets::load<texture>(json["metallic_map"]);
+    if (const auto uuid = read_uuid(stream); uuid) {
+        desc.metallic_map = assets::load<texture>(uuid);
     } else {
         desc.metallic_map = texture::make_one_color(color::white(), { 2, 2 });
     }
 
-    if (json.contains("emissive_map")) {
-        desc.emissive_map = assets::load<texture>(json["emissive_map"]);
+    if (const auto uuid = read_uuid(stream); uuid) {
+        desc.emissive_map = assets::load<texture>(uuid);
     } else {
         desc.emissive_map = texture::make_one_color(color::black(), { 2, 2 });
     }
@@ -64,7 +55,64 @@ std::shared_ptr<material> material::load(const std::string& filename, json& meta
 }
 
 void material::import(const std::string& input, const std::string& output, const json& metadata) {
+    std::ifstream istream{ input, std::ios::in };
+    RB_ASSERT(istream.is_open(), "Cannot open file");
 
+    json json;
+    istream >> json;
+    istream.close();
+
+    vec3f base_color{ 1.0f, 1.0f, 1.0f };
+    float roughness{ 0.8f };
+    float metallic{ 0.0f };
+
+    if (json.contains("base_color")) {
+        auto& color = json["base_color"];
+        base_color = { color[0], color[1], color[2] };
+    }
+
+    if (json.contains("roughness")) {
+        roughness = json["roughness"];
+    }
+
+    if (json.contains("metallic")) {
+        metallic = json["metallic"];
+    }
+
+    bstream stream{ output, bstream_mode::write };
+    stream.write(base_color);
+    stream.write(roughness);
+    stream.write(metallic);
+    
+    if (json.contains("albedo_map")) {
+        stream.write(uuid::from_string(json["albedo_map"]).value().data());
+    } else {
+        stream.write(uuid{}.data());
+    }
+
+    if (json.contains("normal_map")) {
+        stream.write(uuid::from_string(json["normal_map"]).value().data());
+    } else {
+        stream.write(uuid{}.data());
+    }
+
+    if (json.contains("roughness_map")) {
+        stream.write(uuid::from_string(json["roughness_map"]).value().data());
+    } else {
+        stream.write(uuid{}.data());
+    }
+
+    if (json.contains("metallic_map")) {
+        stream.write(uuid::from_string(json["metallic_map"]).value().data());
+    } else {
+        stream.write(uuid{}.data());
+    }
+
+    if (json.contains("emissive_map")) {
+        stream.write(uuid::from_string(json["emissive_map"]).value().data());
+    } else {
+        stream.write(uuid{}.data());
+    }
 }
 
 const vec3f& material::base_color() const {

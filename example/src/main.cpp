@@ -11,8 +11,8 @@ public:
 		auto& coat_transform = registry.emplace<transform>(coat);
 		auto& coat_geometry = registry.emplace<geometry>(coat);
 
-		coat_geometry.mesh = assets::load<mesh>("data/meshes/coat.obj");
-		coat_geometry.material = assets::load<material>("data/materials/coat.json");
+		coat_geometry.mesh = assets::load<mesh>("2e610701-2c15-289a-7faa-437266196638");
+		coat_geometry.material = assets::load<material>("ac7ac63e-1bc2-d3b5-47d8-3dc0e4350cad");
 
 		auto box = registry.create();
 		auto& box_transform = registry.emplace<transform>(box);
@@ -20,7 +20,7 @@ public:
 
 		box_transform.position.y = -1.0f;
 		box_geometry.mesh = mesh::make_box(vec3f{ 2.0f, 1.0f, 2.0f }, { 1.0f, 1.0f });
-		box_geometry.material = assets::load<material>("data/materials/box.json");
+		box_geometry.material = assets::load<material>("8f054d50-0ec9-fa49-33bc-13a37bf4893b");
 
 		auto main_light = registry.create();
 		registry.emplace<transform>(main_light).rotation = { pi<float>() * 0.25f, -pi<float>() * 0.75f, 0.0f };
@@ -28,7 +28,7 @@ public:
 		registry.emplace<directional_light>(main_light);
 
 		auto main_camera = registry.create();
-		registry.emplace<camera>(main_camera).environment = assets::load<environment>("data/cubemaps/magic_hour.json");
+		registry.emplace<camera>(main_camera).environment = assets::load<environment>("01d84041-4221-3169-1a9d-e28b2a1175c5");
 		registry.emplace<transform>(main_camera).position = { 0.0f, 1.0f, 5.0f };
 	}
 };
@@ -104,8 +104,8 @@ int main(int argc, char* argv[]) {
 	app::setup();
 
 	app::system<camera_controller>();
-	// app::system<initializer>();
-	// app::system<fps_meter>();
+	app::system<initializer>();
+	app::system<fps_meter>();
 
 	app::run();
 }

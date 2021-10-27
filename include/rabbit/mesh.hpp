@@ -3,6 +3,7 @@
 #include "vertex.hpp"
 #include "span.hpp"
 #include "json.hpp"
+#include "bstream.hpp"
 
 #include <cstdint>
 #include <vector>
@@ -17,7 +18,7 @@ namespace rb {
 
 	class mesh {
 	public:
-		static std::shared_ptr<mesh> load(const std::string& filename, json& metadata);
+		static std::shared_ptr<mesh> load(bstream& stream);
 
 		static void import(const std::string& input, const std::string& output, const json& metadata);
 

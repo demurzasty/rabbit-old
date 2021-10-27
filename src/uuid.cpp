@@ -128,3 +128,11 @@ std::string uuid::to_string() const {
 		_data[10], _data[11], _data[12], _data[13], _data[14], _data[15]);
 	return buffer;
 }
+
+span<const std::uint8_t> uuid::data() const {
+	return _data;
+}
+
+bool uuid::is_empty() const {
+	return std::memcmp(_data, empty_uuid, sizeof(empty_uuid)) == 0;
+}

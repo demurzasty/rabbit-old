@@ -1,9 +1,0 @@
-{
-  "base_color": [ 1.0, 1.0, 1.0 ],
-  "roughness": 1.0,
-  "metallic": 1.0,
-  "albedo_map": "data/textures/coat/export3dcoat_lambert3SG_color.png",
-  "normal_map": "data/textures/coat/export3dcoat_lambert3SG_nmap.png",
-  "roughness_map": "data/textures/coat/export3dcoat_lambert3SG_roughness.png",
-  "metallic_map": "data/textures/coat/export3dcoat_lambert3SG_metalness.png"
-}

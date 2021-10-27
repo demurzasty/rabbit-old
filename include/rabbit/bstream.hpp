@@ -42,7 +42,6 @@ namespace rb {
 			write(data.data(), data.size_bytes());
 		}
 
-
 		template<typename T>
 		void read(const span<T>& data) {
 			read(data.data(), data.size_bytes());

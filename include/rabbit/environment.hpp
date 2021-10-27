@@ -2,9 +2,11 @@
 
 #include "vec2.hpp"
 #include "json.hpp"
+#include "bstream.hpp"
 
 #include <memory>
 #include <string>
+
 namespace rb {
 	struct environment_desc {
 		const void* data{ nullptr };
@@ -13,7 +15,7 @@ namespace rb {
 
 	class environment {
 	public:
-		static std::shared_ptr<environment> load(const std::string& filename, json& metadata);
+		static std::shared_ptr<environment> load(bstream& stream);
 
 		static void import(const std::string& input, const std::string& output, const json& metadata);
 

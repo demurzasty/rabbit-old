@@ -1,5 +1,7 @@
 #pragma once 
 
+#include "span.hpp"
+
 #include <string>
 #include <optional>
 #include <cstdint>
@@ -43,6 +45,10 @@ namespace rb {
 		operator bool() const;
 
 		std::string to_string() const;
+
+		span<const std::uint8_t> data() const;
+
+		bool is_empty() const;
 
 	private:
 		std::uint8_t _data[16];

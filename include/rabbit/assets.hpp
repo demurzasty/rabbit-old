@@ -1,17 +1,20 @@
 #pragma once 
 
 #include "json.hpp"
+#include "uuid.hpp"
+#include "bstream.hpp"
 
 #include <memory>
 #include <string>
 #include <typeinfo>
 #include <typeindex>
 #include <functional>
+#include <map>
 #include <unordered_map>
 
 namespace rb {
 	class assets {
-		using loader = std::function<std::shared_ptr<void>(const std::string&, json&)>;
+		using loader = std::function<std::shared_ptr<void>(bstream&)>;
 
 	public:
 		static void init();
@@ -24,17 +27,26 @@ namespace rb {
 		}
 
 		template<typename Asset>
-		static std::shared_ptr<Asset> load(const std::string& filename) {
-			return std::static_pointer_cast<Asset>(_load(typeid(Asset), filename));
+		static std::shared_ptr<Asset> load(const uuid& uuid) {
+			return std::static_pointer_cast<Asset>(_load(typeid(Asset), uuid));
+		}
+
+		template<typename Asset>
+		static std::shared_ptr<Asset> load(const std::string& uuid_str) {
+			if (const auto uuid = uuid::from_string(uuid_str); uuid.has_value()) {
+				return load<Asset>(uuid.value());
+			} else {
+				return nullptr;
+			}
 		}
 
 	private:
-		static std::shared_ptr<void> _load(std::type_index type_index, const std::string& filename);
+		static std::shared_ptr<void> _load(std::type_index type_index, const uuid& uuid);
 
 		static json _load_metadata(const std::string& filename);
 
 	private:
 		static std::unordered_map<std::type_index, loader> _loaders;
-		static std::unordered_map<std::string, std::weak_ptr<void>> _assets;
+		static std::map<uuid, std::weak_ptr<void>> _assets;
 	};
 }

@@ -3,6 +3,7 @@
 #include "vec3.hpp"
 #include "texture.hpp"
 #include "json.hpp"
+#include "bstream.hpp"
 
 #include <memory>
 #include <string>
@@ -21,7 +22,7 @@ namespace rb {
 
 	class material {
 	public:
-		static std::shared_ptr<material> load(const std::string& filename, json& metadata);
+		static std::shared_ptr<material> load(bstream& stream);
 
 		static void import(const std::string& input, const std::string& output, const json& metadata);
 

@@ -1,7 +1,6 @@
 #include <rabbit/texture.hpp>
 #include <rabbit/config.hpp>
 #include <rabbit/graphics.hpp>
-#include <rabbit/bstream.hpp>
 
 #define STBI_MAX_DIMENSIONS 8192
 #define STB_IMAGE_IMPLEMENTATION
@@ -23,22 +22,20 @@ inline std::size_t calculate_bytes_per_pixel(texture_format format) {
 	return 0;
 }
 
-std::shared_ptr<texture> texture::load(const std::string& filename, json& metadata) {
-	int width, height, components;
-	std::unique_ptr<stbi_uc, decltype(&stbi_image_free)> pixels{
-		stbi_load(filename.c_str(), &width, &height, &components, STBI_rgb_alpha),
-		&stbi_image_free
-	};
-
-	RB_ASSERT(pixels, "Cannot load image: {}", filename);
-
+std::shared_ptr<texture> texture::load(bstream& stream) {
 	texture_desc desc;
+	stream.read(desc.size.x);
+	stream.read(desc.size.y);
+	stream.read(desc.format);
+	stream.read(desc.filter);
+	stream.read(desc.wrap);
+	stream.read(desc.mipmaps);
+	
+	const auto bytes_per_pixel = calculate_bytes_per_pixel(desc.format);
+	const auto pixels = std::make_unique<std::uint8_t[]>(desc.size.x * desc.size.y * bytes_per_pixel);
+	stream.read(pixels.get(), desc.size.x * desc.size.y * bytes_per_pixel);
 	desc.data = pixels.get();
-	desc.size = { static_cast<unsigned int>(width), static_cast<unsigned int>(height) };
-	desc.format = texture_format::rgba8;
-	desc.filter = texture_filter::linear;
-	desc.wrap = texture_wrap::repeat;
-	desc.mipmaps = 0;
+
 	return graphics::make_texture(desc);
 }
 
