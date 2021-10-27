@@ -23,6 +23,8 @@ namespace rb {
 	public:
 		static std::shared_ptr<material> load(const std::string& filename, json& metadata);
 
+		static void import(const std::string& input, const std::string& output, const json& metadata);
+
 		virtual ~material() = default;
 
 		const vec3f& base_color() const;

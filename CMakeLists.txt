@@ -45,6 +45,7 @@ add_custom_target (shaders DEPENDS ${SPIRV_BINARY_FILES})
 set (SRC 
 	"src/app.cpp"
 	"src/assets.cpp"
+	"src/editor.cpp"
 	"src/environment.cpp"
 	"src/graphics.cpp"
 	"src/input.cpp"
@@ -54,8 +55,15 @@ set (SRC
 	"src/settings.cpp"
 	"src/system.cpp"
 	"src/texture.cpp"
+	"src/uuid.cpp"
 	"src/window.cpp"
 )
+
+if (RB_PROD_BUILD) 
+	set (SRC ${SRC}
+		"src/editor.cpp"
+	)
+endif ()
 
 if (RB_WINDOWS) 
 	set (SRC ${SRC}

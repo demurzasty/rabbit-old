@@ -31,12 +31,14 @@ namespace rb {
 		texture_format format{ texture_format::rgba8 };
 		texture_filter filter{ texture_filter::linear };
 		texture_wrap wrap{ texture_wrap::repeat };
-		std::size_t mipmaps{ 0 };
+		std::uint32_t mipmaps{ 0 };
 	};
 
 	class texture {
 	public:
 		static std::shared_ptr<texture> load(const std::string& filename, json& metadata);
+
+		static void import(const std::string& input, const std::string& output, const json& metadata);
 
 		static std::shared_ptr<texture> make_one_color(const color& color, const vec2u& size);
 
@@ -50,7 +52,7 @@ namespace rb {
 
 		texture_wrap wrap() const;
 
-		std::size_t mipmaps() const;
+		std::uint32_t mipmaps() const;
 
 		std::size_t bytes_per_pixel() const;
 
@@ -62,7 +64,7 @@ namespace rb {
 		const texture_format _format;
 		const texture_filter _filter;
 		const texture_wrap _wrap;
-		const std::size_t _mipmaps;
+		const std::uint32_t _mipmaps;
 		const std::size_t _bytes_per_pixel;
 	};
 }

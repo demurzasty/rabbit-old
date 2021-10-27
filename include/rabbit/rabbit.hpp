@@ -4,6 +4,7 @@
 #include "assets.hpp"
 #include "bbox.hpp"
 #include "bsphere.hpp"
+#include "bstream.hpp"
 #include "camera.hpp"
 #include "color.hpp"
 #include "config.hpp"
@@ -34,3 +35,7 @@
 #include "version.hpp"
 #include "vertex.hpp"
 #include "window.hpp"
+
+#if !RB_PROD_BUILD
+#	include "editor.hpp"
+#endif

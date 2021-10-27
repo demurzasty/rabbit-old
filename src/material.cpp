@@ -63,6 +63,10 @@ std::shared_ptr<material> material::load(const std::string& filename, json& meta
     return graphics::make_material(desc);
 }
 
+void material::import(const std::string& input, const std::string& output, const json& metadata) {
+
+}
+
 const vec3f& material::base_color() const {
     return _base_color;
 }

@@ -15,12 +15,22 @@ void app::setup() {
 	app::submodule<graphics>();
 	app::submodule<assets>();
 
+#if !RB_PROD_BUILD
+	app::submodule<editor>();
+#endif
+
 	app::init([] {
 		assets::add_loader<texture>(&texture::load);
 		assets::add_loader<environment>(&environment::load);
 		assets::add_loader<material>(&material::load);
 		assets::add_loader<mesh>(&mesh::load);
 	});
+
+#if !RB_PROD_BUILD
+	app::init([] {
+		editor::scan();
+	});
+#endif
 
 	app::system<renderer>();
 }

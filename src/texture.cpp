@@ -1,6 +1,7 @@
 #include <rabbit/texture.hpp>
 #include <rabbit/config.hpp>
 #include <rabbit/graphics.hpp>
+#include <rabbit/bstream.hpp>
 
 #define STBI_MAX_DIMENSIONS 8192
 #define STB_IMAGE_IMPLEMENTATION
@@ -41,6 +42,25 @@ std::shared_ptr<texture> texture::load(const std::string& filename, json& metada
 	return graphics::make_texture(desc);
 }
 
+void texture::import(const std::string& input, const std::string& output, const json& metadata) {
+	int width, height, components;
+	std::unique_ptr<stbi_uc, decltype(&stbi_image_free)> pixels{
+		stbi_load(input.c_str(), &width, &height, &components, STBI_rgb_alpha),
+		&stbi_image_free
+	};
+
+	RB_ASSERT(pixels, "Cannot load image: {}", input);
+
+	bstream stream{ output, bstream_mode::write };
+	stream.write(width);
+	stream.write(height);
+	stream.write(texture_format::rgba8);
+	stream.write(texture_filter::linear);
+	stream.write(texture_wrap::repeat);
+	stream.write(0u);
+	stream.write(pixels.get(), width * height * 4);
+}
+
 std::shared_ptr<texture> texture::make_one_color(const color& color, const vec2u& size) {
 	const auto pixels = std::make_unique<rb::color[]>(size.x * size.y);
 	for (auto i = 0u; i < size.x * size.y; ++i) {
@@ -73,7 +93,7 @@ texture_wrap texture::wrap() const {
 	return _wrap;
 }
 
-std::size_t texture::mipmaps() const {
+std::uint32_t texture::mipmaps() const {
 	return _mipmaps;
 }
 

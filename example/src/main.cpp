@@ -1,5 +1,7 @@
 #include <rabbit/rabbit.hpp>
 
+#include <filesystem>
+
 using namespace rb;
 
 class initializer : public rb::system {
@@ -97,11 +99,13 @@ private:
 };
 
 int main(int argc, char* argv[]) {
+	std::filesystem::current_path(CURRENT_DIRECTORY);
+
 	app::setup();
 
 	app::system<camera_controller>();
-	app::system<initializer>();
-	app::system<fps_meter>();
+	// app::system<initializer>();
+	// app::system<fps_meter>();
 
 	app::run();
 }

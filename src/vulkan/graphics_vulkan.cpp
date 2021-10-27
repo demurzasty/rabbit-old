@@ -326,6 +326,10 @@ void graphics_vulkan::begin_render_pass() {
 }
 
 void graphics_vulkan::draw_ambient() {
+    if (!_environment) {
+        return;
+    }
+
     vkCmdBindPipeline(_command_buffers[_command_index], VK_PIPELINE_BIND_POINT_GRAPHICS, _ambient_pipeline);
 
     VkDescriptorSet descriptor_sets[]{
@@ -405,6 +409,10 @@ void graphics_vulkan::draw_point_light(const transform& transform, const light& 
 }
 
 void graphics_vulkan::draw_skybox() {
+    if (!_environment) {
+        return;
+    }
+
     vkCmdBindPipeline(_command_buffers[_command_index], VK_PIPELINE_BIND_POINT_GRAPHICS, _skybox_pipeline);
 
     VkDescriptorSet descriptor_sets[]{

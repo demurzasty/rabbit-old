@@ -15,6 +15,8 @@ namespace rb {
 	public:
 		static std::shared_ptr<environment> load(const std::string& filename, json& metadata);
 
+		static void import(const std::string& input, const std::string& output, const json& metadata);
+
 		virtual ~environment() = default;
 
 		const vec2u& size() const;

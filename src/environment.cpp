@@ -55,6 +55,10 @@ std::shared_ptr<environment> environment::load(const std::string& filename, json
     return graphics::make_environment(desc);
 }
 
+void environment::import(const std::string& input, const std::string& output, const json& metadata) {
+
+}
+
 const vec2u& environment::size() const {
 	return _size;
 }
