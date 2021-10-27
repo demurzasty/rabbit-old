@@ -9,7 +9,6 @@
 #include <typeinfo>
 #include <typeindex>
 #include <functional>
-#include <map>
 #include <unordered_map>
 
 namespace rb {
@@ -40,13 +39,13 @@ namespace rb {
 			}
 		}
 
+		static uuid get_uuid(const std::shared_ptr<void>& asset);
+
 	private:
 		static std::shared_ptr<void> _load(std::type_index type_index, const uuid& uuid);
 
-		static json _load_metadata(const std::string& filename);
-
 	private:
 		static std::unordered_map<std::type_index, loader> _loaders;
-		static std::map<uuid, std::weak_ptr<void>> _assets;
+		static std::unordered_map<uuid, std::weak_ptr<void>, uuid::hasher> _assets;
 	};
 }

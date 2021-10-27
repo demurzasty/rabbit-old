@@ -5,7 +5,7 @@
 using namespace rb;
 
 std::unordered_map<std::type_index, assets::loader> assets::_loaders;
-std::map<uuid, std::weak_ptr<void>> assets::_assets;
+std::unordered_map<uuid, std::weak_ptr<void>, uuid::hasher> assets::_assets;
 
 void assets::init() {
 }
@@ -30,13 +30,12 @@ std::shared_ptr<void> assets::_load(std::type_index type_index, const uuid& uuid
     return loaded_asset;
 }
 
-json assets::_load_metadata(const std::string& filename) {
-    json metadata;
-
-    std::ifstream stream{ filename + ".meta", std::ios::in };
-    if (stream.is_open()) {
-        stream >> metadata;
+uuid assets::get_uuid(const std::shared_ptr<void>& asset) {
+    for (const auto& [uuid, loaded_asset] : _assets) {
+        if (!loaded_asset.expired() && loaded_asset.lock() == asset) {
+            return uuid;
+        }
     }
 
-    return metadata;
+    return {};
 }

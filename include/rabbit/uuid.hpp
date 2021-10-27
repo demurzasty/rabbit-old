@@ -9,6 +9,14 @@
 namespace rb {
 	class uuid {
 	public:
+		struct hasher {
+			std::size_t operator()(const uuid& uuid) const {
+				std::hash<std::size_t> hash;
+				return hash(*reinterpret_cast<const std::size_t*>(&uuid._data[0]));
+			}
+		};
+
+	public:
 		static uuid generate();
 
 		static std::optional<uuid> from_string(const std::string& string);
