@@ -29,7 +29,9 @@ public:
 
         auto main_camera = registry.create();
         registry.emplace<camera>(main_camera).environment = assets::load<environment>("01d84041-4221-3169-1a9d-e28b2a1175c5");
-        registry.emplace<transform>(main_camera).position = { 0.0f, 1.0f, 5.0f };
+        auto& camera_transform = registry.emplace<transform>(main_camera);
+        camera_transform.position = { -4.0f, 3.0f, 4.0f };
+        camera_transform.rotation = { -pi<float>() * 0.15f, -pi<float>() * 0.25f, 0.0f };
     }
 };
 
