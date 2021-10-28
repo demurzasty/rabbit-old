@@ -471,7 +471,7 @@ void graphics_vulkan::present() {
     present_info.pResults = nullptr;
 
     RB_VK(vkQueuePresentKHR(_graphics_queue, &present_info), "Failed to queue present");
-    RB_VK(vkAcquireNextImageKHR(_device, _swapchain, UINT64_MAX, _present_semaphore, nullptr, &_image_index), "Failed to reset acquire next swapchain image");
+    RB_VK(vkAcquireNextImageKHR(_device, _swapchain, UINT64_MAX, _present_semaphore, VK_NULL_HANDLE, &_image_index), "Failed to reset acquire next swapchain image");
 }
 
 void graphics_vulkan::flush() {
@@ -782,7 +782,7 @@ void graphics_vulkan::_create_swapchain() {
     swapchain_info.clipped = VK_TRUE;
     swapchain_info.preTransform = surface_capabilities.currentTransform;
     swapchain_info.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
-    swapchain_info.oldSwapchain = nullptr;
+    swapchain_info.oldSwapchain = VK_NULL_HANDLE;
 
     // Create Vulkan swapchain.
     RB_VK(vkCreateSwapchainKHR(_device, &swapchain_info, nullptr, &_swapchain), "Failed to create swapchain");
@@ -1318,7 +1318,7 @@ void graphics_vulkan::_create_gbuffer() {
     pipeline_info.pDepthStencilState = &depth_stencil_state_info;
     pipeline_info.layout = _gbuffer_pipeline_layout;
     pipeline_info.renderPass = _gbuffer_render_pass;
-    pipeline_info.basePipelineHandle = nullptr;
+    pipeline_info.basePipelineHandle = VK_NULL_HANDLE;
     pipeline_info.pDynamicState = nullptr;
     RB_VK(vkCreateGraphicsPipelines(_device, VK_NULL_HANDLE, 1, &pipeline_info, nullptr, &_gbuffer_pipeline),
         "Failed to create Vulkan graphics pipeline");
@@ -1553,7 +1553,7 @@ void graphics_vulkan::_create_ambient_pipeline() {
     pipeline_info.pDepthStencilState = &depth_stencil_state_info;
     pipeline_info.layout = _ambient_pipeline_layout;
     pipeline_info.renderPass = _render_pass;
-    pipeline_info.basePipelineHandle = nullptr;
+    pipeline_info.basePipelineHandle = VK_NULL_HANDLE;
     pipeline_info.pDynamicState = nullptr;
     RB_VK(vkCreateGraphicsPipelines(_device, VK_NULL_HANDLE, 1, &pipeline_info, nullptr, &_ambient_pipeline),
         "Failed to create Vulkan graphics pipeline");
@@ -1740,7 +1740,7 @@ void graphics_vulkan::_create_directional_light_pipeline() {
     pipeline_info.pDepthStencilState = &depth_stencil_state_info;
     pipeline_info.layout = _directional_light_pipeline_layout;
     pipeline_info.renderPass = _render_pass;
-    pipeline_info.basePipelineHandle = nullptr;
+    pipeline_info.basePipelineHandle = VK_NULL_HANDLE;
     pipeline_info.pDynamicState = nullptr;
     RB_VK(vkCreateGraphicsPipelines(_device, VK_NULL_HANDLE, 1, &pipeline_info, nullptr, &_directional_light_pipeline),
         "Failed to create Vulkan graphics pipeline");
@@ -1930,8 +1930,8 @@ void graphics_vulkan::_create_point_light_pipeline() {
     pipeline_info.pDepthStencilState = &depth_stencil_state_info;
     pipeline_info.layout = _directional_light_pipeline_layout;
     pipeline_info.renderPass = _render_pass;
-    pipeline_info.basePipelineHandle = nullptr;
-    pipeline_info.pDynamicState = nullptr;
+    pipeline_info.basePipelineHandle = VK_NULL_HANDLE;
+    pipeline_info.pDynamicState = VK_NULL_HANDLE;
     RB_VK(vkCreateGraphicsPipelines(_device, VK_NULL_HANDLE, 1, &pipeline_info, nullptr, &_point_light_pipeline),
         "Failed to create Vulkan graphics pipeline");
 
@@ -1953,9 +1953,9 @@ void graphics_vulkan::_create_synchronization_objects() {
     semaphore_info.pNext = nullptr;
     semaphore_info.flags = 0;
 
-    RB_VK(vkCreateSemaphore(_device, &semaphore_info, nullptr, &_render_semaphore), "Failed to create render semaphore");
-    RB_VK(vkCreateSemaphore(_device, &semaphore_info, nullptr, &_present_semaphore), "Failed to create present semaphore");
-    RB_VK(vkAcquireNextImageKHR(_device, _swapchain, UINT64_MAX, _present_semaphore, nullptr, &_image_index),
+    RB_VK(vkCreateSemaphore(_device, &semaphore_info, VK_NULL_HANDLE, &_render_semaphore), "Failed to create render semaphore");
+    RB_VK(vkCreateSemaphore(_device, &semaphore_info, VK_NULL_HANDLE, &_present_semaphore), "Failed to create present semaphore");
+    RB_VK(vkAcquireNextImageKHR(_device, _swapchain, UINT64_MAX, _present_semaphore, VK_NULL_HANDLE, &_image_index),
         "Failed to reset acquire next swapchain image");
 }
 
@@ -2310,7 +2310,7 @@ void graphics_vulkan::_generate_brdf_image() {
     pipeline_info.pDepthStencilState = &depth_stencil_state_info;
     pipeline_info.layout = pipeline_layout;
     pipeline_info.renderPass = render_pass;
-    pipeline_info.basePipelineHandle = nullptr;
+    pipeline_info.basePipelineHandle = VK_NULL_HANDLE;
     pipeline_info.pDynamicState = nullptr;
 
     VkPipeline pipeline;
@@ -2782,7 +2782,7 @@ void graphics_vulkan::_create_irradiance_pipeline() {
     pipeline_info.pDepthStencilState = &depth_stencil_state_info;
     pipeline_info.layout = _irradiance_pipeline_layout;
     pipeline_info.renderPass = _irradiance_render_pass;
-    pipeline_info.basePipelineHandle = nullptr;
+    pipeline_info.basePipelineHandle = VK_NULL_HANDLE;
     pipeline_info.pDynamicState = nullptr;
     RB_VK(vkCreateGraphicsPipelines(_device, VK_NULL_HANDLE, 1, &pipeline_info, nullptr, &_irradiance_pipeline),
         "Failed to create Vulkan graphics pipeline");
@@ -3225,7 +3225,7 @@ void graphics_vulkan::_create_prefilter_pipeline() {
     pipeline_info.pDepthStencilState = &depth_stencil_state_info;
     pipeline_info.layout = _prefilter_pipeline_layout;
     pipeline_info.renderPass = _prefilter_render_pass;
-    pipeline_info.basePipelineHandle = nullptr;
+    pipeline_info.basePipelineHandle = VK_NULL_HANDLE;
     pipeline_info.pDynamicState = &dynamic_state_info;
     RB_VK(vkCreateGraphicsPipelines(_device, VK_NULL_HANDLE, 1, &pipeline_info, nullptr, &_prefilter_pipeline),
         "Failed to create Vulkan graphics pipeline");
@@ -3697,7 +3697,7 @@ void graphics_vulkan::_create_shadow_map() {
     pipeline_info.pDepthStencilState = &depth_stencil_state_info;
     pipeline_info.layout = _shadow_pipeline_layout;
     pipeline_info.renderPass = _shadow_render_pass;
-    pipeline_info.basePipelineHandle = nullptr;
+    pipeline_info.basePipelineHandle = VK_NULL_HANDLE;
     pipeline_info.pDynamicState = nullptr;
     RB_VK(vkCreateGraphicsPipelines(_device, VK_NULL_HANDLE, 1, &pipeline_info, nullptr, &_shadow_pipeline),
         "Failed to create Vulkan graphics pipeline");
@@ -3965,7 +3965,7 @@ void graphics_vulkan::_create_forward_pipeline() {
     pipeline_info.pDepthStencilState = &depth_stencil_state_info;
     pipeline_info.layout = _forward_pipeline_layout;
     pipeline_info.renderPass = _render_pass;
-    pipeline_info.basePipelineHandle = nullptr;
+    pipeline_info.basePipelineHandle = VK_NULL_HANDLE;
     pipeline_info.pDynamicState = nullptr;
     RB_VK(vkCreateGraphicsPipelines(_device, VK_NULL_HANDLE, 1, &pipeline_info, nullptr, &_forward_pipeline),
         "Failed to create Vulkan graphics pipeline");
@@ -4138,7 +4138,7 @@ void graphics_vulkan::_create_skybox_pipeline() {
     pipeline_info.pDepthStencilState = &depth_stencil_state_info;
     pipeline_info.layout = _skybox_pipeline_layout;
     pipeline_info.renderPass = _render_pass;
-    pipeline_info.basePipelineHandle = nullptr;
+    pipeline_info.basePipelineHandle = VK_NULL_HANDLE;
     pipeline_info.pDynamicState = nullptr;
     RB_VK(vkCreateGraphicsPipelines(_device, VK_NULL_HANDLE, 1, &pipeline_info, nullptr, &_skybox_pipeline),
         "Failed to create Vulkan graphics pipeline");
