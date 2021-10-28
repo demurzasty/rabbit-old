@@ -161,10 +161,10 @@ std::shared_ptr<mesh> mesh::make_box(const vec3f& extent, const vec2f& uv_scale)
         { { extent.x, -extent.y, -extent.z }, { 1.0f, 1.0f }, { 1.0f, 0.0f, 0.0f } },
         { { extent.x, extent.y, -extent.z }, { 1.0f, 0.0f }, { 1.0f, 0.0f, 0.0f } },
 
-        { { extent.x, extent.y, extent.z }, { 0.0f, 0.0f }, { 0.0f, 0.0f, -1.0f } },
-        { { extent.x, -extent.y, extent.z }, { 0.0f, 1.0f }, { 0.0f, 0.0f, -1.0f } },
-        { { -extent.x, -extent.y, extent.z }, { 1.0f, 1.0f }, { 0.0f, 0.0f, -1.0f } },
-        { { -extent.x, extent.y, extent.z }, { 1.0f, 0.0f }, { 0.0f, 0.0f, -1.0f } },
+        { { extent.x, extent.y, -extent.z }, { 0.0f, 0.0f }, { 0.0f, 0.0f, -1.0f } },
+        { { extent.x, -extent.y, -extent.z }, { 0.0f, 1.0f }, { 0.0f, 0.0f, -1.0f } },
+        { { -extent.x, -extent.y, -extent.z }, { 1.0f, 1.0f }, { 0.0f, 0.0f, -1.0f } },
+        { { -extent.x, extent.y, -extent.z }, { 1.0f, 0.0f }, { 0.0f, 0.0f, -1.0f } },
 
         { { -extent.x, extent.y, -extent.z }, { 0.0f, 0.0f }, { -1.0f, 0.0f, 0.0f } },
         { { -extent.x, -extent.y, -extent.z }, { 0.0f, 1.0f }, { -1.0f, 0.0f, 0.0f } },
