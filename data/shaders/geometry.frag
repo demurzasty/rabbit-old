@@ -51,7 +51,12 @@ vec3 perturb(vec3 map, vec3 n, vec3 v, vec2 texcoord) {
 }
 
 void main() {
-    vec3 albedo = texture(u_albedo_map, v_texcoord).rgb * u_base_color;
+    vec4 albedo_data = texture(u_albedo_map, v_texcoord);
+    if (albedo_data.a < 0.5) {
+        discard;
+    }
+
+    vec3 albedo = albedo_data.xyz * u_base_color;
     vec3 normal = perturb(texture(u_normal_map, v_texcoord).rgb * 2.0 - 1.0, normalize(v_normal), normalize(u_camera_position - v_position), v_texcoord);
     float roughness = texture(u_roughness_map, v_texcoord).r * u_roughness;
     float metallic = texture(u_metallic_map, v_texcoord).r * u_metallic;

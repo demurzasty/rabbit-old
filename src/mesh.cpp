@@ -187,7 +187,7 @@ std::shared_ptr<mesh> mesh::make_box(const vec3f& extent, const vec2f& uv_scale)
         vertex.texcoord.y *= uv_scale.y;
     }
 
-    std::uint32_t indices[36]{
+    const std::uint32_t indices[36]{
         0, 1, 2,
         2, 3, 0,
 
