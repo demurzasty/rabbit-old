@@ -14,6 +14,8 @@ add_subdirectory ("magic_enum-0.7.3")
 
 add_subdirectory ("meshoptimizer-0.16")
 
+add_subdirectory ("miniz-2.2.0")
+
 add_subdirectory ("quickhull")
 
 add_subdirectory ("stb")

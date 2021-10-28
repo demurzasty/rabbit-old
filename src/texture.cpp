@@ -1,6 +1,7 @@
 #include <rabbit/texture.hpp>
 #include <rabbit/config.hpp>
 #include <rabbit/graphics.hpp>
+#include <rabbit/compression.hpp>
 
 #define STBI_MAX_DIMENSIONS 8192
 #define STB_IMAGE_IMPLEMENTATION
@@ -30,12 +31,18 @@ std::shared_ptr<texture> texture::load(bstream& stream) {
 	stream.read(desc.filter);
 	stream.read(desc.wrap);
 	stream.read(desc.mipmaps);
+
+	std::uint32_t compressed_size;
+	stream.read(compressed_size);
+
+	const auto compressed_pixels = std::make_unique<std::uint8_t[]>(compressed_size);
+	stream.read(compressed_pixels.get(), compressed_size);
 	
 	const auto bytes_per_pixel = calculate_bytes_per_pixel(desc.format);
 	const auto pixels = std::make_unique<std::uint8_t[]>(desc.size.x * desc.size.y * bytes_per_pixel);
-	stream.read(pixels.get(), desc.size.x * desc.size.y * bytes_per_pixel);
-	desc.data = pixels.get();
+	compression::uncompress(compressed_pixels.get(), compressed_size, pixels.get());
 
+	desc.data = pixels.get();
 	return graphics::make_texture(desc);
 }
 
@@ -48,6 +55,12 @@ void texture::import(const std::string& input, const std::string& output, const 
 
 	RB_ASSERT(pixels, "Cannot load image: {}", input);
 
+	const auto compressed_bound = compression::compress_bound(width * height * 4);
+	const auto compressed_pixels = std::make_unique<std::uint8_t[]>(compressed_bound);
+	const auto compressed_size = compression::compress(pixels.get(), width * height * 4, compressed_pixels.get());
+
+	RB_ASSERT(compressed_size > 0, "Cannot compress image");
+
 	bstream stream{ output, bstream_mode::write };
 	stream.write(width);
 	stream.write(height);
@@ -55,7 +68,8 @@ void texture::import(const std::string& input, const std::string& output, const 
 	stream.write(texture_filter::linear);
 	stream.write(texture_wrap::repeat);
 	stream.write(0u);
-	stream.write(pixels.get(), width * height * 4);
+	stream.write<std::uint32_t>(compressed_size);
+	stream.write(compressed_pixels.get(), compressed_size);
 }
 
 std::shared_ptr<texture> texture::make_one_color(const color& color, const vec2u& size) {

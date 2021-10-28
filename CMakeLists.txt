@@ -45,6 +45,7 @@ add_custom_target (shaders DEPENDS ${SPIRV_BINARY_FILES})
 set (SRC 
 	"src/app.cpp"
 	"src/assets.cpp"
+	"src/compression.cpp"
 	"src/editor.cpp"
 	"src/environment.cpp"
 	"src/graphics.cpp"
@@ -87,7 +88,7 @@ endif ()
 add_library (rabbit STATIC ${SRC})
 target_compile_features (rabbit PUBLIC cxx_std_17)
 target_include_directories (rabbit PUBLIC "include" PRIVATE "generated/include")
-target_link_libraries (rabbit PUBLIC quickhull meshoptimizer stb fmt gsl json entt)
+target_link_libraries (rabbit PUBLIC miniz quickhull meshoptimizer stb fmt gsl json entt)
 add_dependencies (rabbit shaders)
 
 if (MSVC)
