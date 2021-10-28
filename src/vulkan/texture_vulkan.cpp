@@ -306,11 +306,11 @@ void texture_vulkan::_create_sampler(const VkPhysicalDeviceProperties& physical_
     sampler_info.pNext = nullptr;
     sampler_info.flags = 0;
     sampler_info.magFilter = filters.at(desc.filter);
-    sampler_info.minFilter = filters.at(desc.filter);
+    sampler_info.minFilter = sampler_info.magFilter;
     sampler_info.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR; // TODO: Do mapping.
     sampler_info.addressModeU = sampler_address_modes.at(desc.wrap);
-    sampler_info.addressModeV = sampler_address_modes.at(desc.wrap);
-    sampler_info.addressModeW = sampler_address_modes.at(desc.wrap);
+    sampler_info.addressModeV = sampler_info.addressModeU;
+    sampler_info.addressModeW = sampler_info.addressModeV;
     sampler_info.mipLodBias = 0.0f;
     sampler_info.anisotropyEnable = VK_TRUE;
     sampler_info.maxAnisotropy = physical_device_properties.limits.maxSamplerAnisotropy;
