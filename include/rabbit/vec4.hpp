@@ -3,6 +3,13 @@
 namespace rb {
 	template<typename T>
 	struct vec4 {
+		static constexpr vec4<T> zero() { return { 0, 0, 0, 0 }; }
+		static constexpr vec4<T> one() { return { 1, 1, 1, 0 }; }
+		static constexpr vec4<T> x_axis() { return { 1, 0, 0, 0 }; }
+		static constexpr vec4<T> y_axis() { return { 0, 1, 0, 0 }; }
+		static constexpr vec4<T> z_axis() { return { 0, 0, 1, 0 }; }
+		static constexpr vec4<T> w_axis() { return { 0, 0, 0, 1 }; }
+
 		constexpr const T& operator[](std::size_t index) const {
 			return (&x)[index];
 		}

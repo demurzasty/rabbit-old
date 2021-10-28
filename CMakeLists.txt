@@ -87,7 +87,7 @@ endif ()
 add_library (rabbit STATIC ${SRC})
 target_compile_features (rabbit PUBLIC cxx_std_17)
 target_include_directories (rabbit PUBLIC "include" PRIVATE "generated/include")
-target_link_libraries (rabbit PUBLIC meshoptimizer stb fmt gsl json entt)
+target_link_libraries (rabbit PUBLIC quickhull meshoptimizer stb fmt gsl json entt)
 add_dependencies (rabbit shaders)
 
 if (MSVC)

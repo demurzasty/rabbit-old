@@ -4,6 +4,7 @@
 #include <rabbit/bstream.hpp>
 
 #include <meshoptimizer.h>
+#include <QuickHull.hpp>
 
 #include <fstream>
 #include <sstream>
@@ -12,7 +13,27 @@
 using namespace rb;
 
 // TODO: Vertex quantization
-// TODO: Add more formats (.dae, .gltf)
+// TODO: Add more formats (.gltf)
+
+static bspheref calculate_bsphere(const span<const vertex>& vertices) {
+    bspheref bsphere{ vec3f::zero(), 0.0f };
+
+    // 1. Calculate center of sphere
+    for (auto& vertex : vertices) {
+        bsphere.position = bsphere.position + vertex.position;
+    }
+    bsphere.position = bsphere.position / static_cast<float>(vertices.size());
+
+    // 2. Calculate maximum radius
+    for (auto& vertex : vertices) {
+        const auto distance = length(vertex.position - bsphere.position);
+        if (distance > bsphere.radius) {
+            bsphere.radius = distance;
+        }
+    }
+
+    return bsphere;
+}
 
 std::shared_ptr<mesh> mesh::load(bstream& stream) {
     std::uint32_t vertex_count;
@@ -25,9 +46,19 @@ std::shared_ptr<mesh> mesh::load(bstream& stream) {
     const auto indices = std::make_unique<std::uint32_t[]>(index_count);
     stream.read(indices.get(), index_count * sizeof(std::uint32_t));
 
+    std::uint32_t triangle_count;
+    stream.read(triangle_count);
+    const auto triangles = std::make_unique<trianglef[]>(triangle_count);
+    stream.read(triangles.get(), triangle_count * sizeof(trianglef));
+
+    bspheref bsphere;
+    stream.read(bsphere);
+
     mesh_desc desc;
     desc.vertices = { vertices.get(), vertex_count };
     desc.indices = { indices.get(), index_count };
+    desc.convex_hull = { triangles.get(), triangle_count };
+    desc.bsphere = bsphere;
     return graphics::make_mesh(desc);
 }
 
@@ -92,11 +123,30 @@ void mesh::import(const std::string& input, const std::string& output, const jso
     meshopt_optimizeOverdraw(indices.get(), indices.get(), vertices.size(), &indexed_vertices.get()->position.x, vertex_size, sizeof(vertex), 1.05f);
     meshopt_optimizeVertexFetch(indexed_vertices.get(), indices.get(), vertices.size(), indexed_vertices.get(), vertex_size, sizeof(vertex));
 
+    quickhull::QuickHull<float> quickhull;
+    auto hull = quickhull.getConvexHull(&positions[0].x, positions.size(), true, false);
+    auto hull_indices = hull.getIndexBuffer();
+    auto hull_vertices = hull.getVertexBuffer();
+
+    std::vector<vec3f> convex_hull;
+    for (auto& index : hull_indices) {
+        convex_hull.push_back({
+            hull_vertices[index].x,
+            hull_vertices[index].y,
+            hull_vertices[index].z,
+        });
+    }
+
+    const auto bsphere = calculate_bsphere({ indexed_vertices.get(), vertex_size });
+
     bstream stream{ output, bstream_mode::write };
     stream.write<std::uint32_t>(vertex_size);
     stream.write(indexed_vertices.get(), vertex_size * sizeof(vertex));
     stream.write<std::uint32_t>(vertices.size());
     stream.write(indices.get(), vertices.size() * sizeof(std::uint32_t));
+    stream.write<std::uint32_t>(convex_hull.size() / 3); // in triangle count
+    stream.write(convex_hull.data(), convex_hull.size() * sizeof(vec3f));
+    stream.write(bsphere);
 }
 
 std::shared_ptr<mesh> mesh::make_box(const vec3f& extent, const vec2f& uv_scale) {
@@ -171,7 +221,17 @@ span<const std::uint32_t> mesh::indices() const {
 	return _indices;
 }
 
+span<const trianglef> mesh::convex_hull() const {
+    return _convex_hull;
+}
+
+const bspheref& mesh::bsphere() const {
+    return _bsphere;
+}
+
 mesh::mesh(const mesh_desc& desc)
 	: _vertices(desc.vertices.begin(), desc.vertices.end())
-	, _indices(desc.indices.begin(), desc.indices.end()) {
+	, _indices(desc.indices.begin(), desc.indices.end())
+    , _convex_hull(desc.convex_hull.begin(), desc.convex_hull.end())
+    , _bsphere(desc.bsphere.has_value() ? desc.bsphere.value() : calculate_bsphere(desc.vertices)) {
 }

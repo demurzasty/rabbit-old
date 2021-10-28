@@ -20,6 +20,7 @@
 #include "material.hpp"
 #include "math.hpp"
 #include "mesh.hpp"
+#include "plane.hpp"
 #include "ray3.hpp"
 #include "renderer.hpp"
 #include "settings.hpp"

@@ -259,9 +259,9 @@ void graphics_vulkan::end_geometry_pass() {
 }
 
 void graphics_vulkan::begin_shadow_pass(const transform& transform, const light& light, const directional_light& directional_light) {
-    const auto dir = normalize(transform_normal(mat4f::rotation(transform.rotation), vec3f{ 0.0f, 0.0f, 1.0f }));
+    const auto dir = normalize(transform_normal(mat4f::rotation(transform.rotation), vec3f::z_axis()));
     const auto depth_projection = mat4f::orthographic(-10.0f, 10.0f, -10.0f, 10.0f, -20.0f, 20.0f);
-    const auto depth_view = mat4f::look_at(_camera_data.camera_position - dir * 10.0f, _camera_data.camera_position, { 0.0f, 1.0f, 0.0f });
+    const auto depth_view = mat4f::look_at(_camera_data.camera_position - dir * 10.0f, _camera_data.camera_position, vec3f::up());
     _light_proj_view = depth_projection * depth_view;
 
     VkClearValue clear_values[1];
@@ -352,9 +352,9 @@ void graphics_vulkan::draw_ambient() {
 void graphics_vulkan::draw_directional_light(const transform& transform, const light& light, const directional_light& directional_light) {
     vkCmdBindPipeline(_command_buffers[_command_index], VK_PIPELINE_BIND_POINT_GRAPHICS, _directional_light_pipeline);
 
-    const auto dir = normalize(transform_normal(mat4f::rotation(transform.rotation), vec3f{ 0.0f, 0.0f, 1.0f }));
+    const auto dir = normalize(transform_normal(mat4f::rotation(transform.rotation), vec3f::z_axis()));
     const auto depth_projection = mat4f::orthographic(-10.0f, 10.0f, -10.0f, 10.0f, -20.0f, 20.0f);
-    const auto depth_view = mat4f::look_at(_camera_data.camera_position - dir * 10.0f, _camera_data.camera_position, { 0.0f, 1.0f, 0.0f });
+    const auto depth_view = mat4f::look_at(_camera_data.camera_position - dir * 10.0f, _camera_data.camera_position, vec3f::up());
     const auto proj_view = depth_projection * depth_view;
 
     VkDescriptorSet descriptor_sets[]{

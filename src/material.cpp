@@ -15,10 +15,10 @@ std::shared_ptr<material> material::load(bstream& stream) {
     stream.read(desc.roughness);
     stream.read(desc.metallic);
 
-    auto read_uuid = [](bstream& stream) -> uuid {
-        std::uint8_t data[16];
-        stream.read(data, sizeof(data));
-        return uuid{ data };
+    const auto read_uuid = [](bstream& stream) -> uuid {
+        uuid uuid;
+        stream.read(uuid);
+        return uuid;
     };
 
     if (const auto uuid = read_uuid(stream); uuid) {

@@ -2,6 +2,7 @@
 
 #include "config.hpp"
 #include "span.hpp"
+#include "uuid.hpp"
 
 #include <string>
 #include <cstdio>
@@ -35,6 +36,16 @@ namespace rb {
 
 		void read(void* data, std::size_t size) {
 			fread(data, 1, size, _file);
+		}
+
+		void write(const uuid& uuid) {
+			write(uuid.data());
+		}
+
+		void read(uuid& uuid) {
+			std::uint8_t data[16];
+			read(data, sizeof(data));
+			uuid = { data };
 		}
 
 		template<typename T>
