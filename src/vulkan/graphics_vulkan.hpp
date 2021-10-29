@@ -67,6 +67,10 @@ namespace rb {
 			vec3f light_color; 
 		};
 
+		struct alignas(16) ssao_data {
+			vec3f samples[64];
+		};
+
 	public:
 		graphics_vulkan();
 
@@ -105,6 +109,8 @@ namespace rb {
 		void draw_point_light(const transform& transform, const light& light, const point_light& point_light) override;
 
 		void draw_skybox() override;
+
+		void draw_ssao() override;
 
 		void end_render_pass() override;
 
@@ -162,6 +168,8 @@ namespace rb {
 		void _create_directional_light_pipeline();
 
 		void _create_point_light_pipeline();
+
+		void _create_ssao_pipeline();
 
 		void _create_skybox_pipeline();
 
@@ -288,6 +296,18 @@ namespace rb {
 
 		VkPipelineLayout _point_light_pipeline_layout;
 		VkPipeline _point_light_pipeline;
+
+		VkBuffer _ssao_buffer;
+		VmaAllocation _ssao_allocation;
+		VkImage _ssao_noise_map;
+		VkImageView _ssao_noise_map_view;
+		VmaAllocation _ssao_noise_map_allocation;
+		VkSampler _ssao_noise_map_sampler;
+		VkDescriptorPool _ssao_descriptor_pool;
+		VkDescriptorSet _ssao_descriptor_set;
+		VkDescriptorSetLayout _ssao_descriptor_set_layout;
+		VkPipelineLayout _ssao_pipeline_layout;
+		VkPipeline _ssao_pipeline;
 
 		VkPipelineLayout _skybox_pipeline_layout;
 		VkShaderModule _skybox_shader_modules[2];

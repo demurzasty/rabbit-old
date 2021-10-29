@@ -9,6 +9,8 @@
 #define VMA_IMPLEMENTATION
 #include <vk_mem_alloc.h>
 
+#include <random>
+
 using namespace rb;
 
 // TODO: Refactor redundant code.
@@ -56,6 +58,7 @@ graphics_vulkan::graphics_vulkan() {
     _create_ambient_pipeline(); // deferred
     _create_directional_light_pipeline(); // deferred
     _create_point_light_pipeline(); // deferred
+    _create_ssao_pipeline();
     _create_skybox_pipeline();
     _create_command_buffers();
 }
@@ -69,6 +72,15 @@ graphics_vulkan::~graphics_vulkan() {
     vkDestroyShaderModule(_device, _skybox_shader_modules[1], nullptr);
     vkDestroyShaderModule(_device, _skybox_shader_modules[0], nullptr);
     vkDestroyPipelineLayout(_device, _skybox_pipeline_layout, nullptr);
+
+    vkDestroyPipeline(_device, _ssao_pipeline, nullptr);
+    vkDestroyPipelineLayout(_device, _ssao_pipeline_layout, nullptr);
+    vkDestroyDescriptorPool(_device, _ssao_descriptor_pool, nullptr);
+    vkDestroyDescriptorSetLayout(_device, _ssao_descriptor_set_layout, nullptr);
+    vkDestroySampler(_device, _ssao_noise_map_sampler, nullptr);
+    vkDestroyImageView(_device, _ssao_noise_map_view, nullptr);
+    vmaDestroyImage(_allocator, _ssao_noise_map, _ssao_noise_map_allocation);
+    vmaDestroyBuffer(_allocator, _ssao_buffer, _ssao_allocation);
 
     vkDestroyPipeline(_device, _gbuffer_pipeline, nullptr);
     vkDestroyShaderModule(_device, _gbuffer_shader_modules[1], nullptr);
@@ -429,6 +441,26 @@ void graphics_vulkan::draw_skybox() {
     vkCmdBindIndexBuffer(_command_buffers[_command_index], _skybox_index_buffer, 0, VK_INDEX_TYPE_UINT16);
 
     vkCmdDrawIndexed(_command_buffers[_command_index], 36, 1, 0, 0, 0);
+}
+
+void graphics_vulkan::draw_ssao() {
+    vkCmdBindPipeline(_command_buffers[_command_index], VK_PIPELINE_BIND_POINT_GRAPHICS, _ssao_pipeline);
+
+    VkDescriptorSet descriptor_sets[]{
+        _forward_descriptor_set,
+        _gbuffer_descriptor_set,
+        _ssao_descriptor_set
+    };
+
+    vkCmdBindDescriptorSets(_command_buffers[_command_index],
+        VK_PIPELINE_BIND_POINT_GRAPHICS, _ssao_pipeline_layout, 0, 3, descriptor_sets,
+        0, nullptr);
+
+    VkDeviceSize offset{ 0 };
+    vkCmdBindVertexBuffers(_command_buffers[_command_index], 0, 1, &_quad_vertex_buffer, &offset);
+    vkCmdBindIndexBuffer(_command_buffers[_command_index], _quad_index_buffer, 0, VK_INDEX_TYPE_UINT16);
+
+    vkCmdDrawIndexed(_command_buffers[_command_index], 6, 1, 0, 0, 0);
 }
 
 void graphics_vulkan::end_render_pass() {
@@ -1928,7 +1960,7 @@ void graphics_vulkan::_create_point_light_pipeline() {
     pipeline_info.pMultisampleState = &multisampling_state_info;
     pipeline_info.pColorBlendState = &color_blend_state_info;
     pipeline_info.pDepthStencilState = &depth_stencil_state_info;
-    pipeline_info.layout = _directional_light_pipeline_layout;
+    pipeline_info.layout = _point_light_pipeline_layout;
     pipeline_info.renderPass = _render_pass;
     pipeline_info.basePipelineHandle = VK_NULL_HANDLE;
     pipeline_info.pDynamicState = VK_NULL_HANDLE;
@@ -1937,6 +1969,442 @@ void graphics_vulkan::_create_point_light_pipeline() {
 
     vkDestroyShaderModule(_device, point_light_shader_modules[1], nullptr);
     vkDestroyShaderModule(_device, point_light_shader_modules[0], nullptr);
+}
+
+void graphics_vulkan::_create_ssao_pipeline() {
+    VkBufferCreateInfo ssao_buffer_info;
+    ssao_buffer_info.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+    ssao_buffer_info.pNext = nullptr;
+    ssao_buffer_info.flags = 0;
+    ssao_buffer_info.size = sizeof(ssao_data);
+    ssao_buffer_info.usage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
+    ssao_buffer_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+    ssao_buffer_info.queueFamilyIndexCount = 0;
+    ssao_buffer_info.pQueueFamilyIndices = nullptr;
+
+    VmaAllocationCreateInfo ssao_allocation_info{};
+    ssao_allocation_info.usage = VMA_MEMORY_USAGE_CPU_ONLY;
+    RB_VK(vmaCreateBuffer(_allocator, &ssao_buffer_info, &ssao_allocation_info, &_ssao_buffer, &_ssao_allocation, nullptr),
+        "Failed to create Vulkan buffer.");
+
+    std::random_device random;
+    std::mt19937 generator{ random() };
+    std::uniform_real_distribution<float> distribution2{ 0.0f, 1.0f };
+    std::uniform_real_distribution<float> distribution3{ 0.2f, 1.0f };
+
+    ssao_data data;
+    for (auto i = 0u; i < 64u; ++i) {
+        data.samples[i] = {
+            distribution2(generator) * 2.0f - 1.0f,
+            distribution2(generator) * 2.0f - 1.0f,
+            distribution2(generator)
+        };
+
+        auto scale = i / 64.0f;
+        scale *= scale;
+
+        // scale = 0.1f + scale * 0.9f;
+
+        data.samples[i] = normalize(data.samples[i]) * distribution3(generator) * scale;
+      //  data.samples[i] = normalize(data.samples[i]) * distribution2(generator) * scale;
+    }
+
+    void* ptr;
+    vmaMapMemory(_allocator, _ssao_allocation, &ptr);
+    std::memcpy(ptr, &data, sizeof(data));
+    vmaUnmapMemory(_allocator, _ssao_allocation);
+
+    VkImageCreateInfo image_info;
+    image_info.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+    image_info.pNext = nullptr;
+    image_info.flags = 0;
+    image_info.imageType = VK_IMAGE_TYPE_2D;
+    image_info.format = VK_FORMAT_R32G32_SFLOAT;
+    image_info.extent = { 4, 4, 1 };
+    image_info.mipLevels = 1;
+    image_info.arrayLayers = 1;
+    image_info.samples = VK_SAMPLE_COUNT_1_BIT;
+    image_info.tiling = VK_IMAGE_TILING_OPTIMAL;
+    image_info.usage = VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT
+        | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+    image_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+    image_info.queueFamilyIndexCount = 0;
+    image_info.pQueueFamilyIndices = 0;
+    image_info.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+
+    VmaAllocationCreateInfo allocation_info{};
+    allocation_info.usage = VMA_MEMORY_USAGE_GPU_ONLY;
+    RB_VK(vmaCreateImage(_allocator, &image_info, &allocation_info, &_ssao_noise_map, &_ssao_noise_map_allocation, nullptr),
+        "Failed to create Vulkan image");
+
+    vec2f ssao_noise[4 * 4];
+    for (auto& noise : ssao_noise) {
+        noise = {
+            distribution2(generator) * 2.0f - 1.0f,
+            distribution2(generator) * 2.0f - 1.0f
+        };
+    }
+
+    // Create staging buffer.
+    VkBufferCreateInfo buffer_info;
+    buffer_info.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+    buffer_info.pNext = nullptr;
+    buffer_info.flags = 0;
+    buffer_info.size = sizeof(ssao_noise);
+    buffer_info.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+    buffer_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+    buffer_info.queueFamilyIndexCount = 0;
+    buffer_info.pQueueFamilyIndices = nullptr;
+
+    VmaAllocationCreateInfo staging_allocation_info{};
+    staging_allocation_info.usage = VMA_MEMORY_USAGE_CPU_ONLY;
+
+    VkBuffer staging_buffer;
+    VmaAllocation staging_buffer_allocation;
+
+    RB_VK(vmaCreateBuffer(_allocator, &buffer_info, &staging_allocation_info, &staging_buffer, &staging_buffer_allocation, nullptr),
+        "Failed to create Vulkan buffer");
+
+    // Transfer pixels into buffer.
+    RB_VK(vmaMapMemory(_allocator, staging_buffer_allocation, &ptr), "Failed to map staging buffer memory");
+    std::memcpy(ptr, ssao_noise, buffer_info.size);
+    vmaUnmapMemory(_allocator, staging_buffer_allocation);
+
+    auto command_buffer = utils_vulkan::begin_single_time_commands(_device, _command_pool);
+
+    VkImageMemoryBarrier barrier{};
+    barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+    barrier.oldLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    barrier.newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+    barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    barrier.image = _ssao_noise_map;
+    barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    barrier.subresourceRange.baseMipLevel = 0;
+    barrier.subresourceRange.levelCount = 1;
+    barrier.subresourceRange.baseArrayLayer = 0;
+    barrier.subresourceRange.layerCount = 1;
+    barrier.srcAccessMask = 0;
+    barrier.dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+
+    vkCmdPipelineBarrier(command_buffer, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
+        VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &barrier);
+
+    VkBufferImageCopy region{};
+    region.bufferOffset = 0;
+    region.bufferRowLength = 0;
+    region.bufferImageHeight = 0;
+    region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    region.imageSubresource.mipLevel = 0;
+    region.imageSubresource.baseArrayLayer = 0;
+    region.imageSubresource.layerCount = 1;
+    region.imageOffset = { 0, 0, 0 };
+    region.imageExtent = { 4, 4, 1 };
+
+    vkCmdCopyBufferToImage(command_buffer, staging_buffer, _ssao_noise_map, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+
+    barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
+    barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
+    barrier.newLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+    barrier.srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    barrier.dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED;
+    barrier.image = _ssao_noise_map;
+    barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    barrier.subresourceRange.baseMipLevel = 0;
+    barrier.subresourceRange.levelCount = 1;
+    barrier.subresourceRange.baseArrayLayer = 0;
+    barrier.subresourceRange.layerCount = 1;
+    barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
+    barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+
+    vkCmdPipelineBarrier(command_buffer, VK_PIPELINE_STAGE_TRANSFER_BIT,
+        VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, 0, 0, nullptr, 0, nullptr, 1, &barrier);
+
+    utils_vulkan::end_single_time_commands(_device, _graphics_queue, _command_pool, command_buffer);
+
+    vmaDestroyBuffer(_allocator, staging_buffer, staging_buffer_allocation);
+
+    VkImageViewCreateInfo image_view_info;
+    image_view_info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+    image_view_info.pNext = nullptr;
+    image_view_info.flags = 0;
+    image_view_info.image = _ssao_noise_map;
+    image_view_info.viewType = VK_IMAGE_VIEW_TYPE_2D;
+    image_view_info.format = VK_FORMAT_R32G32_SFLOAT;
+    image_view_info.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
+    image_view_info.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
+    image_view_info.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
+    image_view_info.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
+    image_view_info.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    image_view_info.subresourceRange.baseMipLevel = 0;
+    image_view_info.subresourceRange.levelCount = 1;
+    image_view_info.subresourceRange.baseArrayLayer = 0;
+    image_view_info.subresourceRange.layerCount = 1;
+    RB_VK(vkCreateImageView(_device, &image_view_info, nullptr, &_ssao_noise_map_view), "Failed to create image view");
+
+    VkSamplerCreateInfo sampler_info;
+    sampler_info.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+    sampler_info.pNext = nullptr;
+    sampler_info.flags = 0;
+    sampler_info.magFilter = VK_FILTER_LINEAR;
+    sampler_info.minFilter = VK_FILTER_LINEAR;
+    sampler_info.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+    sampler_info.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+    sampler_info.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+    sampler_info.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+    sampler_info.mipLodBias = 0.0f;
+    sampler_info.anisotropyEnable = VK_FALSE;
+    sampler_info.maxAnisotropy = 1.0f;
+    sampler_info.compareEnable = VK_FALSE;
+    sampler_info.compareOp = VK_COMPARE_OP_ALWAYS;
+    sampler_info.minLod = 0.0f;
+    sampler_info.maxLod = 1.0f;
+    sampler_info.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
+    sampler_info.unnormalizedCoordinates = VK_FALSE;
+    RB_VK(vkCreateSampler(_device, &sampler_info, nullptr, &_ssao_noise_map_sampler), "Failed to create Vulkan sampler");
+
+    VkDescriptorSetLayoutBinding bindings[2]{
+        { 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr },
+        { 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr },
+    };
+
+    VkDescriptorSetLayoutCreateInfo descriptor_set_layout_info;
+    descriptor_set_layout_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+    descriptor_set_layout_info.pNext = nullptr;
+    descriptor_set_layout_info.flags = 0;
+    descriptor_set_layout_info.bindingCount = 2;
+    descriptor_set_layout_info.pBindings = bindings;
+    RB_VK(vkCreateDescriptorSetLayout(_device, &descriptor_set_layout_info, nullptr, &_ssao_descriptor_set_layout),
+        "Failed to create Vulkan descriptor set layout");
+
+    VkDescriptorPoolSize pool_sizes[2]{
+        { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1 },
+        { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1 },
+    };
+
+    VkDescriptorPoolCreateInfo descriptor_pool_info;
+    descriptor_pool_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+    descriptor_pool_info.pNext = nullptr;
+    descriptor_pool_info.flags = 0;
+    descriptor_pool_info.maxSets = 1;
+    descriptor_pool_info.poolSizeCount = 2;
+    descriptor_pool_info.pPoolSizes = pool_sizes;
+    RB_VK(vkCreateDescriptorPool(_device, &descriptor_pool_info, nullptr, &_ssao_descriptor_pool),
+        "Failed to create descriptor pool");
+
+    VkDescriptorSetAllocateInfo descriptor_set_allocate_info;
+    descriptor_set_allocate_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+    descriptor_set_allocate_info.pNext = nullptr;
+    descriptor_set_allocate_info.descriptorPool = _ssao_descriptor_pool;
+    descriptor_set_allocate_info.descriptorSetCount = 1;
+    descriptor_set_allocate_info.pSetLayouts = &_ssao_descriptor_set_layout;
+    RB_VK(vkAllocateDescriptorSets(_device, &descriptor_set_allocate_info, &_ssao_descriptor_set),
+        "Failed to allocatore desctiptor set");
+
+    VkDescriptorBufferInfo buffer_infos[1]{
+        { _ssao_buffer, 0, sizeof(ssao_data) },
+    };
+
+    VkDescriptorImageInfo image_infos[1]{
+        { _ssao_noise_map_sampler, _ssao_noise_map_view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL },
+    };
+
+    VkWriteDescriptorSet write_infos[2]{
+        { VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET, nullptr, _ssao_descriptor_set, 0, 0, 1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, nullptr, &buffer_infos[0], nullptr },
+        { VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET, nullptr, _ssao_descriptor_set, 1, 0, 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, &image_infos[0], nullptr, nullptr },
+    };
+
+    vkUpdateDescriptorSets(_device, 2, write_infos, 0, nullptr);
+
+    VkDescriptorSetLayout layouts[3]{
+        _forward_descriptor_set_layout[0],
+        _gbuffer_descriptor_set_layout,
+        _ssao_descriptor_set_layout
+    };
+
+    VkPipelineLayoutCreateInfo pipeline_layout_info;
+    pipeline_layout_info.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+    pipeline_layout_info.pNext = nullptr;
+    pipeline_layout_info.flags = 0;
+    pipeline_layout_info.setLayoutCount = 3;
+    pipeline_layout_info.pSetLayouts = layouts;
+    pipeline_layout_info.pushConstantRangeCount = 0;
+    pipeline_layout_info.pPushConstantRanges = nullptr;
+    RB_VK(vkCreatePipelineLayout(_device, &pipeline_layout_info, nullptr, &_ssao_pipeline_layout),
+        "Failed to create Vulkan pipeline layout");
+
+    VkShaderModule ssao_shader_modules[2];
+
+    VkShaderModuleCreateInfo ssao_vert_shader_module_info;
+    ssao_vert_shader_module_info.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+    ssao_vert_shader_module_info.pNext = nullptr;
+    ssao_vert_shader_module_info.flags = 0;
+    ssao_vert_shader_module_info.codeSize = shaders_vulkan::quad_vert().size_bytes();
+    ssao_vert_shader_module_info.pCode = shaders_vulkan::quad_vert().data();
+    RB_VK(vkCreateShaderModule(_device, &ssao_vert_shader_module_info, nullptr, &ssao_shader_modules[0]),
+        "Failed to create shader module");
+
+    VkShaderModuleCreateInfo ssao_frag_shader_module_info;
+    ssao_frag_shader_module_info.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+    ssao_frag_shader_module_info.pNext = nullptr;
+    ssao_frag_shader_module_info.flags = 0;
+    ssao_frag_shader_module_info.codeSize = shaders_vulkan::ssao_frag().size_bytes();
+    ssao_frag_shader_module_info.pCode = shaders_vulkan::ssao_frag().data();
+    RB_VK(vkCreateShaderModule(_device, &ssao_frag_shader_module_info, nullptr, &ssao_shader_modules[1]),
+        "Failed to create shader module");
+
+    struct quad_vertex {
+        vec2f position;
+    };
+
+    VkVertexInputBindingDescription vertex_input_binding_desc;
+    vertex_input_binding_desc.binding = 0;
+    vertex_input_binding_desc.stride = sizeof(quad_vertex);
+    vertex_input_binding_desc.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+
+    VkVertexInputAttributeDescription vertex_attributes[1]{
+        { 0, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(quad_vertex, position) }
+    };
+
+    VkPipelineVertexInputStateCreateInfo vertex_input_info;
+    vertex_input_info.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+    vertex_input_info.pNext = nullptr;
+    vertex_input_info.flags = 0;
+    vertex_input_info.vertexBindingDescriptionCount = 1;
+    vertex_input_info.pVertexBindingDescriptions = &vertex_input_binding_desc;
+    vertex_input_info.vertexAttributeDescriptionCount = 1;
+    vertex_input_info.pVertexAttributeDescriptions = vertex_attributes;
+
+    VkPipelineInputAssemblyStateCreateInfo input_assembly_info;
+    input_assembly_info.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
+    input_assembly_info.pNext = nullptr;
+    input_assembly_info.flags = 0;
+    input_assembly_info.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+    input_assembly_info.primitiveRestartEnable = VK_FALSE;
+
+    VkViewport viewport;
+    viewport.x = 0.0f;
+    viewport.y = 0.0f;
+    viewport.width = static_cast<float>(_swapchain_extent.width);
+    viewport.height = static_cast<float>(_swapchain_extent.height);
+    viewport.minDepth = 0.0f;
+    viewport.maxDepth = 1.0f;
+
+    VkRect2D scissor;
+    scissor.offset = { 0, 0 };
+    scissor.extent = _swapchain_extent;
+
+    VkPipelineViewportStateCreateInfo viewport_state_info;
+    viewport_state_info.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
+    viewport_state_info.pNext = nullptr;
+    viewport_state_info.flags = 0;
+    viewport_state_info.viewportCount = 1;
+    viewport_state_info.pViewports = &viewport;
+    viewport_state_info.scissorCount = 1;
+    viewport_state_info.pScissors = &scissor;
+
+    VkPipelineRasterizationStateCreateInfo rasterizer_state_info{};
+    rasterizer_state_info.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
+    rasterizer_state_info.pNext = nullptr;
+    rasterizer_state_info.flags = 0;
+    rasterizer_state_info.depthClampEnable = VK_FALSE;
+    rasterizer_state_info.rasterizerDiscardEnable = VK_FALSE;
+    rasterizer_state_info.polygonMode = VK_POLYGON_MODE_FILL;
+    rasterizer_state_info.cullMode = VK_CULL_MODE_NONE;
+    rasterizer_state_info.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
+    rasterizer_state_info.depthBiasEnable = VK_FALSE;
+    rasterizer_state_info.depthBiasConstantFactor = 0.0f;
+    rasterizer_state_info.depthBiasClamp = 0.0f;
+    rasterizer_state_info.depthBiasSlopeFactor = 0.0f;
+    rasterizer_state_info.lineWidth = 1.0f;
+
+    VkPipelineMultisampleStateCreateInfo multisampling_state_info;
+    multisampling_state_info.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
+    multisampling_state_info.pNext = nullptr;
+    multisampling_state_info.flags = 0;
+    multisampling_state_info.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
+    multisampling_state_info.sampleShadingEnable = VK_FALSE;
+    multisampling_state_info.minSampleShading = 0.0f;
+    multisampling_state_info.pSampleMask = nullptr;
+    multisampling_state_info.alphaToCoverageEnable = VK_FALSE;
+    multisampling_state_info.alphaToOneEnable = VK_FALSE;
+
+    VkPipelineDepthStencilStateCreateInfo depth_stencil_state_info{};
+    depth_stencil_state_info.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+    depth_stencil_state_info.pNext = nullptr;
+    depth_stencil_state_info.flags = 0;
+    depth_stencil_state_info.depthTestEnable = VK_FALSE;
+    depth_stencil_state_info.depthWriteEnable = VK_FALSE;
+    depth_stencil_state_info.depthCompareOp = VK_COMPARE_OP_LESS;
+    depth_stencil_state_info.depthBoundsTestEnable = VK_FALSE;
+    depth_stencil_state_info.stencilTestEnable = VK_FALSE;
+
+    VkPipelineColorBlendAttachmentState color_blend_attachment_state_info{};
+    color_blend_attachment_state_info.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT |
+        VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+    color_blend_attachment_state_info.blendEnable = VK_TRUE;
+    color_blend_attachment_state_info.srcColorBlendFactor = VK_BLEND_FACTOR_ONE; // Optional
+    color_blend_attachment_state_info.dstColorBlendFactor = VK_BLEND_FACTOR_ONE; // Optional
+    color_blend_attachment_state_info.colorBlendOp = VK_BLEND_OP_ADD; // Optional
+    color_blend_attachment_state_info.srcAlphaBlendFactor = VK_BLEND_FACTOR_ZERO; // Optional
+    color_blend_attachment_state_info.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO; // Optional
+    color_blend_attachment_state_info.alphaBlendOp = VK_BLEND_OP_ADD; // Optional
+
+    color_blend_attachment_state_info.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
+    color_blend_attachment_state_info.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+    color_blend_attachment_state_info.colorBlendOp = VK_BLEND_OP_ADD;
+    color_blend_attachment_state_info.srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE;
+    color_blend_attachment_state_info.dstAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
+    color_blend_attachment_state_info.alphaBlendOp = VK_BLEND_OP_ADD;
+
+    VkPipelineColorBlendStateCreateInfo color_blend_state_info{};
+    color_blend_state_info.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
+    color_blend_state_info.logicOpEnable = VK_FALSE;
+    color_blend_state_info.logicOp = VK_LOGIC_OP_COPY;
+    color_blend_state_info.attachmentCount = 1;
+    color_blend_state_info.pAttachments = &color_blend_attachment_state_info;
+    color_blend_state_info.blendConstants[0] = 0.0f;
+    color_blend_state_info.blendConstants[1] = 0.0f;
+    color_blend_state_info.blendConstants[2] = 0.0f;
+    color_blend_state_info.blendConstants[3] = 0.0f;
+
+    VkPipelineShaderStageCreateInfo vertex_shader_stage_info{};
+    vertex_shader_stage_info.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+    vertex_shader_stage_info.stage = VK_SHADER_STAGE_VERTEX_BIT;
+    vertex_shader_stage_info.module = ssao_shader_modules[0];
+    vertex_shader_stage_info.pName = "main";
+
+    VkPipelineShaderStageCreateInfo fragment_shader_stage_info{};
+    fragment_shader_stage_info.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+    fragment_shader_stage_info.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
+    fragment_shader_stage_info.module = ssao_shader_modules[1];
+    fragment_shader_stage_info.pName = "main";
+
+    VkPipelineShaderStageCreateInfo shader_stages[] = {
+        vertex_shader_stage_info,
+        fragment_shader_stage_info
+    };
+
+    VkGraphicsPipelineCreateInfo pipeline_info{};
+    pipeline_info.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+    pipeline_info.stageCount = 2;
+    pipeline_info.pStages = shader_stages;
+    pipeline_info.pVertexInputState = &vertex_input_info;
+    pipeline_info.pInputAssemblyState = &input_assembly_info;
+    pipeline_info.pViewportState = &viewport_state_info;
+    pipeline_info.pRasterizationState = &rasterizer_state_info;
+    pipeline_info.pMultisampleState = &multisampling_state_info;
+    pipeline_info.pColorBlendState = &color_blend_state_info;
+    pipeline_info.pDepthStencilState = &depth_stencil_state_info;
+    pipeline_info.layout = _ssao_pipeline_layout;
+    pipeline_info.renderPass = _render_pass;
+    pipeline_info.basePipelineHandle = VK_NULL_HANDLE;
+    pipeline_info.pDynamicState = nullptr;
+    RB_VK(vkCreateGraphicsPipelines(_device, VK_NULL_HANDLE, 1, &pipeline_info, nullptr, &_ssao_pipeline),
+        "Failed to create Vulkan graphics pipeline");
+
+    vkDestroyShaderModule(_device, ssao_shader_modules[1], nullptr);
+    vkDestroyShaderModule(_device, ssao_shader_modules[0], nullptr);
 }
 
 void graphics_vulkan::_create_command_pool() {

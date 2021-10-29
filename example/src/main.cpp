@@ -112,5 +112,6 @@ int main(int argc, char* argv[]) {
     app::system<initializer>();
     app::system<fps_meter>();
 
+    settings::vsync = false;
     app::run();
 }

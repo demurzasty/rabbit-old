@@ -90,6 +90,10 @@ void graphics::draw_skybox() {
 	_impl->draw_skybox();
 }
 
+void graphics::draw_ssao() {
+	_impl->draw_ssao();
+}
+
 void graphics::end_render_pass() {
 	_impl->end_render_pass();
 }

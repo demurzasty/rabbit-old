@@ -62,6 +62,8 @@ namespace rb {
 
 		virtual void draw_skybox() = 0;
 
+		virtual void draw_ssao() = 0;
+
 		virtual void end_render_pass() = 0;
 
 		virtual void present() = 0;
@@ -110,6 +112,8 @@ namespace rb {
 		static void draw_point_light(const transform& transform, const light& light, const point_light& point_light);
 
 		static void draw_skybox();
+
+		static void draw_ssao();
 
 		static void end_render_pass();
 

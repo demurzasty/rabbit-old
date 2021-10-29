@@ -113,7 +113,7 @@ float rand(vec4 co) {
 
 // parallel plane estimation
 float penumbra_size(float z_receiver, float z_blocker) {
-	return (z_receiver - z_blocker) / z_blocker * 8.0;
+	return (z_receiver - z_blocker) / z_blocker * 12.0;
 }
 
 vec2 find_blocker(vec2 texcoord, float z_receiver) {
@@ -152,7 +152,7 @@ float pcf(vec2 texcoord, float z_receiver, float filter_radius) {
 
 float pcss(vec3 texcoord) {
 	vec2 blockers = find_blocker(texcoord.xy, texcoord.z);
-	return pcf(texcoord.xy, texcoord.z, 3.0 + penumbra_size(texcoord.z, blockers.x));
+	return pcf(texcoord.xy, texcoord.z, 1.0 + penumbra_size(texcoord.z, blockers.x));
 }
 
 float distribution_ggx(vec3 n, vec3 h, float roughness) {
@@ -256,5 +256,5 @@ void main() {
 
     vec3 lo = (kd * albedo / PI + specular) * radiance * intensity * n_dot_l * shadow;
 
-    o_color = vec4(lo, 1.0);
+    o_color = vec4(lo, 0.0);
 }

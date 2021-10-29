@@ -24,8 +24,6 @@ void renderer::draw(registry& registry) {
 
     graphics::draw_ambient();
 
-    graphics::draw_skybox();
-
     graphics::end_render_pass();
 
     registry.view<transform, light, directional_light>().each([&registry](transform& transform, light& light, directional_light& directional_light) {
@@ -49,6 +47,10 @@ void renderer::draw(registry& registry) {
     registry.view<transform, light, point_light>().each([](transform& transform, light& light, point_light& point_light) {
         graphics::draw_point_light(transform, light, point_light);
     });
+
+    // graphics::draw_ssao();
+
+    graphics::draw_skybox();
 
     graphics::end_render_pass();
 

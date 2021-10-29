@@ -27,6 +27,8 @@
 
 #include <rabbit/generated/shaders/point_light.frag.spv.h>
 
+#include <rabbit/generated/shaders/ssao.frag.spv.h>
+
 using namespace rb;
 
 span<const std::uint32_t> shaders_vulkan::quad_vert() {
@@ -91,4 +93,8 @@ span<const std::uint32_t> shaders_vulkan::directional_light_frag() {
 
 span<const std::uint32_t> shaders_vulkan::point_light_frag() {
 	return ::point_light_frag;
+}
+
+span<const std::uint32_t> shaders_vulkan::ssao_frag() {
+	return ::ssao_frag;
 }

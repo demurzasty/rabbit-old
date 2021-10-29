@@ -67,5 +67,5 @@ void main() {
 
     vec3 ambient = kd * diff + spec + texture(u_emissive_map, v_texcoord).rgb;
 
-    o_color = vec4(ambient, 1.0);
+    o_color = vec4(ambient, 0.0);
 }
