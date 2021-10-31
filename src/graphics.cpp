@@ -122,8 +122,8 @@ void graphics::draw_fxaa(const std::shared_ptr<viewport>& viewport) {
 	_impl->draw_fxaa(viewport);
 }
 
-void graphics::draw_blur(const std::shared_ptr<viewport>& viewport) {
-	_impl->draw_blur(viewport);
+void graphics::draw_blur(const std::shared_ptr<viewport>& viewport, int strength) {
+	_impl->draw_blur(viewport, std::max(strength, 0));
 }
 
 void graphics::end_postprocess_pass(const std::shared_ptr<viewport>& viewport) {
