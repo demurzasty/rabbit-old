@@ -152,7 +152,7 @@ float pcf(vec2 texcoord, float z_receiver, float filter_radius) {
 
 float pcss(vec3 texcoord) {
 	vec2 blockers = find_blocker(texcoord.xy, texcoord.z);
-	return pcf(texcoord.xy, texcoord.z, 1.0 + penumbra_size(texcoord.z, blockers.x));
+	return pcf(texcoord.xy, texcoord.z, 2.0 + penumbra_size(texcoord.z, blockers.x));
 }
 
 float distribution_ggx(vec3 n, vec3 h, float roughness) {
