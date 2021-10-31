@@ -1671,7 +1671,7 @@ void graphics_vulkan::_create_light() {
 
     VkAttachmentDescription color_attachment;
     color_attachment.flags = 0;
-    color_attachment.format = VK_FORMAT_R8G8B8A8_UNORM;
+    color_attachment.format = VK_FORMAT_R16G16B16A16_SFLOAT;
     color_attachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
     color_attachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
     color_attachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;

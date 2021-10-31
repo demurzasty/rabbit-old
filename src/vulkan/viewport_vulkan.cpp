@@ -404,7 +404,7 @@ void viewport_vulkan::_create_light(const viewport_desc& desc) {
     image_info.pNext = nullptr;
     image_info.flags = 0;
     image_info.imageType = VK_IMAGE_TYPE_2D;
-    image_info.format = VK_FORMAT_R8G8B8A8_UNORM;
+    image_info.format = VK_FORMAT_R16G16B16A16_SFLOAT;
     image_info.extent = { desc.size.x, desc.size.y, 1 };
     image_info.mipLevels = 1;
     image_info.arrayLayers = 1;
@@ -428,7 +428,7 @@ void viewport_vulkan::_create_light(const viewport_desc& desc) {
     image_view_info.flags = 0;
     image_view_info.image = _light_image;
     image_view_info.viewType = VK_IMAGE_VIEW_TYPE_2D;
-    image_view_info.format = VK_FORMAT_R8G8B8A8_UNORM;
+    image_view_info.format = VK_FORMAT_R16G16B16A16_SFLOAT;
     image_view_info.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
     image_view_info.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
     image_view_info.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
@@ -444,7 +444,7 @@ void viewport_vulkan::_create_light(const viewport_desc& desc) {
     framebuffer_info.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
     framebuffer_info.pNext = nullptr;
     framebuffer_info.flags = 0;
-    framebuffer_info.renderPass = _postprocess_render_pass;
+    framebuffer_info.renderPass = _light_render_pass;
     framebuffer_info.attachmentCount = 1;
     framebuffer_info.pAttachments = &_light_image_view;
     framebuffer_info.width = desc.size.x;
