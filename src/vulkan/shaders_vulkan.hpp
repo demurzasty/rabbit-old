@@ -22,5 +22,6 @@ namespace rb {
 		static span<const std::uint32_t> point_light_frag();
 		static span<const std::uint32_t> shadowmap_vert();
 		static span<const std::uint32_t> ssao_frag();
+		static span<const std::uint32_t> present_frag();
 	};
 }

@@ -2,6 +2,8 @@
 
 #include <cmath>
 
+#include <cstddef>
+
 namespace rb {
 	template<typename T>
 	struct vec3 {

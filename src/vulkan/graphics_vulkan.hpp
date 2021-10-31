@@ -76,6 +76,8 @@ namespace rb {
 
 		~graphics_vulkan();
 
+		std::shared_ptr<viewport> make_viewport(const viewport_desc& desc) override;
+
 		std::shared_ptr<texture> make_texture(const texture_desc& desc) override;
 
 		std::shared_ptr<environment> make_environment(const environment_desc& desc) override;
@@ -88,11 +90,11 @@ namespace rb {
 
 		void set_camera(const transform& transform, const camera& camera) override;
 
-		void begin_geometry_pass() override;
+		void begin_geometry_pass(const std::shared_ptr<viewport>& viewport) override;
 
-		void draw_geometry(const transform& transform, const geometry& geometry) override;
+		void draw_geometry(const std::shared_ptr<viewport>& viewport, const transform& transform, const geometry& geometry) override;
 
-		void end_geometry_pass() override;
+		void end_geometry_pass(const std::shared_ptr<viewport>& viewport) override;
 
 		void begin_shadow_pass(const transform& transform, const light& light, const directional_light& directional_light) override;
 
@@ -100,23 +102,35 @@ namespace rb {
 
 		void end_shadow_pass() override;
 
-		void begin_render_pass() override;
+		void begin_light_pass(const std::shared_ptr<viewport>& viewport) override;
 
-		void draw_ambient() override;
+		void draw_ambient(const std::shared_ptr<viewport>& viewport) override;
 
-		void draw_directional_light(const transform& transform, const light& light, const directional_light& directional_light) override;
+		void draw_directional_light(const std::shared_ptr<viewport>& viewport, const transform& transform, const light& light, const directional_light& directional_light) override;
 
-		void draw_point_light(const transform& transform, const light& light, const point_light& point_light) override;
+		void draw_point_light(const std::shared_ptr<viewport>& viewport, const transform& transform, const light& light, const point_light& point_light) override;
 
-		void draw_skybox() override;
+		void draw_skybox(const std::shared_ptr<viewport>& viewport) override;
 
-		void draw_ssao() override;
+		void end_light_pass(const std::shared_ptr<viewport>& viewport) override;
 
-		void end_render_pass() override;
+		void begin_forward_pass(const std::shared_ptr<viewport>& viewport) override;
+
+		void end_forward_pass(const std::shared_ptr<viewport>& viewport) override;
+
+		void begin_postprocess_pass(const std::shared_ptr<viewport>& viewport) override;
+
+		void next_postprocess_pass(const std::shared_ptr<viewport>& viewport) override;
+
+		void draw_ssao(const std::shared_ptr<viewport>& viewport) override;
+
+		void end_postprocess_pass(const std::shared_ptr<viewport>& viewport) override;
 
 		void end() override;
 
-		void present() override;
+		void present(const std::shared_ptr<viewport>& viewport) override;
+
+		void swap_buffers() override;
 
 		void flush() override;
 
@@ -145,8 +159,6 @@ namespace rb {
 
 		void _generate_brdf_image();
 
-		void _create_camera_buffer();
-
 		void _create_skybox();
 
 		void _create_irradiance_pipeline();
@@ -159,9 +171,23 @@ namespace rb {
 
 		void _create_shadow_map();
 
-		void _create_forward_pipeline();
+		void _create_camera();
+
+		void _create_main();
+
+		void _create_material();
+
+		void _create_environment();
 
 		void _create_gbuffer();
+
+		void _create_light();
+
+		void _create_forward();
+
+		void _create_postprocess();
+
+		void _create_forward_pipeline();
 
 		void _create_ambient_pipeline();
 
@@ -172,6 +198,8 @@ namespace rb {
 		void _create_ssao_pipeline();
 
 		void _create_skybox_pipeline();
+
+		void _create_present_pipeline();
 
 		void _create_command_buffers();
 
@@ -207,7 +235,6 @@ namespace rb {
 		std::vector<VkFramebuffer> _framebuffers;
 
 		VkRenderPass _render_pass;
-		VkRenderPass _second_render_pass;
 
 		VkCommandPool _command_pool;
 
@@ -226,12 +253,6 @@ namespace rb {
 		VkImage _brdf_image;
 		VkImageView _brdf_image_view;
 		VkSampler _brdf_sampler;
-
-		VkBuffer _camera_buffer;
-		VmaAllocation _camera_allocation;
-
-		VkBuffer _light_buffer;
-		VmaAllocation _light_allocation;
 
 		camera_data _camera_data;
 
@@ -267,28 +288,32 @@ namespace rb {
 		VkShaderModule _shadow_shader_module;
 		VkPipeline _shadow_pipeline;
 
-		VkDescriptorPool _forward_descriptor_pool;
-		VkDescriptorSet _forward_descriptor_set;
-		VkDescriptorSetLayout _forward_descriptor_set_layout[3];
-		VkPipelineLayout _forward_pipeline_layout;
-		VkShaderModule _forward_shader_modules[2];
-		VkPipeline _forward_pipeline;
+		VkBuffer _camera_buffer;
+		VmaAllocation _camera_allocation;
 
-		VkImage _gbuffer[3];
-		VkImageView _gbuffer_views[3];
-		VmaAllocation _gbuffer_allocations[3];
-		VkSampler _gbuffer_sampler;
-		VkRenderPass _gbuffer_render_pass;
-		VkFramebuffer _gbuffer_framebuffer;
-		VkDescriptorPool _gbuffer_descriptor_pool;
-		VkDescriptorSet _gbuffer_descriptor_set;
+		VkDescriptorPool _main_descriptor_pool;
+		VkDescriptorSetLayout _main_descriptor_set_layout;
+		VkDescriptorSet _main_descriptor_set; // main camera, brdf and shadow map information
+
+		VkDescriptorSetLayout _material_descriptor_set_layout;
+
+		VkDescriptorSetLayout _environment_descriptor_set_layout;
+
 		VkDescriptorSetLayout _gbuffer_descriptor_set_layout;
+		VkRenderPass _gbuffer_render_pass;
 		VkPipelineLayout _gbuffer_pipeline_layout;
-		VkShaderModule _gbuffer_shader_modules[2];
 		VkPipeline _gbuffer_pipeline;
 
+		VkDescriptorSetLayout _light_descriptor_set_layout;
+		VkRenderPass _light_render_pass;
+
+		VkDescriptorSetLayout _forward_descriptor_set_layout;
+		VkRenderPass _forward_render_pass;
+
+		VkDescriptorSetLayout _postprocess_descriptor_set_layout;
+		VkRenderPass _postprocess_render_pass;
+
 		VkPipelineLayout _ambient_pipeline_layout;
-		VkShaderModule _ambient_shader_modules[2];
 		VkPipeline _ambient_pipeline;
 
 		VkPipelineLayout _directional_light_pipeline_layout;
@@ -310,8 +335,12 @@ namespace rb {
 		VkPipeline _ssao_pipeline;
 
 		VkPipelineLayout _skybox_pipeline_layout;
-		VkShaderModule _skybox_shader_modules[2];
 		VkPipeline _skybox_pipeline;
+
+		VkPipelineLayout _present_pipeline_layout;
+		VkPipeline _present_pipeline;
+		VkPipeline _light_copy_pipeline;
+		VkPipeline _forward_copy_pipeline;
 
 		VkCommandBuffer _command_buffers[3];
 		VkFence _fences[3];

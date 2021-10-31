@@ -2,8 +2,13 @@
 #include <rabbit/graphics.hpp>
 #include <rabbit/light.hpp>
 #include <rabbit/input.hpp>
+#include <rabbit/settings.hpp>
 
 using namespace rb;
+
+void renderer::initialize(registry& registry) {
+    _viewport = graphics::make_viewport({ settings::window_size });
+}
 
 void renderer::draw(registry& registry) {
     graphics::begin();
@@ -12,47 +17,47 @@ void renderer::draw(registry& registry) {
         graphics::set_camera(transform, camera);
     });
 
-    graphics::begin_geometry_pass();
+    graphics::begin_geometry_pass(_viewport);
 
-    registry.view<transform, geometry>().each([](transform& transform, geometry& geometry) {
-        graphics::draw_geometry(transform, geometry);
+    registry.view<transform, geometry>().each([this](transform& transform, geometry& geometry) {
+        graphics::draw_geometry(_viewport, transform, geometry);
     });
 
-    graphics::end_geometry_pass();
+    graphics::end_geometry_pass(_viewport);
 
-    graphics::begin_render_pass();
-
-    graphics::draw_ambient();
-
-    graphics::end_render_pass();
-
-    registry.view<transform, light, directional_light>().each([&registry](transform& transform, light& light, directional_light& directional_light) {
+    registry.view<transform, light, directional_light>().each([this, &registry](transform& transform, light& light, directional_light& directional_light) {
         graphics::begin_shadow_pass(transform, light, directional_light);
-
+        
         registry.view<rb::transform, geometry>().each([](rb::transform& transform, geometry& geometry) {
             graphics::draw_shadow(transform, geometry);
         });
 
         graphics::end_shadow_pass();
-
-        graphics::begin_render_pass();
-
-        graphics::draw_directional_light(transform, light, directional_light);
-
-        graphics::end_render_pass();
     });
 
-    graphics::begin_render_pass();
+    graphics::begin_light_pass(_viewport);
 
-    registry.view<transform, light, point_light>().each([](transform& transform, light& light, point_light& point_light) {
-        graphics::draw_point_light(transform, light, point_light);
+    graphics::draw_ambient(_viewport);
+
+    registry.view<transform, light, directional_light>().each([this, &registry](transform& transform, light& light, directional_light& directional_light) {
+        graphics::draw_directional_light(_viewport, transform, light, directional_light);
     });
 
-    // graphics::draw_ssao();
+    graphics::end_light_pass(_viewport);
 
-    graphics::draw_skybox();
+    graphics::begin_forward_pass(_viewport);
 
-    graphics::end_render_pass();
+    graphics::draw_skybox(_viewport);
+
+    graphics::end_forward_pass(_viewport);
+
+    graphics::begin_postprocess_pass(_viewport);
+
+    // graphics::draw_ssao(_viewport);
+
+    graphics::end_postprocess_pass(_viewport);
+
+    graphics::present(_viewport);
 
     graphics::end();
 }

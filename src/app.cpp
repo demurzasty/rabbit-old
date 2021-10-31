@@ -81,7 +81,7 @@ void app::_main_loop() {
 			system->draw(registry);
 		}
 
-		graphics::present();
+		graphics::swap_buffers();
 	}
 
 	graphics::flush();

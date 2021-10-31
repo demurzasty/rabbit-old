@@ -18,7 +18,7 @@ layout (std140, set = 0, binding = 0) uniform camera_data {
 };
 
 layout(set = 0, binding = 1) uniform sampler2D u_brdf_map;
-layout(set = 0, binding = 3) uniform sampler2D u_shadow_map;
+layout(set = 0, binding = 2) uniform sampler2D u_shadow_map;
 
 layout (set = 1, binding = 0) uniform sampler2D u_albedo_map;
 layout (set = 1, binding = 1) uniform sampler2D u_normal_map;

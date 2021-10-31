@@ -57,6 +57,7 @@ set (SRC
 	"src/system.cpp"
 	"src/texture.cpp"
 	"src/uuid.cpp"
+	"src/viewport.cpp"
 	"src/window.cpp"
 )
 
@@ -82,6 +83,7 @@ if (RB_VULKAN)
 		"src/vulkan/shaders_vulkan.cpp"
 		"src/vulkan/texture_vulkan.cpp"
 		"src/vulkan/utils_vulkan.cpp"
+		"src/vulkan/viewport_vulkan.cpp"
 	)
 endif ()
 

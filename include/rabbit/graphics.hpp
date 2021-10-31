@@ -1,5 +1,6 @@
 #pragma once 
 
+#include "viewport.hpp"
 #include "environment.hpp"
 #include "texture.hpp"
 #include "material.hpp"
@@ -28,6 +29,8 @@ namespace rb {
 	public:
 		virtual ~graphics_impl() = default;
 
+		virtual std::shared_ptr<viewport> make_viewport(const viewport_desc& desc) = 0;
+
 		virtual std::shared_ptr<texture> make_texture(const texture_desc& desc) = 0;
 
 		virtual std::shared_ptr<environment> make_environment(const environment_desc& desc) = 0;
@@ -40,11 +43,11 @@ namespace rb {
 
 		virtual void set_camera(const transform& transform, const camera& camera) = 0;
 
-		virtual void begin_geometry_pass() = 0;
+		virtual void begin_geometry_pass(const std::shared_ptr<viewport>& viewport) = 0;
 
-		virtual void draw_geometry(const transform& transform, const geometry& geometry) = 0;
+		virtual void draw_geometry(const std::shared_ptr<viewport>& viewport, const transform& transform, const geometry& geometry) = 0;
 
-		virtual void end_geometry_pass() = 0;
+		virtual void end_geometry_pass(const std::shared_ptr<viewport>& viewport) = 0;
 
 		virtual void begin_shadow_pass(const transform& transform, const light& light, const directional_light& directional_light) = 0;
 
@@ -52,23 +55,35 @@ namespace rb {
 
 		virtual void end_shadow_pass() = 0;
 
-		virtual void begin_render_pass() = 0;
+		virtual void begin_light_pass(const std::shared_ptr<viewport>& viewport) = 0;
 
-		virtual void draw_ambient() = 0;
+		virtual void draw_ambient(const std::shared_ptr<viewport>& viewport) = 0;
 
-		virtual void draw_directional_light(const transform& transform, const light& light, const directional_light& directional_light) = 0;
+		virtual void draw_directional_light(const std::shared_ptr<viewport>& viewport, const transform& transform, const light& light, const directional_light& directional_light) = 0;
 
-		virtual void draw_point_light(const transform& transform, const light& light, const point_light& point_light) = 0;
+		virtual void draw_point_light(const std::shared_ptr<viewport>& viewport, const transform& transform, const light& light, const point_light& point_light) = 0;
 
-		virtual void draw_skybox() = 0;
+		virtual void draw_skybox(const std::shared_ptr<viewport>& viewport) = 0;
 
-		virtual void draw_ssao() = 0;
+		virtual void end_light_pass(const std::shared_ptr<viewport>& viewport) = 0;
 
-		virtual void end_render_pass() = 0;
+		virtual void begin_forward_pass(const std::shared_ptr<viewport>& viewport) = 0;
 
-		virtual void present() = 0;
+		virtual void end_forward_pass(const std::shared_ptr<viewport>& viewport) = 0;
+
+		virtual void begin_postprocess_pass(const std::shared_ptr<viewport>& viewport) = 0;
+
+		virtual void next_postprocess_pass(const std::shared_ptr<viewport>& viewport) = 0;
+
+		virtual void draw_ssao(const std::shared_ptr<viewport>& viewport) = 0;
+
+		virtual void end_postprocess_pass(const std::shared_ptr<viewport>& viewport) = 0;
+
+		virtual void present(const std::shared_ptr<viewport>& viewport) = 0;
 
 		virtual void end() = 0;
+
+		virtual void swap_buffers() = 0;
 
 		virtual void flush() = 0;
 	};
@@ -78,6 +93,8 @@ namespace rb {
 		static void init();
 
 		static void release();
+
+		static std::shared_ptr<viewport> make_viewport(const viewport_desc& desc);
 
 		static std::shared_ptr<texture> make_texture(const texture_desc& desc);
 
@@ -91,11 +108,11 @@ namespace rb {
 
 		static void set_camera(const transform& transform, const camera& camera);
 
-		static void begin_geometry_pass();
+		static void begin_geometry_pass(const std::shared_ptr<viewport>& viewport);
 
-		static void draw_geometry(const transform& transform, const geometry& geometry);
+		static void draw_geometry(const std::shared_ptr<viewport>& viewport, const transform& transform, const geometry& geometry);
 
-		static void end_geometry_pass();
+		static void end_geometry_pass(const std::shared_ptr<viewport>& viewport);
 
 		static void begin_shadow_pass(const transform& transform, const light& light, const directional_light& directional_light);
 
@@ -103,23 +120,35 @@ namespace rb {
 
 		static void end_shadow_pass();
 
-		static void begin_render_pass();
+		static void begin_light_pass(const std::shared_ptr<viewport>& viewport);
 
-		static void draw_ambient();
+		static void draw_ambient(const std::shared_ptr<viewport>& viewport);
 
-		static void draw_directional_light(const transform& transform, const light& light, const directional_light& directional_light);
+		static void draw_directional_light(const std::shared_ptr<viewport>& viewport, const transform& transform, const light& light, const directional_light& directional_light);
 
-		static void draw_point_light(const transform& transform, const light& light, const point_light& point_light);
+		static void draw_point_light(const std::shared_ptr<viewport>& viewport, const transform& transform, const light& light, const point_light& point_light);
 
-		static void draw_skybox();
+		static void draw_skybox(const std::shared_ptr<viewport>& viewport);
 
-		static void draw_ssao();
+		static void end_light_pass(const std::shared_ptr<viewport>& viewport);
 
-		static void end_render_pass();
+		static void begin_forward_pass(const std::shared_ptr<viewport>& viewport);
+
+		static void end_forward_pass(const std::shared_ptr<viewport>& viewport);
+
+		static void begin_postprocess_pass(const std::shared_ptr<viewport>& viewport);
+
+		static void next_postprocess_pass(const std::shared_ptr<viewport>& viewport);
+
+		static void draw_ssao(const std::shared_ptr<viewport>& viewport);
+
+		static void end_postprocess_pass(const std::shared_ptr<viewport>& viewport);
+
+		static void present(const std::shared_ptr<viewport>& viewport);
 
 		static void end();
 		
-		static void present();
+		static void swap_buffers();
 
 		static void flush();
 
