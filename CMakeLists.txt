@@ -46,7 +46,6 @@ set (SRC
 	"src/app.cpp"
 	"src/assets.cpp"
 	"src/compression.cpp"
-	"src/editor.cpp"
 	"src/environment.cpp"
 	"src/graphics.cpp"
 	"src/input.cpp"
@@ -61,7 +60,7 @@ set (SRC
 	"src/window.cpp"
 )
 
-if (RB_PROD_BUILD) 
+if (NOT RB_PROD_BUILD) 
 	set (SRC ${SRC}
 		"src/editor.cpp"
 	)

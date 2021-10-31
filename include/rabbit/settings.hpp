@@ -12,6 +12,7 @@ namespace rb {
 		static version app_version;
 		static std::string window_title;
 		static vec2u window_size;
+		static bool fullscreen;
 		static graphics_backend graphics_backend;
 		static bool vsync;
 	};
