@@ -2,6 +2,7 @@
 #include <rabbit/config.hpp>
 #include <rabbit/graphics.hpp>
 #include <rabbit/bstream.hpp>
+#include <rabbit/math.hpp>
 
 #include <meshoptimizer.h>
 #include <QuickHull.hpp>
@@ -210,6 +211,55 @@ std::shared_ptr<mesh> mesh::make_box(const vec3f& extent, const vec2f& uv_scale)
     mesh_desc desc;
     desc.vertices = vertices;
     desc.indices = indices;
+    return graphics::make_mesh(desc);
+}
+
+std::shared_ptr<mesh> mesh::make_sphere(std::size_t stacks, std::size_t slices, float radius) {
+    auto vertices = std::make_unique<vertex[]>((slices + 1) * (stacks + 1));
+    auto indices = std::make_unique<std::uint32_t[]>(slices * slices * 6);
+
+    float phi, theta;
+    float dphi = pi<float>() / stacks;
+    float dtheta = (2.0f * pi<float>()) / slices;
+    float x, y, z, sc;
+    unsigned int index = 0;
+    int k;
+
+    for (int stack = 0u; stack <= stacks; stack++) {
+        phi = pi<float>() * 0.5f - stack * dphi;
+        y = std::sin(phi) * radius;
+        sc = -std::cos(phi);
+
+        for (auto slice = 0u; slice <= slices; slice++) {
+            theta = slice * dtheta;
+            x = sc * std::sin(theta) * radius;
+            z = sc * std::cos(theta) * radius;
+
+            vertices[index] = { x, y, z };
+
+            index++;
+        }
+    }
+
+    index = 0;
+    k = slices + 1;
+
+    for (auto stack = 0u; stack < stacks; stack++) {
+        for (auto slice = 0u; slice < slices; slice++) {
+            indices[index++] = (stack + 0) * k + slice;
+            indices[index++] = (stack + 1) * k + slice;
+            indices[index++] = (stack + 0) * k + slice + 1;
+
+            indices[index++] = (stack + 0) * k + slice + 1;
+            indices[index++] = (stack + 1) * k + slice;
+            indices[index++] = (stack + 1) * k + slice + 1;
+        }
+    }
+
+    mesh_desc desc;
+    desc.vertices = { vertices.get(), (slices + 1) * (stacks + 1) };
+    desc.indices = { indices.get(), slices * slices * 6 };
+    desc.bsphere = { { 0.0f, 0.0f, 0.0f }, radius };
     return graphics::make_mesh(desc);
 }
 

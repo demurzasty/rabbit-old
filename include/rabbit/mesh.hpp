@@ -29,6 +29,8 @@ namespace rb {
 
 		static std::shared_ptr<mesh> make_box(const vec3f& extent, const vec2f& uv_scale);
 
+		static std::shared_ptr<mesh> mesh::make_sphere(std::size_t stacks, std::size_t slices, float radius);
+
 		virtual ~mesh() = default;
 
 		span<const vertex> vertices() const;
