@@ -53,7 +53,11 @@ void renderer::draw(registry& registry) {
 
     graphics::begin_postprocess_pass(_viewport);
 
-    // graphics::draw_ssao(_viewport);
+    //graphics::draw_ssao(_viewport);
+
+    //graphics::next_postprocess_pass(_viewport);
+
+    // graphics::draw_fxaa(_viewport);
 
     graphics::end_postprocess_pass(_viewport);
 

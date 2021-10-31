@@ -124,6 +124,10 @@ namespace rb {
 
 		void draw_ssao(const std::shared_ptr<viewport>& viewport) override;
 
+		void draw_fxaa(const std::shared_ptr<viewport>& viewport) override;
+
+		void draw_blur(const std::shared_ptr<viewport>& viewport) override;
+
 		void end_postprocess_pass(const std::shared_ptr<viewport>& viewport) override;
 
 		void end() override;
@@ -196,6 +200,8 @@ namespace rb {
 		void _create_point_light_pipeline();
 
 		void _create_ssao_pipeline();
+
+		void _create_fxaa_pipeline();
 
 		void _create_skybox_pipeline();
 
@@ -322,6 +328,9 @@ namespace rb {
 		VkPipelineLayout _point_light_pipeline_layout;
 		VkPipeline _point_light_pipeline;
 
+		VkPipelineLayout _skybox_pipeline_layout;
+		VkPipeline _skybox_pipeline;
+
 		VkBuffer _ssao_buffer;
 		VmaAllocation _ssao_allocation;
 		VkImage _ssao_noise_map;
@@ -334,8 +343,8 @@ namespace rb {
 		VkPipelineLayout _ssao_pipeline_layout;
 		VkPipeline _ssao_pipeline;
 
-		VkPipelineLayout _skybox_pipeline_layout;
-		VkPipeline _skybox_pipeline;
+		VkPipelineLayout _fxaa_pipeline_layout;
+		VkPipeline _fxaa_pipeline;
 
 		VkPipelineLayout _present_pipeline_layout;
 		VkPipeline _present_pipeline;

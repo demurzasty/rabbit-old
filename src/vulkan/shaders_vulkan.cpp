@@ -17,6 +17,7 @@
 #include <rabbit/generated/shaders/directional_light.frag.spv.h>
 #include <rabbit/generated/shaders/point_light.frag.spv.h>
 #include <rabbit/generated/shaders/ssao.frag.spv.h>
+#include <rabbit/generated/shaders/fxaa.frag.spv.h>
 #include <rabbit/generated/shaders/present.frag.spv.h>
 
 using namespace rb;
@@ -87,6 +88,10 @@ span<const std::uint32_t> shaders_vulkan::point_light_frag() {
 
 span<const std::uint32_t> shaders_vulkan::ssao_frag() {
 	return ::ssao_frag;
+}
+
+span<const std::uint32_t> shaders_vulkan::fxaa_frag() {
+	return ::fxaa_frag;
 }
 
 span<const std::uint32_t> shaders_vulkan::present_frag() {

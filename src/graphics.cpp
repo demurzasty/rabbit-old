@@ -94,10 +94,6 @@ void graphics::draw_skybox(const std::shared_ptr<viewport>& viewport) {
 	_impl->draw_skybox(viewport);
 }
 
-void graphics::draw_ssao(const std::shared_ptr<viewport>& viewport) {
-	_impl->draw_ssao(viewport);
-}
-
 void graphics::end_light_pass(const std::shared_ptr<viewport>& viewport) {
 	_impl->end_light_pass(viewport);
 }
@@ -116,6 +112,18 @@ void graphics::begin_postprocess_pass(const std::shared_ptr<viewport>& viewport)
 
 void graphics::next_postprocess_pass(const std::shared_ptr<viewport>& viewport) {
 	_impl->next_postprocess_pass(viewport);
+}
+
+void graphics::draw_ssao(const std::shared_ptr<viewport>& viewport) {
+	_impl->draw_ssao(viewport);
+}
+
+void graphics::draw_fxaa(const std::shared_ptr<viewport>& viewport) {
+	_impl->draw_fxaa(viewport);
+}
+
+void graphics::draw_blur(const std::shared_ptr<viewport>& viewport) {
+	_impl->draw_blur(viewport);
 }
 
 void graphics::end_postprocess_pass(const std::shared_ptr<viewport>& viewport) {

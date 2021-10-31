@@ -5,13 +5,10 @@ layout (location = 0) in vec2 v_texcoord;
 
 layout (location = 0) out vec4 o_color;
 
-layout (set = 1, binding = 0) uniform sampler2D u_albedo_map;
-layout (set = 1, binding = 1) uniform sampler2D u_normal_map;
-layout (set = 1, binding = 2) uniform sampler2D u_emissive_map;
-layout (set = 1, binding = 3) uniform sampler2D u_depth_map;
+layout (set = 0, binding = 0) uniform sampler2D u_postprocess_map;
 
 #define FXAA_GLSL_130 1
-#define FXAA_PRESET   4
+#define FXAA_PRESET   2
 
 // Copyright (c) 2011 NVIDIA Corporation. All rights reserved.
 //
@@ -112,7 +109,7 @@ layout (set = 1, binding = 3) uniform sampler2D u_depth_map;
 /*--------------------------------------------------------------------------*/
 float4 FxaaTexLod0(FxaaTex tex, float2 pos) {
     #if FXAA_GLSL_120
-        return texture2DLod(tex, pos.xy, 0.0);
+        return textureLod(tex, pos.xy, 0.0);
     #endif
     #if FXAA_GLSL_130
         return textureLod(tex, pos.xy, 0.0);
@@ -127,7 +124,7 @@ float4 FxaaTexLod0(FxaaTex tex, float2 pos) {
 /*--------------------------------------------------------------------------*/
 float4 FxaaTexGrad(FxaaTex tex, float2 pos, float2 grad) {
     #if FXAA_GLSL_120
-        return texture2DGrad(tex, pos.xy, grad, grad);
+        return textureGrad(tex, pos.xy, grad, grad);
     #endif
     #if FXAA_GLSL_130
         return textureGrad(tex, pos.xy, grad, grad);
@@ -142,10 +139,10 @@ float4 FxaaTexGrad(FxaaTex tex, float2 pos, float2 grad) {
 /*--------------------------------------------------------------------------*/
 float4 FxaaTexOff(FxaaTex tex, float2 pos, int2 off, float2 rcpFrame) {
     #if FXAA_GLSL_120
-        return texture2DLodOffset(tex, pos.xy, 0.0, off.xy);
+        return textureLod(tex, pos.xy + off.xy * rcpFrame, 0.0);
     #endif
     #if FXAA_GLSL_130
-        return textureLod(tex, pos.xy + off.xy, 0.0);
+        return textureLod(tex, pos.xy + off.xy * rcpFrame, 0.0);
     #endif
     #if FXAA_HLSL_3
         return tex2Dlod(tex, float4(pos.xy + (off * rcpFrame), 0, 0)); 
@@ -781,8 +778,8 @@ Position on span is used to compute sub-pixel filter offset using simple ramp,
 }
 
 void main() {
-    ivec2 texture_size = textureSize(u_albedo_map, 0);
+    ivec2 texture_size = textureSize(u_postprocess_map, 0);
     vec2 texel = vec2(1.0 / texture_size.x, 1.0 / texture_size.y);
 
-    o_color = vec4(FxaaPixelShader(v_texcoord, u_albedo_map, texel), texture(u_albedo_map, v_texcoord).a);
+    o_color = vec4(FxaaPixelShader(v_texcoord, u_postprocess_map, texel), 1.0);
 }

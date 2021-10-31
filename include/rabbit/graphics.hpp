@@ -77,6 +77,10 @@ namespace rb {
 
 		virtual void draw_ssao(const std::shared_ptr<viewport>& viewport) = 0;
 
+		virtual void draw_fxaa(const std::shared_ptr<viewport>& viewport) = 0;
+
+		virtual void draw_blur(const std::shared_ptr<viewport>& viewport) = 0;
+
 		virtual void end_postprocess_pass(const std::shared_ptr<viewport>& viewport) = 0;
 
 		virtual void present(const std::shared_ptr<viewport>& viewport) = 0;
@@ -141,6 +145,10 @@ namespace rb {
 		static void next_postprocess_pass(const std::shared_ptr<viewport>& viewport);
 
 		static void draw_ssao(const std::shared_ptr<viewport>& viewport);
+
+		static void draw_fxaa(const std::shared_ptr<viewport>& viewport);
+
+		static void draw_blur(const std::shared_ptr<viewport>& viewport);
 
 		static void end_postprocess_pass(const std::shared_ptr<viewport>& viewport);
 
