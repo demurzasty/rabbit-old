@@ -126,6 +126,8 @@ namespace rb {
 
 		void end_forward_pass(const std::shared_ptr<viewport>& viewport) override;
 
+		void pre_draw_ssao(const std::shared_ptr<viewport>& viewport) override;
+
 		void begin_postprocess_pass(const std::shared_ptr<viewport>& viewport) override;
 
 		void next_postprocess_pass(const std::shared_ptr<viewport>& viewport) override;
@@ -350,12 +352,21 @@ namespace rb {
 		VkImage _ssao_noise_map;
 		VkImageView _ssao_noise_map_view;
 		VmaAllocation _ssao_noise_map_allocation;
-		VkSampler _ssao_noise_map_sampler;
+		VkSampler _ssao_sampler;
+		VkImage _ssao_image;
+		VmaAllocation _ssao_image_allocation;
+		VkImageView _ssao_image_view;
+		VkRenderPass _ssao_render_pass;
+		VkFramebuffer _ssao_framebuffer;
 		VkDescriptorPool _ssao_descriptor_pool;
 		VkDescriptorSet _ssao_descriptor_set;
 		VkDescriptorSetLayout _ssao_descriptor_set_layout;
 		VkPipelineLayout _ssao_pipeline_layout;
 		VkPipeline _ssao_pipeline;
+		VkDescriptorSetLayout _ssao_blur_descriptor_set_layout;
+		VkDescriptorSet _ssao_blur_descriptor_set;
+		VkPipelineLayout _ssao_blur_pipeline_layout;
+		VkPipeline _ssao_blur_pipeline;
 
 		VkPipelineLayout _fxaa_pipeline_layout;
 		VkPipeline _fxaa_pipeline;

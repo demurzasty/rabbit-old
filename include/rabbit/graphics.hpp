@@ -71,6 +71,8 @@ namespace rb {
 
 		virtual void end_forward_pass(const std::shared_ptr<viewport>& viewport) = 0;
 
+		virtual void pre_draw_ssao(const std::shared_ptr<viewport>& viewport) = 0;
+
 		virtual void begin_postprocess_pass(const std::shared_ptr<viewport>& viewport) = 0;
 
 		virtual void next_postprocess_pass(const std::shared_ptr<viewport>& viewport) = 0;
@@ -141,6 +143,8 @@ namespace rb {
 		static void begin_forward_pass(const std::shared_ptr<viewport>& viewport);
 
 		static void end_forward_pass(const std::shared_ptr<viewport>& viewport);
+
+		static void pre_draw_ssao(const std::shared_ptr<viewport>& viewport);
 
 		static void begin_postprocess_pass(const std::shared_ptr<viewport>& viewport);
 

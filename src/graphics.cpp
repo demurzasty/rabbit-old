@@ -106,6 +106,10 @@ void graphics::end_forward_pass(const std::shared_ptr<viewport>& viewport) {
 	_impl->end_forward_pass(viewport);
 }
 
+void graphics::pre_draw_ssao(const std::shared_ptr<viewport>& viewport) {
+	_impl->pre_draw_ssao(viewport);
+}
+
 void graphics::begin_postprocess_pass(const std::shared_ptr<viewport>& viewport) {
 	_impl->begin_postprocess_pass(viewport);
 }

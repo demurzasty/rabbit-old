@@ -111,6 +111,6 @@ int main(int argc, char* argv[]) {
     app::system<camera_controller>();
     app::system<initializer>();
     app::system<fps_meter>();
-
+    
     app::run();
 }

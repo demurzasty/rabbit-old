@@ -25,13 +25,11 @@ layout (set = 2, binding = 0) uniform ssao_data {
 };
 layout (set = 2, binding = 1) uniform sampler2D u_noise_map;
 
-layout (set = 3, binding = 0) uniform sampler2D u_postprocess_map;
-
 const int kernel_size = SSAO_SAMPLES;
-const float radius = 0.25;
+const float radius = 0.5;
 const float bias = 0.025;
 
-const vec2 noise_scale = vec2(1280.0 / 4.0, 720.0 / 4.0);
+const vec2 noise_scale = vec2(1280.0 / 4.0 / 4.0, 720.0 / 4.0 / 4.0);
 
 vec3 extract_position(float depth, vec2 texcoord) {
     vec4 position;
@@ -82,13 +80,14 @@ void main() {
         float factor = distance(position, sample_pos) / radius;
 
         float range_check = smoothstep(0.0, 1.0, radius / abs(linearized_depth - sample_depth));
-        float normal_check = max(1.0 - dot(sample_normal, normal), 0.0);
-        occlusion += step(linearized_depth + bias, sample_depth) * range_check * normal_check * normal_check;
+        float normal_check = pow(max(1.0 - dot(sample_normal, normal), 0.0), 2.0);
+        occlusion += step(linearized_depth + bias, sample_depth) * range_check * normal_check;
         //occlusion += range_check;
     }
     occlusion = (occlusion / kernel_size);
 
-    o_color = vec4(vec3(1.0 - occlusion) * texture(u_postprocess_map, v_texcoord).rgb, 1.0);
+    o_color = vec4(1.0 - occlusion, 0.0, 0.0, 1.0);
+    // o_color = vec4(vec3(1.0 - occlusion) * texture(u_postprocess_map, v_texcoord).rgb, 1.0);
     // o_color = vec4(vec3(1.0 - occlusion), 1.0);
     // o_color = vec4(vec3(0.0), occlusion);
     //o_color = vec4(position, 1.0);

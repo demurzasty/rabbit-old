@@ -7,6 +7,8 @@
 #include "shaders_vulkan.hpp"
 #include "utils_vulkan.hpp"
 
+#define SSAO_IMAGE_REDUCTION 4
+
 #define VMA_IMPLEMENTATION
 #include <vk_mem_alloc.h>
 
@@ -92,11 +94,18 @@ graphics_vulkan::~graphics_vulkan() {
     vkDestroyPipeline(_device, _fxaa_pipeline, nullptr);
     vkDestroyPipelineLayout(_device, _fxaa_pipeline_layout, nullptr);
 
+    vkDestroyPipeline(_device, _ssao_blur_pipeline, nullptr);
+    vkDestroyPipelineLayout(_device, _ssao_blur_pipeline_layout, nullptr);
     vkDestroyPipeline(_device, _ssao_pipeline, nullptr);
     vkDestroyPipelineLayout(_device, _ssao_pipeline_layout, nullptr);
     vkDestroyDescriptorPool(_device, _ssao_descriptor_pool, nullptr);
     vkDestroyDescriptorSetLayout(_device, _ssao_descriptor_set_layout, nullptr);
-    vkDestroySampler(_device, _ssao_noise_map_sampler, nullptr);
+    vkDestroyDescriptorSetLayout(_device, _ssao_blur_descriptor_set_layout, nullptr);
+    vkDestroyFramebuffer(_device, _ssao_framebuffer, nullptr);
+    vkDestroyRenderPass(_device, _ssao_render_pass, nullptr);
+    vkDestroyImageView(_device, _ssao_image_view, nullptr);
+    vmaDestroyImage(_allocator, _ssao_image, _ssao_image_allocation);
+    vkDestroySampler(_device, _ssao_sampler, nullptr);
     vkDestroyImageView(_device, _ssao_noise_map_view, nullptr);
     vmaDestroyImage(_allocator, _ssao_noise_map, _ssao_noise_map_allocation);
     vmaDestroyBuffer(_allocator, _ssao_buffer, _ssao_allocation);
@@ -195,7 +204,7 @@ graphics_vulkan::~graphics_vulkan() {
     vkDestroyInstance(_instance, nullptr);
 }
 
-std::shared_ptr<viewport> graphics_vulkan::make_viewport(const viewport_desc& desc) {
+std::shared_ptr<rb::viewport> graphics_vulkan::make_viewport(const viewport_desc& desc) {
     return std::make_shared<viewport_vulkan>(_device,
         _allocator,
         _gbuffer_render_pass,
@@ -477,6 +486,44 @@ void graphics_vulkan::end_forward_pass(const std::shared_ptr<viewport>& viewport
     native_viewport->end_forward_pass(_command_buffers[_command_index]);
 }
 
+void graphics_vulkan::pre_draw_ssao(const std::shared_ptr<viewport>& viewport) {
+    const auto native_viewport = std::static_pointer_cast<viewport_vulkan>(viewport);
+
+    VkClearValue clear_values[1];
+    clear_values[0].color = { { 0.0f, 0.0f, 0.0f, 0.0f } };
+
+    VkRenderPassBeginInfo render_pass_begin_info;
+    render_pass_begin_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+    render_pass_begin_info.pNext = nullptr;
+    render_pass_begin_info.renderPass = _ssao_render_pass;
+    render_pass_begin_info.framebuffer = _ssao_framebuffer;
+    render_pass_begin_info.renderArea.offset = { 0, 0 };
+    render_pass_begin_info.renderArea.extent = { _swapchain_extent.width / SSAO_IMAGE_REDUCTION, _swapchain_extent.height / SSAO_IMAGE_REDUCTION };
+    render_pass_begin_info.clearValueCount = sizeof(clear_values) / sizeof(*clear_values);
+    render_pass_begin_info.pClearValues = clear_values;
+
+    vkCmdBeginRenderPass(_command_buffers[_command_index], &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
+
+    VkDescriptorSet descriptor_sets[]{
+        _main_descriptor_set,
+        native_viewport->gbuffer_descriptor_set(),
+        _ssao_descriptor_set
+    };
+
+    vkCmdBindDescriptorSets(_command_buffers[_command_index],
+        VK_PIPELINE_BIND_POINT_GRAPHICS, _ssao_pipeline_layout, 0, 3, descriptor_sets,
+        0, nullptr);
+
+    VkDeviceSize offset{ 0 };
+    vkCmdBindVertexBuffers(_command_buffers[_command_index], 0, 1, &_quad_vertex_buffer, &offset);
+    vkCmdBindIndexBuffer(_command_buffers[_command_index], _quad_index_buffer, 0, VK_INDEX_TYPE_UINT16);
+
+    vkCmdBindPipeline(_command_buffers[_command_index], VK_PIPELINE_BIND_POINT_GRAPHICS, _ssao_pipeline);
+    vkCmdDrawIndexed(_command_buffers[_command_index], 6, 1, 0, 0, 0);
+
+    vkCmdEndRenderPass(_command_buffers[_command_index]);
+}
+
 void graphics_vulkan::begin_postprocess_pass(const std::shared_ptr<viewport>& viewport) {
     const auto native_viewport = std::static_pointer_cast<viewport_vulkan>(viewport);
     native_viewport->begin_postprocess_pass(_command_buffers[_command_index]);
@@ -524,21 +571,23 @@ void graphics_vulkan::draw_ssao(const std::shared_ptr<viewport>& viewport) {
     const auto native_viewport = std::static_pointer_cast<viewport_vulkan>(viewport);
 
     VkDescriptorSet descriptor_sets[]{
-        _main_descriptor_set,
-        native_viewport->gbuffer_descriptor_set(),
-        _ssao_descriptor_set,
-        native_viewport->last_postprocess_descriptor_set()
+        native_viewport->last_postprocess_descriptor_set(),
+        _ssao_blur_descriptor_set
     };
 
     vkCmdBindDescriptorSets(_command_buffers[_command_index],
-        VK_PIPELINE_BIND_POINT_GRAPHICS, _ssao_pipeline_layout, 0, 4, descriptor_sets,
+        VK_PIPELINE_BIND_POINT_GRAPHICS, _ssao_blur_pipeline_layout, 0, 2, descriptor_sets,
         0, nullptr);
 
     VkDeviceSize offset{ 0 };
     vkCmdBindVertexBuffers(_command_buffers[_command_index], 0, 1, &_quad_vertex_buffer, &offset);
     vkCmdBindIndexBuffer(_command_buffers[_command_index], _quad_index_buffer, 0, VK_INDEX_TYPE_UINT16);
 
-    vkCmdBindPipeline(_command_buffers[_command_index], VK_PIPELINE_BIND_POINT_GRAPHICS, _ssao_pipeline);
+    blur_data blur_data;
+    blur_data.strength = 2;
+    vkCmdPushConstants(_command_buffers[_command_index], _ssao_blur_pipeline_layout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(blur_data), &blur_data);
+
+    vkCmdBindPipeline(_command_buffers[_command_index], VK_PIPELINE_BIND_POINT_GRAPHICS, _ssao_blur_pipeline);
     vkCmdDrawIndexed(_command_buffers[_command_index], 6, 1, 0, 0, 0);
 }
 
@@ -2591,7 +2640,116 @@ void graphics_vulkan::_create_ssao_pipeline() {
     sampler_info.maxLod = 1.0f;
     sampler_info.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
     sampler_info.unnormalizedCoordinates = VK_FALSE;
-    RB_VK(vkCreateSampler(_device, &sampler_info, nullptr, &_ssao_noise_map_sampler), "Failed to create Vulkan sampler");
+    RB_VK(vkCreateSampler(_device, &sampler_info, nullptr, &_ssao_sampler), "Failed to create Vulkan sampler");
+
+    image_info.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+    image_info.pNext = nullptr;
+    image_info.flags = 0;
+    image_info.imageType = VK_IMAGE_TYPE_2D;
+    image_info.format = VK_FORMAT_R8_UNORM;
+    image_info.extent = { _swapchain_extent.width / SSAO_IMAGE_REDUCTION, _swapchain_extent.height / SSAO_IMAGE_REDUCTION, 1 };
+    image_info.mipLevels = 1;
+    image_info.arrayLayers = 1;
+    image_info.samples = VK_SAMPLE_COUNT_1_BIT;
+    image_info.tiling = VK_IMAGE_TILING_OPTIMAL;
+    image_info.usage = VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT
+        | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+    image_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+    image_info.queueFamilyIndexCount = 0;
+    image_info.pQueueFamilyIndices = 0;
+    image_info.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+
+    allocation_info.usage = VMA_MEMORY_USAGE_GPU_ONLY;
+    RB_VK(vmaCreateImage(_allocator, &image_info, &allocation_info, &_ssao_image, &_ssao_image_allocation, nullptr),
+        "Failed to create Vulkan image");
+
+    image_view_info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+    image_view_info.pNext = nullptr;
+    image_view_info.flags = 0;
+    image_view_info.image = _ssao_image;
+    image_view_info.viewType = VK_IMAGE_VIEW_TYPE_2D;
+    image_view_info.format = VK_FORMAT_R8_UNORM;
+    image_view_info.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
+    image_view_info.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
+    image_view_info.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
+    image_view_info.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
+    image_view_info.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    image_view_info.subresourceRange.baseMipLevel = 0;
+    image_view_info.subresourceRange.levelCount = 1;
+    image_view_info.subresourceRange.baseArrayLayer = 0;
+    image_view_info.subresourceRange.layerCount = 1;
+    RB_VK(vkCreateImageView(_device, &image_view_info, nullptr, &_ssao_image_view), "Failed to create image view");
+
+    VkAttachmentDescription color_attachment;
+    color_attachment.flags = 0;
+    color_attachment.format = VK_FORMAT_R8_UNORM;
+    color_attachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+    color_attachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+    color_attachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+    color_attachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+    color_attachment.samples = VK_SAMPLE_COUNT_1_BIT;
+    color_attachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    color_attachment.finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+    VkAttachmentReference color_attachment_reference;
+    color_attachment_reference.attachment = 0;
+    color_attachment_reference.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+    VkSubpassDescription subpass_desc;
+    subpass_desc.flags = 0;
+    subpass_desc.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+    subpass_desc.inputAttachmentCount = 0;
+    subpass_desc.pInputAttachments = nullptr;
+    subpass_desc.colorAttachmentCount = 1;
+    subpass_desc.pColorAttachments = &color_attachment_reference;
+    subpass_desc.pResolveAttachments = nullptr;
+    subpass_desc.pDepthStencilAttachment = nullptr;
+    subpass_desc.preserveAttachmentCount = 0;
+    subpass_desc.pPreserveAttachments = nullptr;
+
+    std::array<VkSubpassDependency, 2> dependencies;
+
+    dependencies[0].srcSubpass = VK_SUBPASS_EXTERNAL;
+    dependencies[0].dstSubpass = 0;
+    dependencies[0].srcStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
+    dependencies[0].dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+    dependencies[0].srcAccessMask = VK_ACCESS_MEMORY_READ_BIT;
+    dependencies[0].dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+    dependencies[0].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
+
+    dependencies[1].srcSubpass = 0;
+    dependencies[1].dstSubpass = VK_SUBPASS_EXTERNAL;
+    dependencies[1].srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+    dependencies[1].dstStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
+    dependencies[1].srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+    dependencies[1].dstAccessMask = VK_ACCESS_MEMORY_READ_BIT;
+    dependencies[1].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
+
+    VkRenderPassCreateInfo render_pass_info;
+    render_pass_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+    render_pass_info.pNext = nullptr;
+    render_pass_info.flags = 0;
+    render_pass_info.attachmentCount = 1;
+    render_pass_info.pAttachments = &color_attachment;
+    render_pass_info.subpassCount = 1;
+    render_pass_info.pSubpasses = &subpass_desc;
+    render_pass_info.dependencyCount = 2;
+    render_pass_info.pDependencies = dependencies.data();
+    RB_VK(vkCreateRenderPass(_device, &render_pass_info, nullptr, &_ssao_render_pass),
+        "Failed to create Vulkan render pass.");
+
+    VkFramebufferCreateInfo framebuffer_info;
+    framebuffer_info.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+    framebuffer_info.pNext = nullptr;
+    framebuffer_info.flags = 0;
+    framebuffer_info.renderPass = _ssao_render_pass;
+    framebuffer_info.attachmentCount = 1;
+    framebuffer_info.pAttachments = &_ssao_image_view;
+    framebuffer_info.width = _swapchain_extent.width / SSAO_IMAGE_REDUCTION;
+    framebuffer_info.height = _swapchain_extent.height / SSAO_IMAGE_REDUCTION;
+    framebuffer_info.layers = 1;
+    RB_VK(vkCreateFramebuffer(_device, &framebuffer_info, nullptr, &_ssao_framebuffer),
+        "Failed to create Vulkan framebuffer");
 
     VkDescriptorSetLayoutBinding bindings[2]{
         { 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr },
@@ -2607,16 +2765,28 @@ void graphics_vulkan::_create_ssao_pipeline() {
     RB_VK(vkCreateDescriptorSetLayout(_device, &descriptor_set_layout_info, nullptr, &_ssao_descriptor_set_layout),
         "Failed to create Vulkan descriptor set layout");
 
+    VkDescriptorSetLayoutBinding blur_bindings[2]{
+        { 0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr },
+    };
+
+    descriptor_set_layout_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+    descriptor_set_layout_info.pNext = nullptr;
+    descriptor_set_layout_info.flags = 0;
+    descriptor_set_layout_info.bindingCount = 1;
+    descriptor_set_layout_info.pBindings = blur_bindings;
+    RB_VK(vkCreateDescriptorSetLayout(_device, &descriptor_set_layout_info, nullptr, &_ssao_blur_descriptor_set_layout),
+        "Failed to create Vulkan descriptor set layout");
+
     VkDescriptorPoolSize pool_sizes[2]{
         { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1 },
-        { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1 },
+        { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 2 },
     };
 
     VkDescriptorPoolCreateInfo descriptor_pool_info;
     descriptor_pool_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
     descriptor_pool_info.pNext = nullptr;
     descriptor_pool_info.flags = 0;
-    descriptor_pool_info.maxSets = 1;
+    descriptor_pool_info.maxSets = 2;
     descriptor_pool_info.poolSizeCount = 2;
     descriptor_pool_info.pPoolSizes = pool_sizes;
     RB_VK(vkCreateDescriptorPool(_device, &descriptor_pool_info, nullptr, &_ssao_descriptor_pool),
@@ -2631,20 +2801,30 @@ void graphics_vulkan::_create_ssao_pipeline() {
     RB_VK(vkAllocateDescriptorSets(_device, &descriptor_set_allocate_info, &_ssao_descriptor_set),
         "Failed to allocatore desctiptor set");
 
+    descriptor_set_allocate_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+    descriptor_set_allocate_info.pNext = nullptr;
+    descriptor_set_allocate_info.descriptorPool = _ssao_descriptor_pool;
+    descriptor_set_allocate_info.descriptorSetCount = 1;
+    descriptor_set_allocate_info.pSetLayouts = &_ssao_blur_descriptor_set_layout;
+    RB_VK(vkAllocateDescriptorSets(_device, &descriptor_set_allocate_info, &_ssao_blur_descriptor_set),
+        "Failed to allocatore desctiptor set");
+
     VkDescriptorBufferInfo buffer_infos[1]{
         { _ssao_buffer, 0, sizeof(ssao_data) },
     };
 
-    VkDescriptorImageInfo image_infos[1]{
-        { _ssao_noise_map_sampler, _ssao_noise_map_view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL },
+    VkDescriptorImageInfo image_infos[2]{
+        { _ssao_sampler, _ssao_noise_map_view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL },
+        { _ssao_sampler, _ssao_image_view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL },
     };
 
-    VkWriteDescriptorSet write_infos[2]{
+    VkWriteDescriptorSet write_infos[3]{
         { VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET, nullptr, _ssao_descriptor_set, 0, 0, 1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, nullptr, &buffer_infos[0], nullptr },
         { VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET, nullptr, _ssao_descriptor_set, 1, 0, 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, &image_infos[0], nullptr, nullptr },
+        { VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET, nullptr, _ssao_blur_descriptor_set, 0, 0, 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, &image_infos[1], nullptr, nullptr }
     };
 
-    vkUpdateDescriptorSets(_device, 2, write_infos, 0, nullptr);
+    vkUpdateDescriptorSets(_device, 3, write_infos, 0, nullptr);
 
     VkDescriptorSetLayout layouts[4]{
         _main_descriptor_set_layout,
@@ -2716,14 +2896,14 @@ void graphics_vulkan::_create_ssao_pipeline() {
     VkViewport viewport;
     viewport.x = 0.0f;
     viewport.y = 0.0f;
-    viewport.width = static_cast<float>(_swapchain_extent.width);
-    viewport.height = static_cast<float>(_swapchain_extent.height);
+    viewport.width = static_cast<float>(_swapchain_extent.width / SSAO_IMAGE_REDUCTION);
+    viewport.height = static_cast<float>(_swapchain_extent.height / SSAO_IMAGE_REDUCTION);
     viewport.minDepth = 0.0f;
     viewport.maxDepth = 1.0f;
 
     VkRect2D scissor;
     scissor.offset = { 0, 0 };
-    scissor.extent = _swapchain_extent;
+    scissor.extent = { _swapchain_extent.width / SSAO_IMAGE_REDUCTION, _swapchain_extent.height / SSAO_IMAGE_REDUCTION };
 
     VkPipelineViewportStateCreateInfo viewport_state_info;
     viewport_state_info.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
@@ -2773,7 +2953,7 @@ void graphics_vulkan::_create_ssao_pipeline() {
     VkPipelineColorBlendAttachmentState color_blend_attachment_state_info{};
     color_blend_attachment_state_info.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT |
         VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
-    color_blend_attachment_state_info.blendEnable = VK_TRUE;
+    color_blend_attachment_state_info.blendEnable = VK_FALSE;
     color_blend_attachment_state_info.srcColorBlendFactor = VK_BLEND_FACTOR_ONE; // Optional
     color_blend_attachment_state_info.dstColorBlendFactor = VK_BLEND_FACTOR_ONE; // Optional
     color_blend_attachment_state_info.colorBlendOp = VK_BLEND_OP_ADD; // Optional
@@ -2828,7 +3008,7 @@ void graphics_vulkan::_create_ssao_pipeline() {
     pipeline_info.pColorBlendState = &color_blend_state_info;
     pipeline_info.pDepthStencilState = &depth_stencil_state_info;
     pipeline_info.layout = _ssao_pipeline_layout;
-    pipeline_info.renderPass = _postprocess_render_pass;
+    pipeline_info.renderPass = _ssao_render_pass;
     pipeline_info.basePipelineHandle = VK_NULL_HANDLE;
     pipeline_info.pDynamicState = nullptr;
     RB_VK(vkCreateGraphicsPipelines(_device, VK_NULL_HANDLE, 1, &pipeline_info, nullptr, &_ssao_pipeline),
@@ -2836,6 +3016,70 @@ void graphics_vulkan::_create_ssao_pipeline() {
 
     vkDestroyShaderModule(_device, ssao_shader_modules[1], nullptr);
     vkDestroyShaderModule(_device, ssao_shader_modules[0], nullptr);
+
+    VkDescriptorSetLayout ssao_blur_layouts[2]{
+        _postprocess_descriptor_set_layout,
+        _ssao_blur_descriptor_set_layout
+    };
+
+    VkPushConstantRange push_constant_range;
+    push_constant_range.offset = 0;
+    push_constant_range.size = sizeof(blur_data);
+    push_constant_range.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+
+    pipeline_layout_info.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+    pipeline_layout_info.pNext = nullptr;
+    pipeline_layout_info.flags = 0;
+    pipeline_layout_info.setLayoutCount = 2;
+    pipeline_layout_info.pSetLayouts = ssao_blur_layouts;
+    pipeline_layout_info.pushConstantRangeCount = 1;
+    pipeline_layout_info.pPushConstantRanges = &push_constant_range;
+    RB_VK(vkCreatePipelineLayout(_device, &pipeline_layout_info, nullptr, &_ssao_blur_pipeline_layout),
+        "Failed to create Vulkan pipeline layout");
+
+    VkShaderModule ssao_blur_shader_modules[2];
+
+    VkShaderModuleCreateInfo ssao_blur_vert_shader_module_info;
+    ssao_blur_vert_shader_module_info.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+    ssao_blur_vert_shader_module_info.pNext = nullptr;
+    ssao_blur_vert_shader_module_info.flags = 0;
+    ssao_blur_vert_shader_module_info.codeSize = shaders_vulkan::quad_vert().size_bytes();
+    ssao_blur_vert_shader_module_info.pCode = shaders_vulkan::quad_vert().data();
+    RB_VK(vkCreateShaderModule(_device, &ssao_blur_vert_shader_module_info, nullptr, &ssao_blur_shader_modules[0]),
+        "Failed to create shader module");
+
+    VkShaderModuleCreateInfo ssao_blur_frag_shader_module_info;
+    ssao_blur_frag_shader_module_info.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+    ssao_blur_frag_shader_module_info.pNext = nullptr;
+    ssao_blur_frag_shader_module_info.flags = 0;
+    ssao_blur_frag_shader_module_info.codeSize = shaders_vulkan::ssao_blur_frag().size_bytes();
+    ssao_blur_frag_shader_module_info.pCode = shaders_vulkan::ssao_blur_frag().data();
+    RB_VK(vkCreateShaderModule(_device, &ssao_blur_frag_shader_module_info, nullptr, &ssao_blur_shader_modules[1]),
+        "Failed to create shader module");
+
+    viewport.width = static_cast<float>(_swapchain_extent.width);
+    viewport.height = static_cast<float>(_swapchain_extent.height);
+
+    scissor.extent = _swapchain_extent;
+
+    vertex_shader_stage_info.module = ssao_blur_shader_modules[0];
+    fragment_shader_stage_info.module = ssao_blur_shader_modules[1];
+
+    VkPipelineShaderStageCreateInfo ssao_blur_shader_stages[] = {
+        vertex_shader_stage_info,
+        fragment_shader_stage_info
+    };
+
+    pipeline_info.pStages = ssao_blur_shader_stages;
+    pipeline_info.layout = _ssao_blur_pipeline_layout;
+    pipeline_info.renderPass = _postprocess_render_pass;
+    pipeline_info.basePipelineHandle = VK_NULL_HANDLE;
+    pipeline_info.pDynamicState = nullptr;
+    RB_VK(vkCreateGraphicsPipelines(_device, VK_NULL_HANDLE, 1, &pipeline_info, nullptr, &_ssao_blur_pipeline),
+        "Failed to create Vulkan graphics pipeline");
+
+    vkDestroyShaderModule(_device, ssao_blur_shader_modules[1], nullptr);
+    vkDestroyShaderModule(_device, ssao_blur_shader_modules[0], nullptr);
 }
 
 void graphics_vulkan::_create_fxaa_pipeline() {
