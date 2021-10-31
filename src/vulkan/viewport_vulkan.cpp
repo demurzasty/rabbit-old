@@ -81,6 +81,19 @@ void viewport_vulkan::begin_geometry_pass(VkCommandBuffer command_buffer) {
     render_pass_begin_info.pClearValues = clear_values;
 
     vkCmdBeginRenderPass(command_buffer, &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
+
+    VkViewport viewport{
+        0.0f, 0.0f,
+        static_cast<float>(size().x), static_cast<float>(size().y),
+        0.0f, 1.0f
+    };
+    vkCmdSetViewport(command_buffer, 0, 1, &viewport);
+
+    VkRect2D scissor{
+        { 0, 0 },
+        { size().x, size().y }
+    };
+    vkCmdSetScissor(command_buffer, 0, 1, &scissor);
 }
 
 void viewport_vulkan::end_geometry_pass(VkCommandBuffer command_buffer) {
@@ -102,6 +115,19 @@ void viewport_vulkan::begin_light_pass(VkCommandBuffer command_buffer) {
     render_pass_begin_info.pClearValues = clear_values;
 
     vkCmdBeginRenderPass(command_buffer, &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
+
+    VkViewport viewport{
+        0.0f, 0.0f,
+        static_cast<float>(size().x), static_cast<float>(size().y),
+        0.0f, 1.0f
+    };
+    vkCmdSetViewport(command_buffer, 0, 1, &viewport);
+
+    VkRect2D scissor{
+        { 0, 0 },
+        { size().x, size().y }
+    };
+    vkCmdSetScissor(command_buffer, 0, 1, &scissor);
 }
 
 void viewport_vulkan::end_light_pass(VkCommandBuffer command_buffer) {
@@ -124,6 +150,19 @@ void viewport_vulkan::begin_forward_pass(VkCommandBuffer command_buffer) {
     render_pass_begin_info.pClearValues = clear_values;
 
     vkCmdBeginRenderPass(command_buffer, &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
+
+    VkViewport viewport{
+        0.0f, 0.0f,
+        static_cast<float>(size().x), static_cast<float>(size().y),
+        0.0f, 1.0f
+    };
+    vkCmdSetViewport(command_buffer, 0, 1, &viewport);
+
+    VkRect2D scissor{
+        { 0, 0 },
+        { size().x, size().y }
+    };
+    vkCmdSetScissor(command_buffer, 0, 1, &scissor);
 }
 
 void viewport_vulkan::end_forward_pass(VkCommandBuffer command_buffer) {
@@ -146,7 +185,18 @@ void viewport_vulkan::begin_postprocess_pass(VkCommandBuffer command_buffer) {
 
     vkCmdBeginRenderPass(command_buffer, &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
 
-    // vkCmdCopyImage(command_buffer, _forward_image, )
+    VkViewport viewport{
+        0.0f, 0.0f,
+        static_cast<float>(size().x), static_cast<float>(size().y),
+        0.0f, 1.0f
+    };
+    vkCmdSetViewport(command_buffer, 0, 1, &viewport);
+
+    VkRect2D scissor{
+        { 0, 0 },
+        { size().x, size().y }
+    };
+    vkCmdSetScissor(command_buffer, 0, 1, &scissor);
 }
 
 void viewport_vulkan::end_postprocess_pass(VkCommandBuffer command_buffer) {

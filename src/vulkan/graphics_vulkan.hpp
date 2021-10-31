@@ -203,8 +203,6 @@ namespace rb {
 
 		void _create_postprocess();
 
-		void _create_forward_pipeline();
-
 		void _create_ambient_pipeline();
 
 		void _create_directional_light_pipeline();
