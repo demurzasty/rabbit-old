@@ -24,6 +24,7 @@ namespace rb {
 		static span<const std::uint32_t> ssao_frag();
 		static span<const std::uint32_t> fxaa_frag();
 		static span<const std::uint32_t> blur_frag();
+		static span<const std::uint32_t> sharpen_frag();
 		static span<const std::uint32_t> present_frag();
 	};
 }

@@ -75,6 +75,10 @@ namespace rb {
 			int strength;
 		};
 
+		struct alignas(16) sharpen_data {
+			float strength;
+		};
+
 	public:
 		graphics_vulkan();
 
@@ -131,6 +135,8 @@ namespace rb {
 		void draw_fxaa(const std::shared_ptr<viewport>& viewport) override;
 
 		void draw_blur(const std::shared_ptr<viewport>& viewport, int strength) override;
+
+		void draw_sharpen(const std::shared_ptr<viewport>& viewport, float strength) override;
 
 		void end_postprocess_pass(const std::shared_ptr<viewport>& viewport) override;
 
@@ -208,6 +214,8 @@ namespace rb {
 		void _create_fxaa_pipeline();
 
 		void _create_blur_pipeline();
+
+		void _create_sharpen_pipeline();
 
 		void _create_skybox_pipeline();
 
@@ -354,6 +362,9 @@ namespace rb {
 
 		VkPipelineLayout _blur_pipeline_layout;
 		VkPipeline _blur_pipeline;
+
+		VkPipelineLayout _sharpen_pipeline_layout;
+		VkPipeline _sharpen_pipeline;
 
 		VkPipelineLayout _present_pipeline_layout;
 		VkPipeline _present_pipeline;

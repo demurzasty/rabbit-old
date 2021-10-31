@@ -11,13 +11,6 @@ void renderer::initialize(registry& registry) {
 }
 
 void renderer::draw(registry& registry) {
-    static int strength = 0;
-    if (input::is_key_pressed(keycode::i)) {
-        strength++;
-    } else if (input::is_key_pressed(keycode::k)) {
-        strength--;
-    }
-
     graphics::begin();
 
     registry.view<transform, camera>().each([this](transform& transform, camera& camera) {
@@ -61,6 +54,10 @@ void renderer::draw(registry& registry) {
     graphics::begin_postprocess_pass(_viewport);
 
     graphics::draw_fxaa(_viewport);
+
+    graphics::next_postprocess_pass(_viewport);
+
+    graphics::draw_sharpen(_viewport, 0.25f);
 
     graphics::end_postprocess_pass(_viewport);
 
