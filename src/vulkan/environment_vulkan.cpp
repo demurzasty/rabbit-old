@@ -1,6 +1,8 @@
 #include "environment_vulkan.hpp"
 #include "utils_vulkan.hpp"
 
+#include <rabbit/graphics.hpp>
+
 using namespace rb;
 
 environment_vulkan::environment_vulkan(VkDevice device,
@@ -24,7 +26,6 @@ environment_vulkan::environment_vulkan(VkDevice device,
 
 environment_vulkan::~environment_vulkan() {
     vkDestroyDescriptorPool(_device, _descriptor_pool, nullptr);
-    //vkDestroyDescriptorSetLayout(_device, _descriptor_set_layout, nullptr);
 
     vkDestroySampler(_device, _prefilter_sampler, nullptr);
     vkDestroyImageView(_device, _prefilter_image_view, nullptr);
@@ -240,7 +241,7 @@ void environment_vulkan::_create_irradiance_image() {
     image_info.flags = VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT;
     image_info.imageType = VK_IMAGE_TYPE_2D;
     image_info.format = VK_FORMAT_R8G8B8A8_UNORM;
-    image_info.extent = { 64, 64, 1 };
+    image_info.extent = { graphics_limits::irradiance_map_size, graphics_limits::irradiance_map_size, 1 };
     image_info.mipLevels = 1;
     image_info.arrayLayers = 6;
     image_info.samples = VK_SAMPLE_COUNT_1_BIT;
@@ -306,7 +307,7 @@ void environment_vulkan::_create_prefilter_image() {
     image_info.flags = VK_IMAGE_CREATE_CUBE_COMPATIBLE_BIT;
     image_info.imageType = VK_IMAGE_TYPE_2D;
     image_info.format = VK_FORMAT_R8G8B8A8_UNORM;
-    image_info.extent = { 128, 128, 1 };
+    image_info.extent = { graphics_limits::prefilter_map_size, graphics_limits::prefilter_map_size, 1 };
     image_info.mipLevels = 6;
     image_info.arrayLayers = 6;
     image_info.samples = VK_SAMPLE_COUNT_1_BIT;
