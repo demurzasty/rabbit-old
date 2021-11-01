@@ -3102,7 +3102,7 @@ void graphics_vulkan::_create_ssao_pipeline() {
     pipeline_info.layout = _ssao_pipeline_layout;
     pipeline_info.renderPass = _ssao_render_pass;
     pipeline_info.basePipelineHandle = VK_NULL_HANDLE;
-    pipeline_info.pDynamicState = &dynamic_state_info;
+    pipeline_info.pDynamicState = nullptr;
     RB_VK(vkCreateGraphicsPipelines(_device, VK_NULL_HANDLE, 1, &pipeline_info, nullptr, &_ssao_pipeline),
         "Failed to create Vulkan graphics pipeline");
 
@@ -3166,7 +3166,7 @@ void graphics_vulkan::_create_ssao_pipeline() {
     pipeline_info.layout = _ssao_blur_pipeline_layout;
     pipeline_info.renderPass = _postprocess_render_pass;
     pipeline_info.basePipelineHandle = VK_NULL_HANDLE;
-    pipeline_info.pDynamicState = nullptr;
+    pipeline_info.pDynamicState = &dynamic_state_info;
     RB_VK(vkCreateGraphicsPipelines(_device, VK_NULL_HANDLE, 1, &pipeline_info, nullptr, &_ssao_blur_pipeline),
         "Failed to create Vulkan graphics pipeline");
 
