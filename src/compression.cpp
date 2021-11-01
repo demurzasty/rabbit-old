@@ -15,7 +15,7 @@ std::size_t compression::compress(const void* uncompressed_data, std::size_t unc
 		&compressed_size,
 		(const unsigned char*)uncompressed_data,
 		uncompressed_size,
-		2);
+		1);
 
 	return status == MZ_OK ? compressed_size : 0;
 }
