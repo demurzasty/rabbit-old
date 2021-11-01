@@ -1,0 +1,64 @@
+{
+  "entities": [
+    {
+      "identity": {
+        "name": "Head"
+      },
+      "transform": {
+        "position": [ 0.0, 0.0, 0.0 ],
+        "rotation": [ 0.0, 0.0, 0.0 ],
+        "scaling": [ 1.0, 1.0, 1.0 ]
+      },
+      "geometry": {
+        "mesh": "43a6ab4a-f94d-8a7b-2e4f-3f07c154dcc4",
+        "material": "5e3467ac-3624-97c2-4950-434ab0c59002"
+      }
+    },
+    {
+      "identity": {
+        "name": "Ground"
+      },
+      "transform": {
+        "position": [ 0.0, -1.0, 0.0 ],
+        "rotation": [ 0.0, 0.0, 0.0 ],
+        "scaling": [ 1.0, 1.0, 1.0 ]
+      },
+      "geometry": {
+        "mesh": "7173971a-e5d6-e846-7dcd-4af3c02a44f7",
+        "material": "8f054d50-0ec9-fa49-33bc-13a37bf4893b"
+      }
+    },
+    {
+      "identity": {
+        "name": "Light"
+      },
+      "transform": {
+        "position": [ 0.0, 0.0, 0.0 ],
+        "rotation": [ 0.785398185, -2.35619450, 0.0 ],
+        "scaling": [ 1.0, 1.0, 1.0 ]
+      },
+      "light": {
+        "color": [ 255, 255, 255, 255 ]
+      },
+      "directional_light": {}
+    },
+    {
+      "identity": {
+        "name": "Camera"
+      },
+      "transform": {
+        "position": [ -4.0, 3.0, 4.0 ],
+        "rotation": [ -0.471238941, -0.785398185, 0.0 ],
+        "scaling": [ 1.0, 1.0, 1.0 ]
+      },
+      "camera": {
+        "type": "perspective",
+        "size": 11.25,
+        "field_of_view": 45.0,
+        "z_near": 0.1,
+        "z_far": 100.0,
+        "environment": "909f8cc5-9fc9-a107-9dcd-c4ae66b564df"
+      }
+    }
+  ]
+}

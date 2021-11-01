@@ -25,6 +25,5 @@ void main() {
     }
 
     o_color = vec4(vec3(occlusion / count), 1.0);
-    // o_color = vec4(vec3(texture(u_ssao_map, v_texcoord).r), 1.0);
     o_color = vec4(texture(u_postprocess_map, v_texcoord).rgb * vec3(occlusion / count), 1.0);
 }
