@@ -10,5 +10,8 @@ namespace rb {
 		virtual void update(registry& registry, float elapsed_time);
 
 		virtual void draw(registry& registry);
+
+	protected:
+		entity find_by_name(registry& registry, const std::string& name);
 	};
 }

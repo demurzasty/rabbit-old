@@ -6,6 +6,7 @@
 #include "bsphere.hpp"
 #include "bstream.hpp"
 #include "camera.hpp"
+#include "camera_manager.hpp"
 #include "color.hpp"
 #include "config.hpp"
 #include "entity.hpp"

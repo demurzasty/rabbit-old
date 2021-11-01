@@ -10,6 +10,8 @@ namespace rb {
 	public:
 		void initialize(registry& registry) override;
 
+		void update(registry& registry, float elapsed_time) override;
+
 		void draw(registry& registry) override;
 
 	private:
