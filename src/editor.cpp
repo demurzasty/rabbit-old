@@ -11,6 +11,7 @@ void editor::init() {
 	add_importer<mesh>(".obj");
 	add_importer<material>(".mat");
 	add_importer<environment>(".env");
+	add_importer<prefab>(".scn");
 }
 
 void editor::release() {
@@ -51,7 +52,7 @@ void editor::scan() {
 			std::ifstream{ meta_path } >> metadata;
 		} else {
 			metadata["uuid"] = uuid::generate().to_string();
-			std::ofstream{ meta_path } << metadata;
+			std::ofstream{ meta_path } << std::setw(4) << metadata;
 		}
 
 		const std::string uuid{ metadata["uuid"] };
@@ -64,7 +65,7 @@ void editor::scan() {
 			std::ifstream{ cache_path } >> cache;
 		} else {
 			cache["last_write_time"] = 0ll;
-			std::ofstream{ cache_path } << cache;
+			std::ofstream{ cache_path } << std::setw(4) << cache;
 		}
 
 		const long long cached_last_write_time{ cache["last_write_time"] };
@@ -76,7 +77,7 @@ void editor::scan() {
 			importer(path.string(), output_path.string(), metadata);
 
 			cache["last_write_time"] = last_write_time;
-			std::ofstream{ cache_path } << cache;
+			std::ofstream{ cache_path } << std::setw(4) << cache;
 		}
 	}
 }

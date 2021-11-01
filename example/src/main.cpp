@@ -4,37 +4,6 @@
 
 using namespace rb;
 
-class initializer : public rb::system {
-public:
-    void initialize(registry& registry) override {
-        auto coat = registry.create();
-        auto& coat_transform = registry.emplace<transform>(coat);
-        auto& coat_geometry = registry.emplace<geometry>(coat);
-
-        coat_geometry.mesh = assets::load<mesh>("2e610701-2c15-289a-7faa-437266196638");
-        coat_geometry.material = assets::load<material>("ac7ac63e-1bc2-d3b5-47d8-3dc0e4350cad");
-
-        auto box = registry.create();
-        auto& box_transform = registry.emplace<transform>(box);
-        auto& box_geometry = registry.emplace<geometry>(box);
-
-        box_transform.position.y = -1.0f;
-        box_geometry.mesh = mesh::make_box(vec3f{ 2.0f, 1.0f, 2.0f }, { 1.0f, 1.0f });
-        box_geometry.material = assets::load<material>("8f054d50-0ec9-fa49-33bc-13a37bf4893b");
-
-        auto main_light = registry.create();
-        registry.emplace<transform>(main_light).rotation = { pi<float>() * 0.25f, -pi<float>() * 0.75f, 0.0f };
-        registry.emplace<light>(main_light);
-        registry.emplace<directional_light>(main_light);
-
-        auto main_camera = registry.create();
-        registry.emplace<camera>(main_camera).environment = assets::load<environment>("909f8cc5-9fc9-a107-9dcd-c4ae66b564df");
-        auto& camera_transform = registry.emplace<transform>(main_camera);
-        camera_transform.position = { -4.0f, 3.0f, 4.0f };
-        camera_transform.rotation = { -pi<float>() * 0.15f, -pi<float>() * 0.25f, 0.0f };
-    }
-};
-
 struct camera_controller : public rb::system {
     void update(registry& registry, float elapsed_time) {
         if (input::is_mouse_button_pressed(mouse_button::right)) {
@@ -109,8 +78,7 @@ int main(int argc, char* argv[]) {
     app::setup();
 
     app::system<camera_controller>();
-    app::system<initializer>();
     app::system<fps_meter>();
 
-    app::run();
+    app::run(uuid::from_string("9f1dfcc6-a1af-a917-9bc3-878560a0f32a").value());
 }

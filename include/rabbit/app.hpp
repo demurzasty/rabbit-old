@@ -1,11 +1,18 @@
 #pragma once 
 
 #include "system.hpp"
+#include "json.hpp"
+#include "uuid.hpp"
 
 #include <list>
+#include <typeinfo>
+#include <typeindex>
+#include <unordered_map>
 
 namespace rb {
 	class app {
+		using deserializer = void(*)(registry&, entity, json_read_visitor&);
+
 	public:
 		template<typename Submodule>
 		static void submodule() {
@@ -17,6 +24,14 @@ namespace rb {
 		static void init(Func func) {
 			_inits.push_back(func);
 		}
+		
+		template<typename Component>
+		static void component(const std::string& name) {
+			_deserializers.emplace(name, [](registry& registry, entity entity, json_read_visitor& visitor) {
+				auto& comp = registry.emplace<Component>(entity);
+				Component::visit(visitor, comp);
+			});
+		}
 
 		template<typename System>
 		static void system() {
@@ -27,15 +42,18 @@ namespace rb {
 
 		static void setup();
 
-		static void run();
+		static void run(uuid initial_scene = uuid{});
+
+		static deserializer get_deserializer(const std::string& name);
 
 	private:
-		static void _main_loop();
+		static void _main_loop(uuid initial_scene);
 
 	private:
 		static std::list<void(*)()> _preinits;
 		static std::list<void(*)()> _inits;
 		static std::list<void(*)()> _releases;
 		static std::list<std::shared_ptr<rb::system>(*)()> _systems;
+		static std::unordered_map<std::string, deserializer> _deserializers;
 	};
 }

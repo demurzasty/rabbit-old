@@ -2,7 +2,6 @@
 
 #include "mesh.hpp"
 #include "material.hpp"
-#include "assets.hpp"
 
 #include <memory>
 
@@ -13,8 +12,8 @@ namespace rb {
 
 		template<typename Visitor>
 		static void visit(Visitor& visitor, geometry& geometry) {
-			visitor("mesh", assets::get_uuid(geometry.mesh));
-			visitor("material", assets::get_uuid(geometry.material));
+			visitor("mesh", geometry.mesh);
+			visitor("material", geometry.material);
 		}
 	};
 }

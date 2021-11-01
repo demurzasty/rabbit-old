@@ -30,6 +30,16 @@ namespace rb {
 			fclose(_file);
 		}
 
+		std::size_t size() {
+			const auto curr = ftell(_file);
+
+			fseek(_file, 0, SEEK_END);
+			const auto size = ftell(_file);
+			fseek(_file, curr, SEEK_SET);
+
+			return size;
+		}
+
 		void write(const void* data, std::size_t size) {
 			fwrite(data, 1, size, _file);
 		}

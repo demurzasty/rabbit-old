@@ -8,6 +8,7 @@ std::list<void(*)()> app::_preinits;
 std::list<void(*)()> app::_inits;
 std::list<void(*)()> app::_releases;
 std::list<std::shared_ptr<rb::system>(*)()> app::_systems;
+std::unordered_map<std::string, void(*)(registry&, entity, json_read_visitor&)> app::_deserializers;
 
 void app::setup() {
 	app::submodule<window>();
@@ -19,11 +20,20 @@ void app::setup() {
 	app::submodule<editor>();
 #endif
 
+	app::component<identity>("identity");
+	app::component<transform>("transform");
+	app::component<camera>("camera");
+	app::component<geometry>("geometry");
+	app::component<light>("light");
+	app::component<directional_light>("directional_light");
+	app::component<point_light>("point_light");
+
 	app::init([] {
 		assets::add_loader<texture>(&texture::load);
 		assets::add_loader<environment>(&environment::load);
 		assets::add_loader<material>(&material::load);
 		assets::add_loader<mesh>(&mesh::load);
+		assets::add_loader<prefab>(&prefab::load);
 	});
 
 #if !RB_PROD_BUILD
@@ -35,7 +45,7 @@ void app::setup() {
 	app::system<renderer>();
 }
 
-void app::run() {
+void app::run(uuid initial_scene) {
 	for (auto& preinit : _preinits) {
 		preinit();
 	}
@@ -44,20 +54,25 @@ void app::run() {
 		init();
 	}
 	
-	_main_loop();
+	_main_loop(initial_scene);
 
 	for (auto& release : _releases) {
 		release();
 	}
 }
 
-void app::_main_loop() {
+void app::_main_loop(uuid initial_scene) {
 	std::list<std::shared_ptr<rb::system>> systems;
 	std::transform(_systems.begin(), _systems.end(), std::back_inserter(systems), [](auto func) {
 		return func();
 	});
 
 	registry registry;
+	if (!initial_scene.is_empty()) {
+		auto scene = assets::load<prefab>(initial_scene);
+		scene->apply(registry);
+	}
+
 	for (auto& system : systems) {
 		system->initialize(registry);
 	}
@@ -85,4 +100,8 @@ void app::_main_loop() {
 	}
 
 	graphics::flush();
+}
+
+app::deserializer app::get_deserializer(const std::string& name) {
+	return _deserializers.at(name);
 }

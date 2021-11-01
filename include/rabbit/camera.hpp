@@ -26,7 +26,7 @@ namespace rb {
 			visitor("field_of_view", camera.field_of_view);
 			visitor("z_near", camera.z_near);
 			visitor("z_far", camera.z_far);
-			visitor("environment", assets::get_uuid(camera.environment));
+			visitor("environment", camera.environment);
 		}
 	};
 }

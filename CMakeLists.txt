@@ -51,6 +51,7 @@ set (SRC
 	"src/input.cpp"
 	"src/material.cpp"
 	"src/mesh.cpp"
+	"src/prefab.cpp"
 	"src/renderer.cpp"
 	"src/settings.cpp"
 	"src/system.cpp"
