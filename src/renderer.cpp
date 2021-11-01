@@ -25,6 +25,10 @@ void renderer::draw(registry& registry) {
         return;
     }
 
+    if (!registry.all_of<transform, camera>(camera_manager::main_camera)) {
+        return;
+    }
+
     graphics::begin();
 
     const auto& [camera_transform, camera] = registry.get<transform, rb::camera>(camera_manager::main_camera);
