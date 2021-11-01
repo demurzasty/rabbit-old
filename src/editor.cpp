@@ -1,6 +1,10 @@
 #include <rabbit/rabbit.hpp>
 
+#include <algorithm>
 #include <fstream>
+#include <execution>
+#include <filesystem>
+#include <chrono>
 
 using namespace rb;
 
@@ -25,24 +29,33 @@ void editor::scan() {
 	std::filesystem::create_directories(package_directory);
 	std::filesystem::create_directories(cache_directory);
 
-	for (auto& dir_entry : std::filesystem::recursive_directory_iterator{ "./data" }) {
+	const auto di = std::filesystem::recursive_directory_iterator{ "./data" };
+	const auto beg = std::filesystem::begin(di);
+	const auto end = std::filesystem::end(di);
+
+	std::vector<std::filesystem::directory_entry> entries;
+	std::transform(beg, end, std::back_inserter(entries), [](auto& entry) {
+		return entry;
+	});
+
+	std::for_each(std::execution::par_unseq, entries.begin(), entries.end(), [&](auto& dir_entry) {
 		if (!dir_entry.is_regular_file()) {
-			continue;
+			return;
 		}
 
 		const auto path = dir_entry.path();
 		if (!path.has_extension()) {
-			continue;
+			return;
 		}
 
 		const auto extension = path.extension();
 		if (extension == ".meta") {
-			continue;
+			return;
 		}
 
 		const auto importer = _importers[extension.string()];
 		if (!importer) {
-			continue;
+			return;
 		}
 
 		const auto meta_path = path.string() + ".meta";
@@ -79,5 +92,5 @@ void editor::scan() {
 			cache["last_write_time"] = last_write_time;
 			std::ofstream{ cache_path } << std::setw(4) << cache;
 		}
-	}
+	});
 }

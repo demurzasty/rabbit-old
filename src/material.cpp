@@ -51,6 +51,12 @@ std::shared_ptr<material> material::load(bstream& stream) {
         desc.emissive_map = texture::make_one_color(color::black(), { 2, 2 });
     }
 
+    if (const auto uuid = read_uuid(stream); uuid) {
+        desc.ambient_map = assets::load<texture>(uuid);
+    } else {
+        desc.ambient_map = texture::make_one_color(color::white(), { 2, 2 });
+    }
+
     return graphics::make_material(desc);
 }
 
@@ -113,6 +119,12 @@ void material::import(const std::string& input, const std::string& output, const
     } else {
         stream.write(uuid{}.data());
     }
+
+    if (json.contains("ambient_map")) {
+        stream.write(uuid::from_string(json["ambient_map"]).value());
+    } else {
+        stream.write(uuid{}.data());
+    }
 }
 
 const vec3f& material::base_color() const {
@@ -147,6 +159,10 @@ const std::shared_ptr<texture>& material::emissive_map() const {
     return _emissive_map;
 }
 
+const std::shared_ptr<texture>& material::ambient_map() const {
+    return _ambient_map;
+}
+
 material::material(const material_desc& desc)
     : _base_color(desc.base_color)
     , _roughness(desc.roughness)
@@ -155,5 +171,6 @@ material::material(const material_desc& desc)
     , _normal_map(desc.normal_map)
     , _roughness_map(desc.roughness_map)
     , _metallic_map(desc.metallic_map)
-    , _emissive_map(desc.emissive_map) {
+    , _emissive_map(desc.emissive_map)
+    , _ambient_map(desc.ambient_map) {
 }

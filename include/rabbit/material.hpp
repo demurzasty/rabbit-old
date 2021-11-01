@@ -18,6 +18,7 @@ namespace rb {
 		std::shared_ptr<texture> roughness_map;
 		std::shared_ptr<texture> metallic_map;
 		std::shared_ptr<texture> emissive_map;
+		std::shared_ptr<texture> ambient_map;
 	};
 
 	class material {
@@ -44,6 +45,8 @@ namespace rb {
 
 		const std::shared_ptr<texture>& emissive_map() const;
 
+		const std::shared_ptr<texture>& ambient_map() const;
+
 	protected:
 		material(const material_desc& desc);
 
@@ -56,5 +59,6 @@ namespace rb {
 		const std::shared_ptr<texture> _roughness_map;
 		const std::shared_ptr<texture> _metallic_map;
 		const std::shared_ptr<texture> _emissive_map;
+		const std::shared_ptr<texture> _ambient_map;
 	};
 }
