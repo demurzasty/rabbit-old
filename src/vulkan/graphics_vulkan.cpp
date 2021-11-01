@@ -207,6 +207,7 @@ graphics_vulkan::~graphics_vulkan() {
 std::shared_ptr<rb::viewport> graphics_vulkan::make_viewport(const viewport_desc& desc) {
     return std::make_shared<viewport_vulkan>(_device,
         _allocator,
+        _get_supported_depth_format(),
         _gbuffer_render_pass,
         _gbuffer_descriptor_set_layout,
         _light_render_pass,
@@ -1026,10 +1027,9 @@ void graphics_vulkan::_create_swapchain() {
     RB_VK(vkGetPhysicalDeviceSurfacePresentModesKHR(_physical_device, _surface, &present_mode_count, present_modes.get()),
         "Failed to enumerate present mode count");
 
-    _present_mode = VK_PRESENT_MODE_FIFO_RELAXED_KHR;
+    _present_mode = VK_PRESENT_MODE_FIFO_KHR;
 
     if (!settings::vsync) {
-        _present_mode = VK_PRESENT_MODE_FIFO_KHR;
         _present_mode = VK_PRESENT_MODE_IMMEDIATE_KHR;
 
         // Search for better solution.
@@ -1105,8 +1105,10 @@ void graphics_vulkan::_create_swapchain() {
         RB_VK(vkCreateImageView(_device, &image_view_info, nullptr, &_image_views[index]), "Failed to create image view");
     }
 
+    const auto depth_format = _get_supported_depth_format();
+
     const VkFormat depth_formats[] = {
-        VK_FORMAT_D16_UNORM_S8_UINT
+        depth_format
     };
 
     VkImageCreateInfo depth_image_info{};
@@ -1117,13 +1119,13 @@ void graphics_vulkan::_create_swapchain() {
     depth_image_info.extent.depth = 1;
     depth_image_info.mipLevels = 1;
     depth_image_info.arrayLayers = 1;
-    depth_image_info.format = VK_FORMAT_D16_UNORM_S8_UINT; // VK_FORMAT_D24_UNORM_S8_UINT;
+    depth_image_info.format = depth_format; // VK_FORMAT_D24_UNORM_S8_UINT;
     depth_image_info.tiling = VK_IMAGE_TILING_OPTIMAL;
     depth_image_info.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
     depth_image_info.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
     depth_image_info.samples = VK_SAMPLE_COUNT_1_BIT;
     depth_image_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-    
+
     VmaAllocationCreateInfo depth_allocation_info = {};
     depth_allocation_info.usage = VMA_MEMORY_USAGE_GPU_ONLY;
     RB_VK(vmaCreateImage(_allocator, &depth_image_info, &depth_allocation_info, &_depth_image, &_depth_image_allocation, nullptr),
@@ -1133,7 +1135,7 @@ void graphics_vulkan::_create_swapchain() {
     depth_image_view_info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
     depth_image_view_info.image = _depth_image;
     depth_image_view_info.viewType = VK_IMAGE_VIEW_TYPE_2D;
-    depth_image_view_info.format = VK_FORMAT_D16_UNORM_S8_UINT;
+    depth_image_view_info.format = depth_format;
     depth_image_view_info.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
     depth_image_view_info.subresourceRange.baseMipLevel = 0;
     depth_image_view_info.subresourceRange.levelCount = 1;
@@ -1154,7 +1156,7 @@ void graphics_vulkan::_create_swapchain() {
     color_attachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 
     VkAttachmentDescription depth_attachment{};
-    depth_attachment.format = VK_FORMAT_D16_UNORM_S8_UINT;
+    depth_attachment.format = depth_format;
     depth_attachment.samples = VK_SAMPLE_COUNT_1_BIT;
     depth_attachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR; // VK_ATTACHMENT_LOAD_OP_CLEAR;
     depth_attachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
@@ -1403,8 +1405,10 @@ void graphics_vulkan::_create_gbuffer() {
         color_attachment_references[i].layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
     }
 
+    const auto depth_format = _get_supported_depth_format();
+
     VkAttachmentDescription depth_attachment{};
-    depth_attachment.format = VK_FORMAT_D16_UNORM;
+    depth_attachment.format = depth_format;
     depth_attachment.samples = VK_SAMPLE_COUNT_1_BIT;
     depth_attachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
     depth_attachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
@@ -1769,8 +1773,10 @@ void graphics_vulkan::_create_forward() {
     color_attachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
     color_attachment.finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
+    const auto depth_format = _get_supported_depth_format();
+
     VkAttachmentDescription depth_attachment{};
-    depth_attachment.format = VK_FORMAT_D16_UNORM;
+    depth_attachment.format = depth_format;
     depth_attachment.samples = VK_SAMPLE_COUNT_1_BIT;
     depth_attachment.loadOp = VK_ATTACHMENT_LOAD_OP_LOAD; // VK_ATTACHMENT_LOAD_OP_CLEAR;
     depth_attachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
@@ -5236,12 +5242,14 @@ void graphics_vulkan::_bake_prefilter(const std::shared_ptr<environment>& enviro
 }
 
 void graphics_vulkan::_create_shadow_map() {
+    const auto depth_format = _get_supported_depth_format();
+
     VkImageCreateInfo image_info;
     image_info.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
     image_info.pNext = nullptr;
     image_info.flags = 0;
     image_info.imageType = VK_IMAGE_TYPE_2D;
-    image_info.format = VK_FORMAT_D16_UNORM; 
+    image_info.format = depth_format;
     image_info.extent = { graphics_limits::shadow_map_size, graphics_limits::shadow_map_size, 1 };
     image_info.mipLevels = 1;
     image_info.arrayLayers = 1;
@@ -5264,7 +5272,7 @@ void graphics_vulkan::_create_shadow_map() {
     image_view_info.flags = 0;
     image_view_info.image = _shadow_image;
     image_view_info.viewType = VK_IMAGE_VIEW_TYPE_2D;
-    image_view_info.format = VK_FORMAT_D16_UNORM;
+    image_view_info.format = depth_format;
     image_view_info.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
     image_view_info.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
     image_view_info.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
@@ -5299,7 +5307,7 @@ void graphics_vulkan::_create_shadow_map() {
     RB_VK(vkCreateSampler(_device, &sampler_info, nullptr, &_shadow_sampler), "Failed to create Vulkan sampler");
 
     VkAttachmentDescription attachment_description{};
-    attachment_description.format = VK_FORMAT_D16_UNORM;
+    attachment_description.format = depth_format;
     attachment_description.samples = VK_SAMPLE_COUNT_1_BIT;
     attachment_description.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;							// Clear depth at beginning of the render pass
     attachment_description.storeOp = VK_ATTACHMENT_STORE_OP_STORE;						// We will read from depth, so it's important to store the depth attachment results
@@ -5966,4 +5974,24 @@ void graphics_vulkan::_command_end() {
     submit_info.pSignalSemaphores = nullptr;
 
     RB_VK(vkQueueSubmit(_graphics_queue, 1, &submit_info, _fences[_command_index]), "Failed to queue submit");
+}
+
+VkFormat graphics_vulkan::_get_supported_depth_format() {
+    VkFormat depth_formats[]{
+        VK_FORMAT_D32_SFLOAT_S8_UINT,
+        VK_FORMAT_D32_SFLOAT,
+        VK_FORMAT_D24_UNORM_S8_UINT,
+        VK_FORMAT_D16_UNORM_S8_UINT,
+        VK_FORMAT_D16_UNORM
+    };
+
+    for (auto& format : depth_formats) {
+        VkFormatProperties formatProps;
+        vkGetPhysicalDeviceFormatProperties(_physical_device, format, &formatProps);
+        if (formatProps.optimalTilingFeatures & VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT) {
+            return format;
+        }
+    }
+
+    return VK_FORMAT_UNDEFINED;
 }

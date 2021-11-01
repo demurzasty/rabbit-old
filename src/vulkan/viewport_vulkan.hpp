@@ -15,6 +15,7 @@ namespace rb {
     public:
         viewport_vulkan(VkDevice device,
             VmaAllocator allocator,
+            VkFormat depth_format,
             VkRenderPass gbuffer_render_pass,
             VkDescriptorSetLayout gbuffer_descriptor_set_layout,
             VkRenderPass light_render_pass,
@@ -56,7 +57,7 @@ namespace rb {
 
         void _create_sampler(const viewport_desc& desc);
 
-        void _create_depth(const viewport_desc& desc);
+        void _create_depth(const viewport_desc& desc, VkFormat depth_format);
 
         void _create_gbuffer(const viewport_desc& desc);
 

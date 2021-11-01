@@ -73,7 +73,9 @@ private:
 };
 
 int main(int argc, char* argv[]) {
+#if !RB_PROD_BUILD
     std::filesystem::current_path(CURRENT_DIRECTORY);
+#endif
 
     app::setup();
 

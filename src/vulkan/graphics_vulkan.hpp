@@ -235,6 +235,8 @@ namespace rb {
 
 		void _command_end();
 
+		VkFormat _get_supported_depth_format();
+
 	private:
 		VkInstance _instance;
 		VkPhysicalDevice _physical_device;

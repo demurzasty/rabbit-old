@@ -5,6 +5,7 @@ using namespace rb;
 
 viewport_vulkan::viewport_vulkan(VkDevice device,
     VmaAllocator allocator,
+    VkFormat depth_format,
     VkRenderPass gbuffer_render_pass,
     VkDescriptorSetLayout gbuffer_descriptor_set_layout,
     VkRenderPass light_render_pass,
@@ -27,7 +28,7 @@ viewport_vulkan::viewport_vulkan(VkDevice device,
     , _postprocess_descriptor_set_layout(postprocess_descriptor_set_layout) {
     _create_descriptor_pool(desc);
     _create_sampler(desc);
-    _create_depth(desc);
+    _create_depth(desc, depth_format);
     _create_gbuffer(desc);
     _create_light(desc);
     _create_forward(desc);
@@ -260,13 +261,13 @@ void viewport_vulkan::_create_sampler(const viewport_desc& desc) {
     RB_VK(vkCreateSampler(_device, &sampler_info, nullptr, &_sampler), "Failed to create Vulkan sampler");
 }
 
-void viewport_vulkan::_create_depth(const viewport_desc& desc) {
+void viewport_vulkan::_create_depth(const viewport_desc& desc, VkFormat depth_format) {
     VkImageCreateInfo image_info;
     image_info.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
     image_info.pNext = nullptr;
     image_info.flags = 0;
     image_info.imageType = VK_IMAGE_TYPE_2D;
-    image_info.format = VK_FORMAT_D16_UNORM;
+    image_info.format = depth_format;
     image_info.extent = { desc.size.x, desc.size.y, 1 };
     image_info.mipLevels = 1;
     image_info.arrayLayers = 1;
@@ -289,7 +290,7 @@ void viewport_vulkan::_create_depth(const viewport_desc& desc) {
     image_view_info.flags = 0;
     image_view_info.image = _depth_image;
     image_view_info.viewType = VK_IMAGE_VIEW_TYPE_2D;
-    image_view_info.format = VK_FORMAT_D16_UNORM;
+    image_view_info.format = depth_format;
     image_view_info.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
     image_view_info.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
     image_view_info.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
