@@ -30,11 +30,9 @@ void editor::scan() {
 	std::filesystem::create_directories(cache_directory);
 
 	const auto di = std::filesystem::recursive_directory_iterator{ "./data" };
-	const auto beg = std::filesystem::begin(di);
-	const auto end = std::filesystem::end(di);
 
 	std::vector<std::filesystem::directory_entry> entries;
-	std::transform(beg, end, std::back_inserter(entries), [](auto& entry) {
+	std::transform(std::filesystem::begin(di), std::filesystem::end(di), std::back_inserter(entries), [](auto& entry) {
 		return entry;
 	});
 

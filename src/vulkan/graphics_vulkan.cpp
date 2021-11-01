@@ -1327,20 +1327,21 @@ void graphics_vulkan::_create_main() {
 }
 
 void graphics_vulkan::_create_material() {
-    VkDescriptorSetLayoutBinding material_bindings[6]{
+    VkDescriptorSetLayoutBinding material_bindings[7]{
         { 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr },
         { 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr },
         { 2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr },
         { 3, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr },
         { 4, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr },
         { 5, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr },
+        { 6, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr },
     };
 
     VkDescriptorSetLayoutCreateInfo material_descriptor_set_layout_info;
     material_descriptor_set_layout_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
     material_descriptor_set_layout_info.pNext = nullptr;
     material_descriptor_set_layout_info.flags = 0;
-    material_descriptor_set_layout_info.bindingCount = 6;
+    material_descriptor_set_layout_info.bindingCount = 7;
     material_descriptor_set_layout_info.pBindings = material_bindings;
     RB_VK(vkCreateDescriptorSetLayout(_device, &material_descriptor_set_layout_info, nullptr, &_material_descriptor_set_layout),
         "Failed to create Vulkan descriptor set layout");

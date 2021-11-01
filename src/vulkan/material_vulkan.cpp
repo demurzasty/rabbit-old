@@ -50,7 +50,7 @@ material_vulkan::material_vulkan(VkDevice device,
 
     VkDescriptorPoolSize pool_sizes[2]{
         { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1 },
-        { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 5 }
+        { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 6 }
     };
 
     VkDescriptorPoolCreateInfo descriptor_pool_info;
@@ -84,24 +84,26 @@ material_vulkan::material_vulkan(VkDevice device,
         return std::static_pointer_cast<texture_vulkan>(texture)->sampler();
     };
 
-    VkDescriptorImageInfo image_infos[5]{
+    VkDescriptorImageInfo image_infos[6]{
         { sampler(desc.albedo_map), image_view(desc.albedo_map), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL },
         { sampler(desc.normal_map), image_view(desc.normal_map), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL },
         { sampler(desc.roughness_map), image_view(desc.roughness_map), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL },
         { sampler(desc.metallic_map), image_view(desc.metallic_map), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL },
         { sampler(desc.emissive_map), image_view(desc.emissive_map), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL },
+        { sampler(desc.ambient_map), image_view(desc.ambient_map), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL },
     };
 
-    VkWriteDescriptorSet write_infos[6]{
+    VkWriteDescriptorSet write_infos[7]{
         { VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET, nullptr, _descriptor_set, 0, 0, 1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, nullptr, &buffer_infos[0], nullptr },
         { VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET, nullptr, _descriptor_set, 1, 0, 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, &image_infos[0], nullptr, nullptr },
         { VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET, nullptr, _descriptor_set, 2, 0, 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, &image_infos[1], nullptr, nullptr },
         { VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET, nullptr, _descriptor_set, 3, 0, 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, &image_infos[2], nullptr, nullptr },
         { VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET, nullptr, _descriptor_set, 4, 0, 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, &image_infos[3], nullptr, nullptr },
         { VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET, nullptr, _descriptor_set, 5, 0, 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, &image_infos[4], nullptr, nullptr },
+        { VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET, nullptr, _descriptor_set, 6, 0, 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, &image_infos[5], nullptr, nullptr },
     };
 
-    vkUpdateDescriptorSets(_device, 6, write_infos, 0, nullptr);
+    vkUpdateDescriptorSets(_device, 7, write_infos, 0, nullptr);
 }
 
 material_vulkan::~material_vulkan() {

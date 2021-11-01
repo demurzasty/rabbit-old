@@ -220,12 +220,14 @@ float compute_shadow(in vec3 position) {
 void main() {
     vec4 albedo_data = texture(u_albedo_map, v_texcoord);
     vec4 normal_data = texture(u_normal_map, v_texcoord);
+    vec4 emissive_data = texture(u_emissive_map, v_texcoord);
 
     vec3 position = extract_position(u_depth_map, v_texcoord);
     vec3 albedo = albedo_data.rgb;
     vec3 normal = normalize(normal_data.xyz * 2.0 - 1.0);
     float roughness = albedo_data.a;
     float metallic = normal_data.a;
+	float ao = emissive_data.a;
     
     vec3 v = normalize(u_camera_position - position);
     float n_dot_v = abs(dot(normal, v)) + 1e-5;
@@ -256,5 +258,5 @@ void main() {
 
     vec3 lo = (kd * albedo / PI + specular) * radiance * intensity * n_dot_l * shadow;
 
-    o_color = vec4(lo, 0.0);
+    o_color = vec4(lo * ao, 0.0);
 }

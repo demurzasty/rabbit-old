@@ -40,12 +40,15 @@ vec3 extract_position(sampler2D depth_map, vec2 texcoord) {
 void main() {
     vec4 albedo_data = texture(u_albedo_map, v_texcoord);
     vec4 normal_data = texture(u_normal_map, v_texcoord);
+    vec4 emissive_data = texture(u_emissive_map, v_texcoord);
 
     vec3 position = extract_position(u_depth_map, v_texcoord);
     vec3 albedo = albedo_data.rgb;
     vec3 normal = normalize(normal_data.xyz * 2.0 - 1.0);
+    vec3 emissive = emissive_data.rgb;
     float roughness = albedo_data.a;
     float metallic = normal_data.a;
+    float ao = emissive_data.a;
     
     vec3 v = normalize(u_camera_position - position);
     float n_dot_v = abs(dot(normal, v)) + 1e-5;
@@ -66,5 +69,5 @@ void main() {
 
     vec3 ambient = kd * diff + spec + texture(u_emissive_map, v_texcoord).rgb;
 
-    o_color = vec4(ambient, 0.0);
+    o_color = vec4(ambient * ao, 0.0);
 }

@@ -6,7 +6,7 @@ layout (location = 2) in vec3 v_normal;
 
 layout (location = 0) out vec4 o_albedo;
 layout (location = 1) out vec4 o_normal;
-layout (location = 2) out vec3 o_emissive;
+layout (location = 2) out vec4 o_emissive;
 
 layout (std140, set = 0, binding = 0) uniform camera_data {
     mat4 u_proj;
@@ -26,6 +26,7 @@ layout(set = 1, binding = 2) uniform sampler2D u_normal_map;
 layout(set = 1, binding = 3) uniform sampler2D u_roughness_map;
 layout(set = 1, binding = 4) uniform sampler2D u_metallic_map;
 layout(set = 1, binding = 5) uniform sampler2D u_emissive_map;
+layout(set = 1, binding = 6) uniform sampler2D u_ambient_map;
 
 mat3 cotangent_frame(vec3 n, vec3 p, vec2 uv) {
     // get edge vectors of the pixel triangle
@@ -61,8 +62,9 @@ void main() {
     float roughness = texture(u_roughness_map, v_texcoord).r * u_roughness;
     float metallic = texture(u_metallic_map, v_texcoord).r * u_metallic;
     vec3 emissive = texture(u_emissive_map, v_texcoord).rgb;
+    float ao = texture(u_ambient_map, v_texcoord).r;
 
     o_albedo = vec4(albedo, roughness);
     o_normal = vec4(normal * 0.5 + 0.5, metallic);
-    o_emissive = emissive;
+    o_emissive = vec4(emissive, ao);
 }
