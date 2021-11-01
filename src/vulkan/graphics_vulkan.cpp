@@ -5978,8 +5978,6 @@ void graphics_vulkan::_command_end() {
 
 VkFormat graphics_vulkan::_get_supported_depth_format() {
     VkFormat depth_formats[]{
-        VK_FORMAT_D32_SFLOAT_S8_UINT,
-        VK_FORMAT_D32_SFLOAT,
         VK_FORMAT_D24_UNORM_S8_UINT,
         VK_FORMAT_D16_UNORM_S8_UINT,
         VK_FORMAT_D16_UNORM
