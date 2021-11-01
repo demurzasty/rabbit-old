@@ -142,6 +142,14 @@ namespace rb {
 
 		void end_postprocess_pass(const std::shared_ptr<viewport>& viewport) override;
 
+		void begin_immediate_pass() override;
+
+		void draw_immediate_color(const span<const vertex>& vertices, const color& color) override;
+
+		void draw_immediate_textured(const span<const vertex>& vertices, const std::shared_ptr<texture>& texture) override;
+
+		void end_immediate_pass() override;
+
 		void end() override;
 
 		void present(const std::shared_ptr<viewport>& viewport) override;

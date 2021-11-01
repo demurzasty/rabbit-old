@@ -138,6 +138,22 @@ void graphics::end_postprocess_pass(const std::shared_ptr<viewport>& viewport) {
 	_impl->end_postprocess_pass(viewport);
 }
 
+void graphics::begin_immediate_pass() {
+	_impl->begin_immediate_pass();
+}
+
+void graphics::draw_immediate_color(const span<const vertex>& vertices, const color& color) {
+	_impl->draw_immediate_color(vertices, color);
+}
+
+void graphics::draw_immediate_textured(const span<const vertex>& vertices, const std::shared_ptr<texture>& texture) {
+	_impl->draw_immediate_textured(vertices, texture);
+}
+
+void graphics::end_immediate_pass() {
+	_impl->end_immediate_pass();
+}
+
 void graphics::present(const std::shared_ptr<viewport>& viewport) {
 	_impl->present(viewport);
 }
