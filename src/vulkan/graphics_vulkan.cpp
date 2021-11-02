@@ -5985,12 +5985,16 @@ VkFormat graphics_vulkan::_get_supported_depth_format() {
     };
 
     for (auto& format : depth_formats) {
-        VkFormatProperties formatProps;
-        vkGetPhysicalDeviceFormatProperties(_physical_device, format, &formatProps);
-        if (formatProps.optimalTilingFeatures & VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT) {
+        if (_is_format_supported(format, VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT)) {
             return format;
         }
     }
 
     return VK_FORMAT_UNDEFINED;
+}
+
+bool graphics_vulkan::_is_format_supported(VkFormat format, VkFormatFeatureFlags flags) {
+    VkFormatProperties format_props;
+    vkGetPhysicalDeviceFormatProperties(_physical_device, format, &format_props);
+    return (format_props.optimalTilingFeatures & flags) == flags;
 }

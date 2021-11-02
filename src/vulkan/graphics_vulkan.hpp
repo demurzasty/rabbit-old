@@ -237,6 +237,8 @@ namespace rb {
 
 		VkFormat _get_supported_depth_format();
 
+		bool _is_format_supported(VkFormat format, VkFormatFeatureFlags flags);
+
 	private:
 		VkInstance _instance;
 		VkPhysicalDevice _physical_device;

@@ -18,6 +18,8 @@ add_subdirectory ("miniz-2.2.0")
 
 add_subdirectory ("quickhull")
 
+add_subdirectory ("rgbcx-1.12")
+
 add_subdirectory ("stb")
 
 if (WIN32)

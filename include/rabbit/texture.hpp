@@ -14,7 +14,8 @@ namespace rb {
 	enum class texture_format {
 		r8,
 		rg8,
-		rgba8
+		rgba8,
+		bc1
 	};
 
 	enum class texture_filter {
@@ -58,7 +59,7 @@ namespace rb {
 
 		std::uint32_t mipmaps() const;
 
-		std::size_t bytes_per_pixel() const;
+		std::size_t bits_per_pixel() const;
 
 	protected:
 		texture(const texture_desc& desc);
@@ -69,6 +70,6 @@ namespace rb {
 		const texture_filter _filter;
 		const texture_wrap _wrap;
 		const std::uint32_t _mipmaps;
-		const std::size_t _bytes_per_pixel;
+		const std::size_t _bits_per_pixel;
 	};
 }

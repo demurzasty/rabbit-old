@@ -7,17 +7,20 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
 
+#include <rabbit/s3tc.hpp>
+
 using namespace rb;
 
 inline std::size_t calculate_mipmap_levels(const vec2u& texture_size) {
 	return (std::size_t)std::log2(std::max(texture_size.x, texture_size.y));
 }
 
-inline std::size_t calculate_bytes_per_pixel(texture_format format) {
+inline std::size_t calculate_bits_per_pixel(texture_format format) {
 	switch (format) {
-		case texture_format::r8: return 1;
-		case texture_format::rg8: return 2;
-		case texture_format::rgba8: return 4;
+		case texture_format::r8: return 8;
+		case texture_format::rg8: return 16;
+		case texture_format::rgba8: return 32;
+		case texture_format::bc1: return 4;
 	}
 
 	return 0;
@@ -38,9 +41,13 @@ std::shared_ptr<texture> texture::load(bstream& stream) {
 	const auto compressed_pixels = std::make_unique<std::uint8_t[]>(compressed_size);
 	stream.read(compressed_pixels.get(), compressed_size);
 	
-	const auto bytes_per_pixel = calculate_bytes_per_pixel(desc.format);
-	const auto pixels = std::make_unique<std::uint8_t[]>(desc.size.x * desc.size.y * bytes_per_pixel);
+	const auto bits_per_pixel = calculate_bits_per_pixel(desc.format);
+	const auto pixels = std::make_unique<std::uint8_t[]>(desc.size.x * desc.size.y * bits_per_pixel / 8);
 	compression::uncompress(compressed_pixels.get(), compressed_size, pixels.get());
+
+	if (desc.format == texture_format::bc1) {
+		desc.mipmaps = 1;
+	}
 
 	desc.data = pixels.get();
 	return graphics::make_texture(desc);
@@ -55,9 +62,17 @@ void texture::import(const std::string& input, const std::string& output, const 
 
 	RB_ASSERT(pixels, "Cannot load image: {}", input);
 
-	const auto compressed_bound = compression::compress_bound(width * height * 4);
+	RB_ASSERT(width % 4 == 0 && height % 4 == 0, "Incorrect texture size");
+
+	// 1. Compress pixels to lossy, gpu friendly BC1
+	const auto bc1_size = width * height * calculate_bits_per_pixel(texture_format::bc1) / 8;
+	const auto bc1_pixels = std::make_unique<std::uint8_t[]>(bc1_size);
+	s3tc::bc1(pixels.get(), width * height * 4, width * 4, bc1_pixels.get());
+
+	// 2. Compress to lossles, storage friendly zlib
+	const auto compressed_bound = compression::compress_bound(bc1_size);
 	const auto compressed_pixels = std::make_unique<std::uint8_t[]>(compressed_bound);
-	const auto compressed_size = compression::compress(pixels.get(), width * height * 4, compressed_pixels.get());
+	const auto compressed_size = compression::compress(bc1_pixels.get(), bc1_size, compressed_pixels.get());
 
 	RB_ASSERT(compressed_size > 0, "Cannot compress image");
 
@@ -65,7 +80,7 @@ void texture::import(const std::string& input, const std::string& output, const 
 	stream.write(texture::magic_number);
 	stream.write(width);
 	stream.write(height);
-	stream.write(texture_format::rgba8);
+	stream.write(texture_format::bc1);
 	stream.write(texture_filter::linear);
 	stream.write(texture_wrap::repeat);
 	stream.write(0u);
@@ -109,8 +124,8 @@ std::uint32_t texture::mipmaps() const {
 	return _mipmaps;
 }
 
-std::size_t texture::bytes_per_pixel() const {
-	return _bytes_per_pixel;
+std::size_t texture::bits_per_pixel() const {
+	return _bits_per_pixel;
 }
 
 texture::texture(const texture_desc& desc)
@@ -119,5 +134,5 @@ texture::texture(const texture_desc& desc)
 	, _filter(desc.filter)
 	, _wrap(desc.wrap)
 	, _mipmaps(desc.mipmaps > 0 ? desc.mipmaps : calculate_mipmap_levels(desc.size))
-	, _bytes_per_pixel(calculate_bytes_per_pixel(desc.format)) {
+	, _bits_per_pixel(calculate_bits_per_pixel(desc.format)) {
 }

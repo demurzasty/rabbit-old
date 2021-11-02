@@ -36,7 +36,7 @@ void editor::scan() {
 		return entry;
 	});
 
-	std::for_each(std::execution::par_unseq, entries.begin(), entries.end(), [&](auto& dir_entry) {
+	std::for_each(std::execution::par_unseq, entries.begin(), entries.end(), [&](const auto& dir_entry) {
 		if (!dir_entry.is_regular_file()) {
 			return;
 		}

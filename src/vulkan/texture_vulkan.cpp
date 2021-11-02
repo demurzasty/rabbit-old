@@ -10,6 +10,7 @@ static std::map<texture_format, VkFormat> formats = {
     { texture_format::r8, VK_FORMAT_R8_UNORM },
     { texture_format::rg8, VK_FORMAT_R8G8_UNORM },
     { texture_format::rgba8, VK_FORMAT_R8G8B8A8_UNORM },
+    { texture_format::bc1, VK_FORMAT_BC1_RGBA_UNORM_BLOCK },
 };
 
 static std::map<texture_filter, VkFilter> filters = {
@@ -93,7 +94,7 @@ void texture_vulkan::_update_image(VkQueue graphics_queue, VkCommandPool command
     buffer_info.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
     buffer_info.pNext = nullptr;
     buffer_info.flags = 0;
-    buffer_info.size = desc.size.x * desc.size.y * bytes_per_pixel();
+    buffer_info.size = desc.size.x * desc.size.y * bits_per_pixel() / 8;
     buffer_info.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
     buffer_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
     buffer_info.queueFamilyIndexCount = 0;
@@ -287,10 +288,10 @@ void texture_vulkan::_create_image_view(const texture_desc& desc) {
     image_view_info.image = _image;
     image_view_info.viewType = VK_IMAGE_VIEW_TYPE_2D;
     image_view_info.format = formats.at(desc.format);
-    image_view_info.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
-    image_view_info.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
-    image_view_info.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
-    image_view_info.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
+    image_view_info.components.r = VK_COMPONENT_SWIZZLE_R;
+    image_view_info.components.g = VK_COMPONENT_SWIZZLE_G;
+    image_view_info.components.b = VK_COMPONENT_SWIZZLE_B;
+    image_view_info.components.a = VK_COMPONENT_SWIZZLE_A;
     image_view_info.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
     image_view_info.subresourceRange.baseMipLevel = 0;
     image_view_info.subresourceRange.levelCount = static_cast<std::uint32_t>(mipmaps());
