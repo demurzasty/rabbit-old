@@ -5,6 +5,7 @@
 #include "json.hpp"
 #include "color.hpp"
 #include "bstream.hpp"
+#include "fnv1a.hpp"
 
 #include <string>
 #include <memory>
@@ -37,6 +38,8 @@ namespace rb {
 
 	class texture {
 	public:
+		static constexpr auto magic_number{ fnv1a("texture") };
+
 		static std::shared_ptr<texture> load(bstream& stream);
 
 		static void import(const std::string& input, const std::string& output, const json& metadata);

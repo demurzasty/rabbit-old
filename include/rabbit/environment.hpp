@@ -3,6 +3,7 @@
 #include "vec2.hpp"
 #include "json.hpp"
 #include "bstream.hpp"
+#include "fnv1a.hpp"
 
 #include <memory>
 #include <string>
@@ -15,6 +16,8 @@ namespace rb {
 
 	class environment {
 	public:
+		static constexpr auto magic_number{ fnv1a("environment") };
+
 		static std::shared_ptr<environment> load(bstream& stream);
 
 		static void import(const std::string& input, const std::string& output, const json& metadata);

@@ -6,6 +6,7 @@
 #include "triangle.hpp"
 #include "bsphere.hpp"
 #include "bstream.hpp"
+#include "fnv1a.hpp"
 
 #include <cstdint>
 #include <vector>
@@ -23,6 +24,8 @@ namespace rb {
 
 	class mesh {
 	public:
+		static constexpr auto magic_number{ fnv1a("mesh") };
+
 		static std::shared_ptr<mesh> load(bstream& stream);
 
 		static void import(const std::string& input, const std::string& output, const json& metadata);
