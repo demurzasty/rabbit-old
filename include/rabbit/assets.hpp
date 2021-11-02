@@ -3,6 +3,7 @@
 #include "bstream.hpp"
 #include "json.hpp"
 #include "uuid.hpp"
+#include "fnv1a.hpp"
 
 #include <memory>
 #include <string>
@@ -27,7 +28,7 @@ namespace rb {
 
 		template<typename Asset>
 		static std::shared_ptr<Asset> load(const uuid& uuid) {
-			return std::static_pointer_cast<Asset>(_load(typeid(Asset), uuid));
+			return std::static_pointer_cast<Asset>(_load(typeid(Asset), uuid, Asset::magic_number));
 		}
 
 		template<typename Asset>
@@ -42,7 +43,7 @@ namespace rb {
 		static uuid get_uuid(const std::shared_ptr<void>& asset);
 
 	private:
-		static std::shared_ptr<void> _load(std::type_index type_index, const uuid& uuid);
+		static std::shared_ptr<void> _load(std::type_index type_index, const uuid& uuid, fnv1a_result_t magic_number);
 
 	private:
 		static std::unordered_map<std::type_index, loader> _loaders;

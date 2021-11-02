@@ -15,14 +15,18 @@ void assets::release() {
 	_loaders.clear();
 }
 
-std::shared_ptr<void> assets::_load(std::type_index type_index, const uuid& uuid) {
+std::shared_ptr<void> assets::_load(std::type_index type_index, const uuid& uuid, fnv1a_result_t magic_number) {
     auto& asset = _assets[uuid];
     if (!asset.expired()) {
         return asset.lock();
     }
 
+    fnv1a_result_t asset_magic_number;
+
     bstream stream{ "package/" + uuid.to_string(), bstream_mode::read };
-    // TODO: Test filetype.
+    stream.read(asset_magic_number);
+
+    RB_ASSERT(asset_magic_number == magic_number, "Asset type is not compatible.");
 
     auto& loader = _loaders.at(type_index);
     auto loaded_asset = loader(stream);

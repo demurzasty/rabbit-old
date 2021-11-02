@@ -86,6 +86,7 @@ void material::import(const std::string& input, const std::string& output, const
     }
 
     bstream stream{ output, bstream_mode::write };
+    stream.write(material::magic_number);
     stream.write(base_color);
     stream.write(roughness);
     stream.write(metallic);

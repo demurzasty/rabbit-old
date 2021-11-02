@@ -141,6 +141,7 @@ void mesh::import(const std::string& input, const std::string& output, const jso
     const auto bsphere = calculate_bsphere({ indexed_vertices.get(), vertex_size });
 
     bstream stream{ output, bstream_mode::write };
+    stream.write(mesh::magic_number);
     stream.write<std::uint32_t>(vertex_size);
     stream.write(indexed_vertices.get(), vertex_size * sizeof(vertex));
     stream.write<std::uint32_t>(vertices.size());

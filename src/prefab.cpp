@@ -14,17 +14,23 @@ void prefab::import(const std::string& input, const std::string& output, const j
     istream >> json;
     istream.close();
 
-    std::ofstream ostream{ output };
-    RB_ASSERT(ostream.is_open(), "Cannot open file: {}", output);
-    ostream << json;
+    const auto dump = json::to_cbor(json);
+
+    bstream ostream{ output, bstream_mode::write };
+    ostream.write(prefab::magic_number);
+    ostream.write<std::uint32_t>(dump.size());
+    ostream.write(&dump[0], dump.size());
 }
 
 std::shared_ptr<prefab> prefab::load(bstream& stream) {
     std::vector<std::uint8_t> bytes;
-    bytes.resize(stream.size());
+
+    std::uint32_t size;
+    stream.read(size);
+    bytes.resize(size);
     stream.read(&bytes[0], bytes.size());
 
-    const auto json = json::parse(bytes.begin(), bytes.end());
+    const auto json = json::from_cbor(bytes);
 
     const auto applier = [json](registry& registry) {
         for (auto jentity : json["entities"]) {

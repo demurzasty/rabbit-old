@@ -62,6 +62,7 @@ void texture::import(const std::string& input, const std::string& output, const 
 	RB_ASSERT(compressed_size > 0, "Cannot compress image");
 
 	bstream stream{ output, bstream_mode::write };
+	stream.write(texture::magic_number);
 	stream.write(width);
 	stream.write(height);
 	stream.write(texture_format::rgba8);

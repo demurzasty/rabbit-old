@@ -62,6 +62,7 @@ void environment::import(const std::string& input, const std::string& output, co
     }
 
     bstream stream{ output, bstream_mode::write };
+    stream.write(environment::magic_number);
     stream.write(size);
     stream.write(buffer.get(), size.x * size.y * 4 * 6);
 }
