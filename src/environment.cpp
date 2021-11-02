@@ -1,6 +1,7 @@
 #include <rabbit/environment.hpp>
 #include <rabbit/config.hpp>
 #include <rabbit/graphics.hpp>
+#include <rabbit/compression.hpp>
 
 #include <array>
 #include <fstream>
@@ -22,9 +23,16 @@ std::shared_ptr<environment> environment::load(bstream& stream) {
     environment_desc desc;
     stream.read(desc.size);
 
-    const auto data = std::make_unique<std::uint8_t[]>(desc.size.x * desc.size.y * 4 * 6);
-    stream.read(data.get(), desc.size.x * desc.size.y * 4 * 6);
-    desc.data = data.get();
+    std::uint32_t compressed_size;
+    stream.read(compressed_size);
+
+    const auto compressed_pixels = std::make_unique<std::uint8_t[]>(compressed_size);
+    stream.read(compressed_pixels.get(), compressed_size);
+
+    const auto uncompressed_pixels = std::make_unique<std::uint8_t[]>(desc.size.x * desc.size.y * 4 * 6);
+    compression::uncompress(compressed_pixels.get(), compressed_size, uncompressed_pixels.get());
+
+    desc.data = uncompressed_pixels.get();
     return graphics::make_environment(desc);
 }
 
@@ -61,10 +69,15 @@ void environment::import(const std::string& input, const std::string& output, co
         stbi_image_free(pixels);
     }
 
+    const auto compressed_bound = compression::compress_bound(size.x * size.y * 4 * 6);
+    const auto compressed_pixels = std::make_unique<std::uint8_t[]>(compressed_bound);
+    const auto compressed_size = compression::compress(buffer.get(), size.x * size.y * 4 * 6, compressed_pixels.get());
+
     bstream stream{ output, bstream_mode::write };
     stream.write(environment::magic_number);
     stream.write(size);
-    stream.write(buffer.get(), size.x * size.y * 4 * 6);
+    stream.write<std::uint32_t>(compressed_size);
+    stream.write(compressed_pixels.get(), compressed_size);
 }
 
 const vec2u& environment::size() const {

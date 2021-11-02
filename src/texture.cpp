@@ -45,10 +45,6 @@ std::shared_ptr<texture> texture::load(bstream& stream) {
 	const auto pixels = std::make_unique<std::uint8_t[]>(desc.size.x * desc.size.y * bits_per_pixel / 8);
 	compression::uncompress(compressed_pixels.get(), compressed_size, pixels.get());
 
-	if (desc.format == texture_format::bc1) {
-		desc.mipmaps = 1;
-	}
-
 	desc.data = pixels.get();
 	return graphics::make_texture(desc);
 }
@@ -83,7 +79,7 @@ void texture::import(const std::string& input, const std::string& output, const 
 	stream.write(texture_format::bc1);
 	stream.write(texture_filter::linear);
 	stream.write(texture_wrap::repeat);
-	stream.write(0u);
+	stream.write(1u);
 	stream.write<std::uint32_t>(compressed_size);
 	stream.write(compressed_pixels.get(), compressed_size);
 }
