@@ -82,6 +82,5 @@ int main(int argc, char* argv[]) {
     app::system<camera_controller>();
     app::system<fps_meter>();
 
-    settings::fullscreen = true;
     app::run("data/prefabs/scene.scn");
 }
