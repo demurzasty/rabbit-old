@@ -18,7 +18,6 @@ void s3tc::bc1(const void* uncompressed_pixels, std::size_t uncompressed_size, s
 	const auto blocks = reinterpret_cast<block*>(compressed_pixels);
 
 	color input_block[16];
-	color output_block[2];
 
 	const auto size_x = stride / 4;
 	const auto blocks_x = size_x / 4;
