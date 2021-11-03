@@ -23,6 +23,7 @@
 #include "material.hpp"
 #include "math.hpp"
 #include "mesh.hpp"
+#include "model.hpp"
 #include "parent.hpp"
 #include "plane.hpp"
 #include "prefab.hpp"

@@ -22,6 +22,8 @@ add_subdirectory ("rgbcx-1.12")
 
 add_subdirectory ("stb")
 
+add_subdirectory ("tinygltf-2.5.0")
+
 if (WIN32)
    set(VOLK_STATIC_DEFINES VK_USE_PLATFORM_WIN32_KHR)
 endif()

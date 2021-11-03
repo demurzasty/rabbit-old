@@ -17,6 +17,7 @@ void editor::init() {
 	add_importer<material>(".mat");
 	add_importer<environment>(".env");
 	add_importer<prefab>(".scn");
+	add_importer<model>(".gltf");
 }
 
 void editor::release() {
@@ -50,12 +51,16 @@ void editor::scan() {
 			return;
 		}
 
-		const auto extension = path.extension();
+		const auto extension = path.extension().string();
 		if (extension == ".meta") {
 			return;
 		}
 
-		const auto importer = _importers[extension.string()];
+		if (_importers.find(extension) == _importers.end()) {
+			return;
+		}
+
+		const auto importer = _importers.at(extension);
 		if (!importer) {
 			return;
 		}
@@ -84,11 +89,11 @@ void editor::scan() {
 		}
 
 		const long long cached_last_write_time{ cache["last_write_time"] };
+		const auto output_path = package_directory / uuid;
 
-		if (last_write_time > cached_last_write_time) {
+		if (last_write_time > cached_last_write_time || !std::filesystem::exists(output_path)) {
 			print("importing: {}\n", path.string());
 
-			const auto output_path = package_directory / uuid;
 			importer(path.string(), output_path.string(), metadata);
 
 			cache["last_write_time"] = last_write_time;

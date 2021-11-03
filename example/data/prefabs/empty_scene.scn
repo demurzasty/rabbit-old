@@ -1,0 +1,36 @@
+{
+  "entities": [
+    {
+      "identity": {
+        "name": "Light"
+      },
+      "transform": {
+        "position": [ 0.0, 0.0, 0.0 ],
+        "rotation": [ 0.785398185, -2.35619450, 0.0 ],
+        "scaling": [ 1.0, 1.0, 1.0 ]
+      },
+      "light": {
+        "color": [ 255, 255, 255, 255 ]
+      },
+      "directional_light": {}
+    },
+    {
+      "identity": {
+        "name": "Camera"
+      },
+      "transform": {
+        "position": [ -4.0, 3.0, 4.0 ],
+        "rotation": [ -0.471238941, -0.785398185, 0.0 ],
+        "scaling": [ 1.0, 1.0, 1.0 ]
+      },
+      "camera": {
+        "type": "perspective",
+        "size": 11.25,
+        "field_of_view": 45.0,
+        "z_near": 0.1,
+        "z_far": 100.0,
+        "environment": "909f8cc5-9fc9-a107-9dcd-c4ae66b564df"
+      }
+    }
+  ]
+}
