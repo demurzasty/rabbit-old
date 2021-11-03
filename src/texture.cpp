@@ -120,4 +120,6 @@ texture::texture(const texture_desc& desc)
 	, _wrap(desc.wrap)
 	, _mipmaps(desc.mipmaps > 0 ? desc.mipmaps : calculate_mipmap_levels(desc.size))
 	, _bits_per_pixel(calculate_bits_per_pixel(desc.format)) {
+	RB_ASSERT(_size.x > 0 && _size.y > 0, "Size of texture should be greater than 0. Current size: {}, {}.", _size.x, _size.y);
+	RB_ASSERT(_bits_per_pixel > 0, "Incorrect bits per pixel value: {}.", _bits_per_pixel);
 }

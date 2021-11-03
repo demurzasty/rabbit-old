@@ -81,4 +81,5 @@ const vec2u& environment::size() const {
 
 environment::environment(const environment_desc& desc)
 	: _size(desc.size) {
+    RB_ASSERT(_size.x > 0 && _size.y > 0, "Size of environment map should be greater than 0. Current size: {}, {}.", _size.x, _size.y);
 }

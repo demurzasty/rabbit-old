@@ -285,4 +285,6 @@ mesh::mesh(const mesh_desc& desc)
 	, _indices(desc.indices.begin(), desc.indices.end())
     , _convex_hull(desc.convex_hull.begin(), desc.convex_hull.end())
     , _bsphere(desc.bsphere.has_value() ? desc.bsphere.value() : calculate_bsphere(desc.vertices)) {
+    RB_ASSERT(!_vertices.empty(), "No vertices has been provided for mesh.");
+    RB_ASSERT(!_indices.empty(), "No indices has been provided for mesh.");
 }
