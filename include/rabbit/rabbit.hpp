@@ -42,5 +42,5 @@
 #include "window.hpp"
 
 #if !RB_PROD_BUILD
-#	include "editor.hpp"
+#	include "editor/editor.hpp"
 #endif

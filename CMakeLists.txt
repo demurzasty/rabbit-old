@@ -65,7 +65,7 @@ set (SRC
 
 if (NOT RB_PROD_BUILD) 
 	set (SRC ${SRC}
-		"src/editor.cpp"
+		"src/editor/editor.cpp"
 	)
 endif ()
 
