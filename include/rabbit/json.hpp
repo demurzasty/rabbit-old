@@ -44,8 +44,13 @@ namespace rb {
 		template<typename T, std::enable_if_t<std::is_class_v<T>, int> = 0>
 		void operator()(const char* name, std::shared_ptr<T>& data) {
 			if (json.contains(name)) {
-				if (const auto uuid = uuid::from_string(json[name]); uuid) {
-					data = assets::load<T>(*uuid);
+				const auto asset_data = json[name];
+				if (asset_data.is_object()) {
+					data = assets::load_from_base64<T>(asset_data["base64"]);
+				} else {
+					if (const auto uuid = uuid::from_string(json[name]); uuid) {
+						data = assets::load<T>(*uuid);
+					}
 				}
 			}
 		}

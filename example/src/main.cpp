@@ -1,6 +1,7 @@
 #include <rabbit/rabbit.hpp>
 
 #include <filesystem>
+#include <fstream>
 
 using namespace rb;
 
@@ -75,6 +76,7 @@ private:
 int main(int argc, char* argv[]) {
 #if !RB_PROD_BUILD
     std::filesystem::current_path(CURRENT_DIRECTORY);
+    std::filesystem::remove("package/2102c172-e886-245a-ea19-e5b7b98263fe");
 #endif
 
     app::setup();

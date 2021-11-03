@@ -4,6 +4,7 @@
 #include "json.hpp"
 #include "uuid.hpp"
 #include "fnv1a.hpp"
+#include "base64.h"
 
 #include <memory>
 #include <string>
@@ -57,6 +58,18 @@ namespace rb {
 		}
 
 		template<typename Asset>
+		static std::shared_ptr<Asset> load_from_stream(bstream& stream) {
+			return std::static_pointer_cast<Asset>(_load_from_stream(typeid(Asset), stream, Asset::magic_number));
+		}
+
+		template<typename Asset>
+		static std::shared_ptr<Asset> load_from_base64(const std::string& base64) {
+			const auto bytes = base64::decode(base64);
+			memory_bstream stream{ bytes, bstream_mode::read };
+			return load_from_stream<Asset>(stream);
+		}
+
+		template<typename Asset>
 		static std::shared_ptr<Asset> load(const std::string& name) {
 			if (const auto uuid = _resources[name]; uuid) {
 				return load<Asset>(uuid);
@@ -69,6 +82,8 @@ namespace rb {
 
 	private:
 		static std::shared_ptr<void> _load(std::type_index type_index, const uuid& uuid, fnv1a_result_t magic_number);
+
+		static std::shared_ptr<void> _load_from_stream(std::type_index type_index, bstream& stream, fnv1a_result_t magic_number);
 
 	private:
 		static std::unordered_map<std::type_index, loader> _loaders;

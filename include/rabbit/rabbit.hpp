@@ -2,6 +2,7 @@
 
 #include "app.hpp"
 #include "assets.hpp"
+#include "base64.hpp"
 #include "bbox.hpp"
 #include "bsphere.hpp"
 #include "bstream.hpp"

@@ -94,7 +94,8 @@ void editor::scan() {
 		if (last_write_time > cached_last_write_time || !std::filesystem::exists(output_path)) {
 			print("importing: {}\n", path.string());
 
-			importer(path.string(), output_path.string(), metadata);
+			file_bstream output{ output_path.string(), bstream_mode::write };
+			importer(path.string(), output, metadata);
 
 			cache["last_write_time"] = last_write_time;
 			std::ofstream{ cache_path } << std::setw(4) << cache;
@@ -106,7 +107,7 @@ void editor::scan() {
 		resources_json[resource_path] = uuid;
 	});
 
-	bstream resources_stream{ (package_directory / "resources").string(), bstream_mode::write };
+	file_bstream resources_stream{ (package_directory / "resources").string(), bstream_mode::write };
 	const auto cbor = json::to_cbor(resources_json);
 	resources_stream.write<std::uint32_t>(cbor.size());
 	resources_stream.write<std::uint8_t>(cbor);

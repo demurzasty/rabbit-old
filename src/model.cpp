@@ -10,7 +10,7 @@
 
 using namespace rb;
 
-void model::import(const std::string& input, const std::string& output, const json& metadata) {
+void model::import(const std::string& input, bstream& output, const json& metadata) {
     tinygltf::Model model;
     tinygltf::TinyGLTF loader;
 

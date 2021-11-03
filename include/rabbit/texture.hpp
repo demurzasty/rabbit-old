@@ -43,7 +43,7 @@ namespace rb {
 
 		static std::shared_ptr<texture> load(bstream& stream);
 
-		static void import(const std::string& input, const std::string& output, const json& metadata);
+		static void import(const std::string& input, bstream& output, const json& metadata);
 
 		static std::shared_ptr<texture> make_one_color(const color& color, const vec2u& size);
 

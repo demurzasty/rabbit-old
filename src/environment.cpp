@@ -35,7 +35,7 @@ std::shared_ptr<environment> environment::load(bstream& stream) {
     return graphics::make_environment(desc);
 }
 
-void environment::import(const std::string& input, const std::string& output, const json& metadata) {
+void environment::import(const std::string& input, bstream& output, const json& metadata) {
     // Try to open file.
     std::fstream istream{ input, std::ios::in };
     RB_ASSERT(istream.is_open(), "Cannot open file");
@@ -68,11 +68,10 @@ void environment::import(const std::string& input, const std::string& output, co
 
     const auto compressed_pixels = compression::compress<color>(buffer);
 
-    bstream stream{ output, bstream_mode::write };
-    stream.write(environment::magic_number);
-    stream.write(size);
-    stream.write<std::uint32_t>(compressed_pixels.size());
-    stream.write<std::uint8_t>(compressed_pixels);
+    output.write(environment::magic_number);
+    output.write(size);
+    output.write<std::uint32_t>(compressed_pixels.size());
+    output.write<std::uint8_t>(compressed_pixels);
 }
 
 const vec2u& environment::size() const {

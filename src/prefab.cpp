@@ -6,7 +6,7 @@
 
 using namespace rb;
 
-void prefab::import(const std::string& input, const std::string& output, const json& metadata) {
+void prefab::import(const std::string& input, bstream& output, const json& metadata) {
     std::ifstream istream{ input };
     RB_ASSERT(istream.is_open(), "Cannot open file: {}", input);
 
@@ -16,10 +16,9 @@ void prefab::import(const std::string& input, const std::string& output, const j
 
     const auto dump = json::to_cbor(json);
 
-    bstream ostream{ output, bstream_mode::write };
-    ostream.write(prefab::magic_number);
-    ostream.write<std::uint32_t>(dump.size());
-    ostream.write(&dump[0], dump.size());
+    output.write(prefab::magic_number);
+    output.write<std::uint32_t>(dump.size());
+    output.write(&dump[0], dump.size());
 }
 
 std::shared_ptr<prefab> prefab::load(bstream& stream) {

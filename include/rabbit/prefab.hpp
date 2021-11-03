@@ -14,7 +14,7 @@ namespace rb {
     public:
         static constexpr auto magic_number{ fnv1a("prefab") };
 
-        static void import(const std::string& input, const std::string& output, const json& metadata);
+        static void import(const std::string& input, bstream& output, const json& metadata);
 
         static std::shared_ptr<prefab> load(bstream& stream);
 

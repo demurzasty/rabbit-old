@@ -45,7 +45,7 @@ std::shared_ptr<texture> texture::load(bstream& stream) {
 	return graphics::make_texture(desc);
 }
 
-void texture::import(const std::string& input, const std::string& output, const json& metadata) {
+void texture::import(const std::string& input, bstream& output, const json& metadata) {
 	// 1. Load image from file to RGBA image
 	auto image = image::load_from_file(input);
 
@@ -62,15 +62,14 @@ void texture::import(const std::string& input, const std::string& output, const 
 
 	RB_ASSERT(!compressed_pixels.empty(), "Cannot compress image: {}", input);
 
-	bstream stream{ output, bstream_mode::write };
-	stream.write(texture::magic_number);
-	stream.write(image.size());
-	stream.write(texture_format::bc1);
-	stream.write(texture_filter::linear);
-	stream.write(texture_wrap::repeat);
-	stream.write(1u);
-	stream.write<std::uint32_t>(compressed_pixels.size());
-	stream.write<std::uint8_t>(compressed_pixels);
+	output.write(texture::magic_number);
+	output.write(image.size());
+	output.write(texture_format::bc1);
+	output.write(texture_filter::linear);
+	output.write(texture_wrap::repeat);
+	output.write(1u);
+	output.write<std::uint32_t>(compressed_pixels.size());
+	output.write<std::uint8_t>(compressed_pixels);
 }
 
 std::shared_ptr<texture> texture::make_one_color(const color& color, const vec2u& size) {

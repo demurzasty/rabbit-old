@@ -28,7 +28,7 @@ namespace rb {
 
 		static std::shared_ptr<mesh> load(bstream& stream);
 
-		static void import(const std::string& input, const std::string& output, const json& metadata);
+		static void import(const std::string& input, bstream& output, const json& metadata);
 
 		static std::shared_ptr<mesh> make_box(const vec3f& extent, const vec2f& uv_scale);
 

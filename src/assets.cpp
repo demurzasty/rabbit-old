@@ -17,7 +17,7 @@ void assets::release() {
 }
 
 void assets::load_resources() {
-    bstream stream{ "package/resources", bstream_mode::read };
+    file_bstream stream{ "package/resources", bstream_mode::read };
 
     std::uint32_t cbor_size;
     stream.read(cbor_size);
@@ -42,7 +42,7 @@ std::shared_ptr<void> assets::_load(std::type_index type_index, const uuid& uuid
 
     fnv1a_result_t asset_magic_number;
 
-    bstream stream{ "package/" + uuid.to_string(), bstream_mode::read };
+    file_bstream stream{ "package/" + uuid.to_string(), bstream_mode::read };
     stream.read(asset_magic_number);
 
     RB_ASSERT(asset_magic_number == magic_number, "Asset type is not compatible.");
@@ -51,6 +51,15 @@ std::shared_ptr<void> assets::_load(std::type_index type_index, const uuid& uuid
     auto loaded_asset = loader(stream);
     asset = loaded_asset;
     return loaded_asset;
+}
+
+std::shared_ptr<void> assets::_load_from_stream(std::type_index type_index, bstream& stream, fnv1a_result_t magic_number) {
+    fnv1a_result_t asset_magic_number;
+    stream.read(asset_magic_number);
+
+    RB_ASSERT(asset_magic_number == magic_number, "Asset type is not compatible.");
+
+    return _loaders.at(type_index)(stream);
 }
 
 uuid assets::get_uuid(const std::shared_ptr<void>& asset) {

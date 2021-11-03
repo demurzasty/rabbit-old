@@ -1,6 +1,7 @@
 #pragma once 
 
 #include "../json.hpp"
+#include "../bstream.hpp"
 
 #include <string>
 #include <functional>
@@ -12,7 +13,7 @@ namespace rb {
 		std::filesystem::path path;
 	};
 
-	using importer = std::function<void(const std::string&, const std::string&, const json&)>;
+	using importer = std::function<void(const std::string&, bstream&, const json&)>;
 
 	class editor {
 	public:

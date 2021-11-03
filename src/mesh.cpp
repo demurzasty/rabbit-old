@@ -53,17 +53,17 @@ std::shared_ptr<mesh> mesh::load(bstream& stream) {
     stream.read(triangles.get(), triangle_count * sizeof(trianglef));
 
     bspheref bsphere;
-    stream.read(bsphere);
+    //stream.read(bsphere);
 
     mesh_desc desc;
     desc.vertices = { vertices.get(), vertex_count };
     desc.indices = { indices.get(), index_count };
     desc.convex_hull = { triangles.get(), triangle_count };
-    desc.bsphere = bsphere;
+   // desc.bsphere = bsphere;
     return graphics::make_mesh(desc);
 }
 
-void mesh::import(const std::string& input, const std::string& output, const json& metadata) {
+void mesh::import(const std::string& input, bstream& output, const json& metadata) {
     std::ifstream istream{ input, std::ios::in };
     RB_ASSERT(istream.is_open(), "Cannot open file");
 
@@ -140,15 +140,16 @@ void mesh::import(const std::string& input, const std::string& output, const jso
 
     const auto bsphere = calculate_bsphere({ indexed_vertices.get(), vertex_size });
 
-    bstream stream{ output, bstream_mode::write };
-    stream.write(mesh::magic_number);
-    stream.write<std::uint32_t>(vertex_size);
-    stream.write(indexed_vertices.get(), vertex_size * sizeof(vertex));
-    stream.write<std::uint32_t>(vertices.size());
-    stream.write(indices.get(), vertices.size() * sizeof(std::uint32_t));
-    stream.write<std::uint32_t>(convex_hull.size() / 3); // in triangle count
-    stream.write(convex_hull.data(), convex_hull.size() * sizeof(vec3f));
-    stream.write(bsphere);
+    const auto triangle_count = convex_hull.size() / 3;
+
+    output.write(mesh::magic_number);
+    output.write<std::uint32_t>(vertex_size);
+    output.write(indexed_vertices.get(), vertex_size * sizeof(vertex));
+    output.write<std::uint32_t>(vertices.size());
+    output.write(indices.get(), vertices.size() * sizeof(std::uint32_t));
+    output.write<std::uint32_t>(triangle_count); // in triangle count
+    output.write(convex_hull.data(), triangle_count * sizeof(trianglef));
+    output.write(bsphere);
 }
 
 std::shared_ptr<mesh> mesh::make_box(const vec3f& extent, const vec2f& uv_scale) {
