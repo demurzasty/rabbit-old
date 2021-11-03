@@ -29,7 +29,14 @@ void app::setup() {
 	app::component<directional_light>("directional_light");
 	app::component<point_light>("point_light");
 
+#if !RB_PROD_BUILD
 	app::init([] {
+		editor::scan();
+	});
+#endif
+
+	app::init([] {
+		assets::load_resources();
 		assets::add_loader<texture>(&texture::load);
 		assets::add_loader<environment>(&environment::load);
 		assets::add_loader<material>(&material::load);
@@ -37,16 +44,10 @@ void app::setup() {
 		assets::add_loader<prefab>(&prefab::load);
 	});
 
-#if !RB_PROD_BUILD
-	app::init([] {
-		editor::scan();
-	});
-#endif
-
 	app::system<renderer>();
 }
 
-void app::run(uuid initial_scene) {
+void app::run(std::string initial_scene) {
 	for (auto& preinit : _preinits) {
 		preinit();
 	}
@@ -62,14 +63,14 @@ void app::run(uuid initial_scene) {
 	}
 }
 
-void app::_main_loop(uuid initial_scene) {
+void app::_main_loop(const std::string& initial_scene) {
 	std::list<std::shared_ptr<rb::system>> systems;
 	std::transform(_systems.begin(), _systems.end(), std::back_inserter(systems), [](auto func) {
 		return func();
 	});
 
 	registry registry;
-	if (!initial_scene.is_empty()) {
+	if (!initial_scene.empty()) {
 		auto scene = assets::load<prefab>(initial_scene);
 		scene->apply(registry);
 	}

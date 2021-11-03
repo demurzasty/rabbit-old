@@ -5,6 +5,7 @@
 #include <execution>
 #include <filesystem>
 #include <chrono>
+#include <mutex>
 
 using namespace rb;
 
@@ -29,12 +30,15 @@ void editor::scan() {
 	std::filesystem::create_directories(package_directory);
 	std::filesystem::create_directories(cache_directory);
 
-	const auto di = std::filesystem::recursive_directory_iterator{ "./data" };
+	const auto di = std::filesystem::recursive_directory_iterator{ "data" };
 
 	std::vector<std::filesystem::directory_entry> entries;
 	std::transform(std::filesystem::begin(di), std::filesystem::end(di), std::back_inserter(entries), [](auto& entry) {
 		return entry;
 	});
+
+	std::mutex resources_mutex;
+	auto resources_json = json::object();
 
 	std::for_each(std::execution::par_unseq, entries.begin(), entries.end(), [&](const auto& dir_entry) {
 		if (!dir_entry.is_regular_file()) {
@@ -90,5 +94,15 @@ void editor::scan() {
 			cache["last_write_time"] = last_write_time;
 			std::ofstream{ cache_path } << std::setw(4) << cache;
 		}
+
+		std::lock_guard<std::mutex> guard{ resources_mutex };
+		auto resource_path = path.string();
+		std::replace(resource_path.begin(), resource_path.end(), '\\', '/');
+		resources_json[resource_path] = uuid;
 	});
+
+	bstream resources_stream{ (package_directory / "resources").string(), bstream_mode::write };
+	const auto cbor = json::to_cbor(resources_json);
+	resources_stream.write<std::uint32_t>(cbor.size());
+	resources_stream.write<std::uint8_t>(cbor);
 }

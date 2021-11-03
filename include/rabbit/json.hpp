@@ -44,8 +44,9 @@ namespace rb {
 		template<typename T, std::enable_if_t<std::is_class_v<T>, int> = 0>
 		void operator()(const char* name, std::shared_ptr<T>& data) {
 			if (json.contains(name)) {
-				std::string uuid = json[name]; // TODO: Can be simplified?
-				data = assets::load<T>(uuid);
+				if (const auto uuid = uuid::from_string(json[name]); uuid) {
+					data = assets::load<T>(*uuid);
+				}
 			}
 		}
 

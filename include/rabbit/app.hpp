@@ -42,12 +42,12 @@ namespace rb {
 
 		static void setup();
 
-		static void run(uuid initial_scene = uuid{});
+		static void run(std::string initial_scene = "");
 
 		static deserializer get_deserializer(const std::string& name);
 
 	private:
-		static void _main_loop(uuid initial_scene);
+		static void _main_loop(const std::string& initial_scene);
 
 	private:
 		static std::list<void(*)()> _preinits;

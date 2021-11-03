@@ -82,5 +82,5 @@ int main(int argc, char* argv[]) {
     app::system<camera_controller>();
     app::system<fps_meter>();
 
-    app::run(uuid::from_string("9f1dfcc6-a1af-a917-9bc3-878560a0f32a").value());
+    app::run("data/prefabs/scene.scn");
 }
