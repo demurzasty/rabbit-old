@@ -53,3 +53,10 @@ void s3tc::bc1(const void* uncompressed_pixels, std::size_t uncompressed_size, s
 		}
 	}
 }
+
+std::vector<std::uint8_t> s3tc::bc1(const image& image) {
+	const auto compressed_size = (image.size().x * image.size().y) / 2;
+	auto compressed_pixels = std::make_unique<std::uint8_t[]>(compressed_size);
+	bc1(image.pixels().data(), image.pixels().size_bytes(), image.stride(), compressed_pixels.get());
+	return { compressed_pixels.get(), compressed_pixels.get() + compressed_size };
+}

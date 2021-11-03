@@ -17,14 +17,14 @@ image image::load_from_file(const std::string& filename) {
         return {};
     }
 
-    return { pixels.get(), vec2u{ static_cast<unsigned int>(width), static_cast<unsigned int>(height) } };
+    return { reinterpret_cast<const color*>(pixels.get()), vec2u{ static_cast<unsigned int>(width), static_cast<unsigned int>(height) } };
 }
 
 image::operator bool() const {
     return !_pixels.empty();
 }
 
-const std::vector<std::uint8_t>& image::pixels() const {
+span<const color> image::pixels() const {
     return _pixels;
 }
 
@@ -36,7 +36,7 @@ std::size_t image::stride() const {
     return _size.x * 4;
 }
 
-image::image(const std::uint8_t* pixels, const vec2u& size)
-    : _pixels(pixels, pixels + size.x * size.y * 4)
+image::image(const color* pixels, const vec2u& size)
+    : _pixels(pixels, pixels + size.x * size.y)
     , _size(size) {
 }

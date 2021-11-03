@@ -46,22 +46,21 @@ std::shared_ptr<texture> texture::load(bstream& stream) {
 }
 
 void texture::import(const std::string& input, const std::string& output, const json& metadata) {
+	// 1. Load image from file to RGBA image
 	auto image = image::load_from_file(input);
+
 	RB_ASSERT(image, "Cannot load image: {}", input);
+	RB_ASSERT(image.size().x % 4 == 0 && image.size().y % 4 == 0, "Incorrect texture size of image: {}", input);
 
-	RB_ASSERT(image.size().x % 4 == 0 && image.size().y % 4 == 0, "Incorrect texture size");
+	// 2. Compress pixels to lossy, gpu friendly BC1
+	const auto bc1_pixels = s3tc::bc1(image);
 
-	// 1. Compress pixels to lossy, gpu friendly BC1
-	const auto bc1_size = image.size().x * image.size().y * calculate_bits_per_pixel(texture_format::bc1) / 8;
-	const auto bc1_pixels = std::make_unique<std::uint8_t[]>(bc1_size);
-	s3tc::bc1(image.pixels().data(), image.pixels().size(), image.stride(), bc1_pixels.get());
+	RB_ASSERT(!bc1_pixels.empty(), "Cannot compress image: {}", input);
 
-	// 2. Compress to lossles, storage friendly zlib
-	const auto compressed_bound = compression::compress_bound(bc1_size);
-	const auto compressed_pixels = std::make_unique<std::uint8_t[]>(compressed_bound);
-	const auto compressed_size = compression::compress(bc1_pixels.get(), bc1_size, compressed_pixels.get());
+	// 3. Compress to lossles, storage friendly zlib
+	const auto compressed_pixels = compression::compress<std::uint8_t>(bc1_pixels);
 
-	RB_ASSERT(compressed_size > 0, "Cannot compress image");
+	RB_ASSERT(!compressed_pixels.empty(), "Cannot compress image: {}", input);
 
 	bstream stream{ output, bstream_mode::write };
 	stream.write(texture::magic_number);
@@ -70,8 +69,8 @@ void texture::import(const std::string& input, const std::string& output, const 
 	stream.write(texture_filter::linear);
 	stream.write(texture_wrap::repeat);
 	stream.write(1u);
-	stream.write<std::uint32_t>(compressed_size);
-	stream.write(compressed_pixels.get(), compressed_size);
+	stream.write<std::uint32_t>(compressed_pixels.size());
+	stream.write<std::uint8_t>(compressed_pixels);
 }
 
 std::shared_ptr<texture> texture::make_one_color(const color& color, const vec2u& size) {

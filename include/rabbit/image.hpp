@@ -1,6 +1,8 @@
 #pragma once 
 
 #include "vec2.hpp"
+#include "color.hpp"
+#include "span.hpp"
 
 #include <vector>
 #include <memory>
@@ -23,17 +25,17 @@ namespace rb {
 
         operator bool() const;
 
-        const std::vector<std::uint8_t>& pixels() const;
+        span<const color> pixels() const;
 
         const vec2u& size() const;
 
         std::size_t stride() const;
 
     private:
-        image(const std::uint8_t* pixels, const vec2u& size);
+        image(const color* pixels, const vec2u& size);
 
     private:
-        std::vector<std::uint8_t> _pixels;
+        std::vector<color> _pixels;
         vec2u _size{ 0, 0 };
     };
 }
