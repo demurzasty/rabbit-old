@@ -11,6 +11,7 @@
 #include "config.hpp"
 #include "entity.hpp"
 #include "environment.hpp"
+#include "fnv1a.hpp"
 #include "format.hpp"
 #include "geometry.hpp"
 #include "graphics.hpp"
@@ -22,10 +23,12 @@
 #include "material.hpp"
 #include "math.hpp"
 #include "mesh.hpp"
+#include "parent.hpp"
 #include "plane.hpp"
 #include "prefab.hpp"
 #include "ray3.hpp"
 #include "renderer.hpp"
+#include "s3tc.hpp"
 #include "settings.hpp"
 #include "shape3.hpp"
 #include "span.hpp"
@@ -39,6 +42,7 @@
 #include "vec4.hpp"
 #include "version.hpp"
 #include "vertex.hpp"
+#include "viewport.hpp"
 #include "window.hpp"
 
 #if !RB_PROD_BUILD
