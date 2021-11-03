@@ -46,7 +46,7 @@ struct camera_controller : public rb::system {
                     transform.position.z -= std::cos(transform.rotation.y + pi<float>() * 0.5f) * elapsed_time * speed;
                 }
             }
-            });
+        });
     }
 private:
     vec2i _last_mouse_position;
