@@ -2,11 +2,10 @@
 #include <rabbit/config.hpp>
 #include <rabbit/graphics.hpp>
 #include <rabbit/compression.hpp>
+#include <rabbit/image.hpp>
 
 #include <array>
 #include <fstream>
-
-#include <stb_image.h>
 
 using namespace rb;
 
@@ -56,28 +55,24 @@ void environment::import(const std::string& input, const std::string& output, co
 
     vec2u size;
 
-    std::map<std::size_t, stbi_uc*> data;
+    std::map<std::size_t, image> images;
     for (std::size_t index{ 0 }; index < 6; ++index) {
-        int width, height, components;
-        data[index] = stbi_load(filenames[index].c_str(), &width, &height, &components, STBI_rgb_alpha);
-        size = { static_cast<unsigned int>(width), static_cast<unsigned int>(height) };
+        images[index] = image::load_from_file(filenames[index]);
+        size = images[index].size();
     }
 
-    auto buffer = std::make_unique<stbi_uc[]>(size.x * size.y * 4 * 6);
-    for (auto& [index, pixels] : data) {
-        std::memcpy(buffer.get() + index * (size.x * size.y * 4), pixels, size.x * size.y * 4);
-        stbi_image_free(pixels);
+    std::vector<color> buffer(size.x * size.y * 6);
+    for (auto& [index, images] : images) {
+        std::memcpy(buffer.data() + index * size.x * size.y, images.pixels().data(), size.x * size.y * sizeof(color));
     }
 
-    const auto compressed_bound = compression::compress_bound(size.x * size.y * 4 * 6);
-    const auto compressed_pixels = std::make_unique<std::uint8_t[]>(compressed_bound);
-    const auto compressed_size = compression::compress(buffer.get(), size.x * size.y * 4 * 6, compressed_pixels.get());
+    const auto compressed_pixels = compression::compress<color>(buffer);
 
     bstream stream{ output, bstream_mode::write };
     stream.write(environment::magic_number);
     stream.write(size);
-    stream.write<std::uint32_t>(compressed_size);
-    stream.write(compressed_pixels.get(), compressed_size);
+    stream.write<std::uint32_t>(compressed_pixels.size());
+    stream.write<std::uint8_t>(compressed_pixels);
 }
 
 const vec2u& environment::size() const {
