@@ -11,7 +11,6 @@ namespace rb {
 		vec3<T> position;
 		vec3<T> direction;
 
-		template<typename T>
 		static ray3<T> pick_ray(const vec2<T>& point, const vec4<T>& viewport, const mat4<T>& inv_proj_view) {
 			vec3<T> near{ point.x, point.y, 0 };
 			vec3<T> far{ point.x, point.y, 1 };

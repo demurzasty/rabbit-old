@@ -36,15 +36,15 @@ namespace rb {
             };
         }
 
-        static constexpr mat4<T> orthographic(T left, T right, T bottom, T top, T near, T far) {
+        static constexpr mat4<T> orthographic(T left, T right, T bottom, T top, T z_near, T z_far) {
             const auto tx = -((right + left) / (right - left));
             const auto ty = -((top + bottom) / (top - bottom));
-            const auto tz = -((far + near) / (far - near));
+            const auto tz = -((z_far + z_near) / (z_far - z_near));
 
             return {
                 2 / (right - left), 0, 0, 0,
                 0, 2 / (top - bottom), 0, 0,
-                0, 0, -2 / (far - near), 0,
+                0, 0, -2 / (z_far - z_near), 0,
                 tx, ty, tz, 1
             };
         }

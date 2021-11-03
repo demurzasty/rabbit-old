@@ -18,8 +18,8 @@ namespace rb {
 	public:
 		asset() = default;
 
-		asset(const std::shared_ptr<T>& asset):
-			: _asset(asset) {
+		asset(const std::shared_ptr<T>& ptr)
+			: _ptr(ptr) {
 		}
 
 		asset(const asset<T>&) = default;
@@ -29,11 +29,11 @@ namespace rb {
 		asset<T>& operator=(asset<T>&&) = default;
 
 		T* operator->() const {
-			return _asset.get();
+			return _ptr.get();
 		}
 
 	private:
-		std::shared_ptr<T> _asset;
+		std::shared_ptr<T> _ptr;
 	};
 
 	class assets {
