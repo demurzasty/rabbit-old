@@ -2,11 +2,7 @@
 #include <rabbit/config.hpp>
 #include <rabbit/graphics.hpp>
 #include <rabbit/compression.hpp>
-
-#define STBI_MAX_DIMENSIONS 8192
-#define STB_IMAGE_IMPLEMENTATION
-#include <stb_image.h>
-
+#include <rabbit/image.hpp>
 #include <rabbit/s3tc.hpp>
 
 using namespace rb;
@@ -50,20 +46,15 @@ std::shared_ptr<texture> texture::load(bstream& stream) {
 }
 
 void texture::import(const std::string& input, const std::string& output, const json& metadata) {
-	int width, height, components;
-	std::unique_ptr<stbi_uc, decltype(&stbi_image_free)> pixels{
-		stbi_load(input.c_str(), &width, &height, &components, STBI_rgb_alpha),
-		&stbi_image_free
-	};
+	auto image = image::load_from_file(input);
+	RB_ASSERT(image, "Cannot load image: {}", input);
 
-	RB_ASSERT(pixels, "Cannot load image: {}", input);
-
-	RB_ASSERT(width % 4 == 0 && height % 4 == 0, "Incorrect texture size");
+	RB_ASSERT(image.size().x % 4 == 0 && image.size().y % 4 == 0, "Incorrect texture size");
 
 	// 1. Compress pixels to lossy, gpu friendly BC1
-	const auto bc1_size = width * height * calculate_bits_per_pixel(texture_format::bc1) / 8;
+	const auto bc1_size = image.size().x * image.size().y * calculate_bits_per_pixel(texture_format::bc1) / 8;
 	const auto bc1_pixels = std::make_unique<std::uint8_t[]>(bc1_size);
-	s3tc::bc1(pixels.get(), width * height * 4, width * 4, bc1_pixels.get());
+	s3tc::bc1(image.pixels().data(), image.pixels().size(), image.stride(), bc1_pixels.get());
 
 	// 2. Compress to lossles, storage friendly zlib
 	const auto compressed_bound = compression::compress_bound(bc1_size);
@@ -74,8 +65,7 @@ void texture::import(const std::string& input, const std::string& output, const 
 
 	bstream stream{ output, bstream_mode::write };
 	stream.write(texture::magic_number);
-	stream.write(width);
-	stream.write(height);
+	stream.write(image.size());
 	stream.write(texture_format::bc1);
 	stream.write(texture_filter::linear);
 	stream.write(texture_wrap::repeat);
