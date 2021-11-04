@@ -43,11 +43,11 @@ void renderer::draw(registry& registry) {
     graphics::end_geometry_pass(_viewport);
 
     registry.view<transform, light, directional_light>().each([this, &registry](transform& transform, light& light, directional_light& directional_light) {
-        for (auto i = 0; i < 4; ++i) {
-            graphics::begin_shadow_pass(transform, light, directional_light, i);
+        for (auto cascade = 0u; cascade < graphics_limits::max_shadow_cascades; ++cascade) {
+            graphics::begin_shadow_pass(transform, light, directional_light, cascade);
         
-            registry.view<rb::transform, geometry>().each([](rb::transform& transform, geometry& geometry) {
-                graphics::draw_shadow(transform, geometry);
+            registry.view<rb::transform, geometry>().each([cascade](rb::transform& transform, geometry& geometry) {
+                graphics::draw_shadow(transform, geometry, cascade);
             });
 
             graphics::end_shadow_pass();

@@ -23,6 +23,7 @@ namespace rb {
 		static constexpr std::size_t irradiance_map_size{ 64 };
 		static constexpr std::size_t prefilter_map_size{ 128 };
 		static constexpr std::size_t shadow_map_size{ 1024 };
+		static constexpr std::size_t max_shadow_cascades{ 4 };
 	};
 
 	class graphics_impl {
@@ -49,9 +50,9 @@ namespace rb {
 
 		virtual void end_geometry_pass(const std::shared_ptr<viewport>& viewport) = 0;
 
-		virtual void begin_shadow_pass(const transform& transform, const light& light, const directional_light& directional_light, int cascade) = 0;
+		virtual void begin_shadow_pass(const transform& transform, const light& light, const directional_light& directional_light, std::size_t cascade) = 0;
 
-		virtual void draw_shadow(const transform& transform, const geometry& geometry) = 0;
+		virtual void draw_shadow(const transform& transform, const geometry& geometry, std::size_t cascade) = 0;
 
 		virtual void end_shadow_pass() = 0;
 
@@ -130,9 +131,9 @@ namespace rb {
 
 		static void end_geometry_pass(const std::shared_ptr<viewport>& viewport);
 
-		static void begin_shadow_pass(const transform& transform, const light& light, const directional_light& directional_light, int cascade);
+		static void begin_shadow_pass(const transform& transform, const light& light, const directional_light& directional_light, std::size_t cascade);
 
-		static void draw_shadow(const transform& transform, const geometry& geometry);
+		static void draw_shadow(const transform& transform, const geometry& geometry, std::size_t cascade);
 
 		static void end_shadow_pass();
 

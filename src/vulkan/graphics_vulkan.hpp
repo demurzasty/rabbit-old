@@ -104,9 +104,9 @@ namespace rb {
 
 		void end_geometry_pass(const std::shared_ptr<viewport>& viewport) override;
 
-		void begin_shadow_pass(const transform& transform, const light& light, const directional_light& directional_light, int cascade) override;
+		void begin_shadow_pass(const transform& transform, const light& light, const directional_light& directional_light, std::size_t cascade) override;
 
-		void draw_shadow(const transform& transform, const geometry& geometry) override;
+		void draw_shadow(const transform& transform, const geometry& geometry, std::size_t cascade) override;
 
 		void end_shadow_pass() override;
 
@@ -399,8 +399,6 @@ namespace rb {
 
 		bool _first_render_pass{ false };
 
-		int _cascade{ 0 };
-		mat4f _light_proj_view[4];
 		std::shared_ptr<environment_vulkan> _environment;
 	};
 }

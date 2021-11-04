@@ -148,13 +148,13 @@ graphics_vulkan::~graphics_vulkan() {
     vkDestroyPipeline(_device, _shadow_pipeline, nullptr);
     vkDestroyShaderModule(_device, _shadow_shader_module, nullptr);
     vkDestroyPipelineLayout(_device, _shadow_pipeline_layout, nullptr);
-    for (auto i = 0u; i < 4u; ++i) {
+    for (auto i = 0u; i < graphics_limits::max_shadow_cascades; ++i) {
         vkDestroyFramebuffer(_device, _shadow_framebuffers[i], nullptr);
     }
     vkDestroyRenderPass(_device, _shadow_render_pass, nullptr);
     vkDestroySampler(_device, _shadow_sampler, nullptr);
     vkDestroyImageView(_device, _shadow_image_view, nullptr);
-    for (auto i = 0u; i < 4u; ++i) {
+    for (auto i = 0u; i < graphics_limits::max_shadow_cascades; ++i) {
         vkDestroyImageView(_device, _shadow_image_views[i], nullptr);
     }
     vmaDestroyImage(_allocator, _shadow_image, _shadow_allocation);
@@ -300,14 +300,13 @@ void graphics_vulkan::end_geometry_pass(const std::shared_ptr<viewport>& viewpor
     native_viewport->end_geometry_pass(_command_buffers[_command_index]);
 }
 
-void graphics_vulkan::begin_shadow_pass(const transform& transform, const light& light, const directional_light& directional_light, int cascade) {
-    _cascade = cascade;
+void graphics_vulkan::begin_shadow_pass(const transform& transform, const light& light, const directional_light& directional_light, std::size_t cascade) {
     const auto factor = static_cast<float>(1 << cascade);
 
     const auto dir = normalize(transform_normal(mat4f::rotation(transform.rotation), vec3f::z_axis()));
     const auto depth_projection = mat4f::orthographic(-10.0f * factor, 10.0f * factor, -10.0f * factor, 10.0f * factor, -20.0f * factor, 20.0f * factor);
     const auto depth_view = mat4f::look_at(_camera_data.camera_position - dir * 10.0f * factor, _camera_data.camera_position, vec3f::up());
-    _light_proj_view[cascade] = depth_projection * depth_view;
+    _camera_data.light_proj_view[cascade] = depth_projection * depth_view;
 
     VkClearValue clear_values[1];
     clear_values[0].depthStencil = { 1.0f, 0 };
@@ -326,7 +325,7 @@ void graphics_vulkan::begin_shadow_pass(const transform& transform, const light&
     vkCmdBindPipeline(_command_buffers[_command_index], VK_PIPELINE_BIND_POINT_GRAPHICS, _shadow_pipeline);
 }
 
-void graphics_vulkan::draw_shadow(const transform& transform, const geometry& geometry) {
+void graphics_vulkan::draw_shadow(const transform& transform, const geometry& geometry, std::size_t cascade) {
     const auto native_material = std::static_pointer_cast<material_vulkan>(geometry.material);
     const auto native_mesh = std::static_pointer_cast<mesh_vulkan>(geometry.mesh);
 
@@ -340,7 +339,7 @@ void graphics_vulkan::draw_shadow(const transform& transform, const geometry& ge
         mat4f::scaling(transform.scaling);
 
     shadow_data shadow_data;
-    shadow_data.proj_view_world = _light_proj_view[_cascade] * world;
+    shadow_data.proj_view_world = _camera_data.light_proj_view[cascade] * world;
     vkCmdPushConstants(_command_buffers[_command_index], _shadow_pipeline_layout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(shadow_data), &shadow_data);
 
     vkCmdDrawIndexed(_command_buffers[_command_index], static_cast<std::uint32_t>(native_mesh->indices().size()), 1, 0, 0, 0);
@@ -351,10 +350,6 @@ void graphics_vulkan::end_shadow_pass() {
 }
 
 void graphics_vulkan::begin_light_pass(const std::shared_ptr<viewport>& viewport) {
-    for (int i = 0; i < 4; ++i) {
-        _camera_data.light_proj_view[i] = _light_proj_view[i];
-    }
-
     vkCmdUpdateBuffer(_command_buffers[_command_index], _camera_buffer,
         offsetof(camera_data, light_proj_view),
         sizeof(_camera_data.light_proj_view),
@@ -5299,7 +5294,7 @@ void graphics_vulkan::_create_shadow_map() {
     RB_VK(vkCreateImageView(_device, &image_view_info, nullptr, &_shadow_image_view),
         "Failed to create Vulkan image view");
 
-    for (auto i = 0u; i < 4u; ++i) {
+    for (auto i = 0u; i < graphics_limits::max_shadow_cascades; ++i) {
         VkImageViewCreateInfo image_view_info;
         image_view_info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
         image_view_info.pNext = nullptr;
@@ -5390,7 +5385,7 @@ void graphics_vulkan::_create_shadow_map() {
     RB_VK(vkCreateRenderPass(_device, &render_pass_info, nullptr, &_shadow_render_pass),
         "Failed to create render pass.");
 
-    for (auto i = 0u; i < 4u; ++i) {
+    for (auto i = 0u; i < graphics_limits::max_shadow_cascades; ++i) {
         VkFramebufferCreateInfo framebuffer_info;
         framebuffer_info.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
         framebuffer_info.pNext = nullptr;
