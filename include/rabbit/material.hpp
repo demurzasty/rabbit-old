@@ -10,6 +10,15 @@
 #include <string>
 
 namespace rb {
+	struct material_flags {
+		static constexpr std::uint32_t albedo_map_bit = (1 << 0);
+		static constexpr std::uint32_t normal_map_bit = (1 << 1);
+		static constexpr std::uint32_t roughness_map_bit = (1 << 2);
+		static constexpr std::uint32_t metallic_map_bit = (1 << 3);
+		static constexpr std::uint32_t emissive_map_bit = (1 << 4);
+		static constexpr std::uint32_t ambient_map_bit = (1 << 5);
+	};
+
 	struct material_desc {
 		vec3f base_color{ 1.0f, 1.0f, 1.0f }; // TODO: Use color structure instead.
 		float roughness{ 0.8f };
@@ -50,6 +59,8 @@ namespace rb {
 
 		const std::shared_ptr<texture>& ambient_map() const;
 
+		const std::uint32_t flags() const;
+
 	protected:
 		material(const material_desc& desc);
 
@@ -63,5 +74,6 @@ namespace rb {
 		const std::shared_ptr<texture> _metallic_map;
 		const std::shared_ptr<texture> _emissive_map;
 		const std::shared_ptr<texture> _ambient_map;
+		const std::uint32_t _flags;
 	};
 }

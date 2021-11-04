@@ -9,6 +9,36 @@
 
 using namespace rb;
 
+inline std::uint32_t calculate_material_flags(const material_desc& desc) {
+    std::uint32_t flags{ 0 };
+
+    if (desc.albedo_map) {
+        flags |= material_flags::albedo_map_bit;
+    }
+
+    if (desc.normal_map) {
+        flags |= material_flags::normal_map_bit;
+    }
+
+    if (desc.roughness_map) {
+        flags |= material_flags::roughness_map_bit;
+    }
+
+    if (desc.metallic_map) {
+        flags |= material_flags::metallic_map_bit;
+    }
+
+    if (desc.emissive_map) {
+        flags |= material_flags::emissive_map_bit;
+    }
+
+    if (desc.ambient_map) {
+        flags |= material_flags::ambient_map_bit;
+    }
+
+    return flags;
+}
+
 std::shared_ptr<material> material::load(ibstream& stream) {
     material_desc desc;
     stream.read(desc.base_color);
@@ -159,6 +189,10 @@ const std::shared_ptr<texture>& material::ambient_map() const {
     return _ambient_map;
 }
 
+const std::uint32_t material::flags() const {
+    return _flags;
+}
+
 material::material(const material_desc& desc)
     : _base_color(desc.base_color)
     , _roughness(desc.roughness)
@@ -168,5 +202,6 @@ material::material(const material_desc& desc)
     , _roughness_map(desc.roughness_map)
     , _metallic_map(desc.metallic_map)
     , _emissive_map(desc.emissive_map)
-    , _ambient_map(desc.ambient_map) {
+    , _ambient_map(desc.ambient_map)
+    , _flags(calculate_material_flags(desc)) {
 }
