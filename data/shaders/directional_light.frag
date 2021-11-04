@@ -15,10 +15,11 @@ layout (std140, set = 0, binding = 0) uniform camera_data {
     mat4 view;
     mat4 u_inv_proj_view;
     vec3 u_camera_position;
+	mat4 u_light_proj_views[4];
 };
 
 layout(set = 0, binding = 1) uniform sampler2D u_brdf_map;
-layout(set = 0, binding = 2) uniform sampler2D u_shadow_map;
+layout(set = 0, binding = 2) uniform sampler2DArray u_shadow_map;
 
 layout (set = 1, binding = 0) uniform sampler2D u_albedo_map;
 layout (set = 1, binding = 1) uniform sampler2D u_normal_map;
@@ -32,7 +33,6 @@ layout(set = 2, binding = 2) uniform samplerCube u_prefilter_map;
 layout (std140, push_constant) uniform light_data {
     vec3 u_light_dir;
     vec3 u_light_color; // precomputed intensity in color
-    mat4 u_light_proj_view;
 };
 
 const vec2 poisson_disk[64] = {
@@ -116,8 +116,8 @@ float penumbra_size(float z_receiver, float z_blocker) {
 	return (z_receiver - z_blocker) / z_blocker * 12.0;
 }
 
-vec2 find_blocker(vec2 texcoord, float z_receiver) {
-	ivec2 texture_size = textureSize(u_shadow_map, 0);
+vec2 find_blocker(vec2 texcoord, float z_receiver, float cascade) {
+	ivec2 texture_size = textureSize(u_shadow_map, 0).xy;
 	vec2 texel = vec2(1.0 / texture_size.x, 1.0 / texture_size.y);
 
 	float search_width = length(texel) * 20.0;
@@ -126,7 +126,7 @@ vec2 find_blocker(vec2 texcoord, float z_receiver) {
 	
 	for (int i = 0; i < PCSS_BLOCKER_SEARCH_NUM_SAMPLES; i++) {
 		vec2 coord = texcoord + poisson_disk[i] * search_width;
-		float smap = texture(u_shadow_map, coord).r;
+		float smap = texture(u_shadow_map, vec3(coord, cascade)).r;
 		if (smap < z_receiver) {
 			blockerSum += smap;
 			numBlockers++;
@@ -135,8 +135,8 @@ vec2 find_blocker(vec2 texcoord, float z_receiver) {
 	return vec2(blockerSum / numBlockers, numBlockers);
 }
 
-float pcf(vec2 texcoord, float z_receiver, float filter_radius) {
-	ivec2 texture_size = textureSize(u_shadow_map, 0);
+float pcf(vec2 texcoord, float z_receiver, float filter_radius, float cascade) {
+	ivec2 texture_size = textureSize(u_shadow_map, 0).xy;
 	vec2 texel = vec2(1.0 / texture_size.x, 1.0 / texture_size.y);
 
 	float theta = rand(vec4(texcoord, gl_FragCoord.xy));
@@ -145,14 +145,14 @@ float pcf(vec2 texcoord, float z_receiver, float filter_radius) {
 	float shadow = 0.0;
 	for (int i = 0; i < PCF_NUM_SAMPLES; ++i) {
 		vec2 offset = rotation * poisson_disk[i] * texel * filter_radius;
-		shadow += step(z_receiver, texture(u_shadow_map, texcoord + offset).r);
+		shadow += step(z_receiver, texture(u_shadow_map, vec3(texcoord + offset, cascade)).r);
 	}
 	return shadow / PCF_NUM_SAMPLES;
 }
 
-float pcss(vec3 texcoord) {
-	vec2 blockers = find_blocker(texcoord.xy, texcoord.z);
-	return pcf(texcoord.xy, texcoord.z, 2.0 + penumbra_size(texcoord.z, blockers.x));
+float pcss(vec3 texcoord, float cascade) {
+	vec2 blockers = find_blocker(texcoord.xy, texcoord.z, cascade);
+	return pcf(texcoord.xy, texcoord.z, 2.0 + penumbra_size(texcoord.z, blockers.x), cascade);
 }
 
 float distribution_ggx(vec3 n, vec3 h, float roughness) {
@@ -203,18 +203,18 @@ vec3 extract_position(sampler2D depth_map, vec2 texcoord) {
 }
 
 float compute_shadow(in vec3 position) {
-    vec4 shadow_position = u_light_proj_view * vec4(position, 1.0);
-    shadow_position.xyz = shadow_position.xyz / shadow_position.w;
+	for (int i = 0; i < 4; ++i) {
+		vec4 shadow_position = u_light_proj_views[i] * vec4(position, 1.0);
+		shadow_position.xyz = shadow_position.xyz / shadow_position.w;
 
-    vec2 shadow_coord = vec2(shadow_position.x, shadow_position.y) * 0.5 + 0.5;
-    if (shadow_coord.x < 0.0 || shadow_coord.x > 1.0 ||
-        shadow_coord.y < 0.0 || shadow_coord.y > 1.0 ||
-        shadow_position.z < 0.0 || shadow_position.z > 1.0) {
-        return 1.0;
-    }
-
-	float shadow = pcss(vec3(shadow_coord.xy, shadow_position.z));
-	return sin(shadow * PI * 0.5);
+		vec2 shadow_coord = vec2(shadow_position.x, shadow_position.y) * 0.5 + 0.5;
+		if (shadow_coord.x >= 0.0 && shadow_coord.x <= 1.0 &&
+			shadow_coord.y >= 0.0 && shadow_coord.y <= 1.0 &&
+			shadow_position.z >= 0.0 && shadow_position.z <= 1.0) {
+			return sin(pcss(vec3(shadow_coord.xy, shadow_position.z - 0.001 * i), i) * PI * 0.5);
+		} 
+	}
+	return 1.0;
 }
 
 void main() {

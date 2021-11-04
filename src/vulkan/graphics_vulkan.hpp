@@ -22,7 +22,8 @@ namespace rb {
 			mat4f projection;
 			mat4f view;
 			mat4f inv_proj_view;
-			vec3f camera_position;
+			vec3f camera_position; float padding;
+			mat4f light_proj_view[4];
 		};
 
 		struct alignas(16) light_data {
@@ -58,7 +59,6 @@ namespace rb {
 		struct alignas(16) directional_light_data {
 			vec3f light_dir; float padding[1];
 			vec3f light_color; float padding2[1];
-			mat4f light_proj_view;
 		};
 
 		struct alignas(16) point_light_data {
@@ -104,7 +104,7 @@ namespace rb {
 
 		void end_geometry_pass(const std::shared_ptr<viewport>& viewport) override;
 
-		void begin_shadow_pass(const transform& transform, const light& light, const directional_light& directional_light) override;
+		void begin_shadow_pass(const transform& transform, const light& light, const directional_light& directional_light, int cascade) override;
 
 		void draw_shadow(const transform& transform, const geometry& geometry) override;
 
@@ -312,10 +312,11 @@ namespace rb {
 
 		VkImage _shadow_image;
 		VkImageView _shadow_image_view;
+		VkImageView _shadow_image_views[4];
 		VmaAllocation _shadow_allocation;
 		VkSampler _shadow_sampler;
 		VkRenderPass _shadow_render_pass;
-		VkFramebuffer _shadow_framebuffer;
+		VkFramebuffer _shadow_framebuffers[4];
 		VkPipelineLayout _shadow_pipeline_layout;
 		VkShaderModule _shadow_shader_module;
 		VkPipeline _shadow_pipeline;
@@ -397,7 +398,9 @@ namespace rb {
 		std::size_t _command_index{ 0 };
 
 		bool _first_render_pass{ false };
-		mat4f _light_proj_view;
+
+		int _cascade{ 0 };
+		mat4f _light_proj_view[4];
 		std::shared_ptr<environment_vulkan> _environment;
 	};
 }

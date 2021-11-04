@@ -49,7 +49,7 @@ namespace rb {
 
 		virtual void end_geometry_pass(const std::shared_ptr<viewport>& viewport) = 0;
 
-		virtual void begin_shadow_pass(const transform& transform, const light& light, const directional_light& directional_light) = 0;
+		virtual void begin_shadow_pass(const transform& transform, const light& light, const directional_light& directional_light, int cascade) = 0;
 
 		virtual void draw_shadow(const transform& transform, const geometry& geometry) = 0;
 
@@ -130,7 +130,7 @@ namespace rb {
 
 		static void end_geometry_pass(const std::shared_ptr<viewport>& viewport);
 
-		static void begin_shadow_pass(const transform& transform, const light& light, const directional_light& directional_light);
+		static void begin_shadow_pass(const transform& transform, const light& light, const directional_light& directional_light, int cascade);
 
 		static void draw_shadow(const transform& transform, const geometry& geometry);
 

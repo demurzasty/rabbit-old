@@ -62,8 +62,8 @@ void graphics::end_geometry_pass(const std::shared_ptr<viewport>& viewport) {
 	_impl->end_geometry_pass(viewport);
 }
 
-void graphics::begin_shadow_pass(const transform& transform, const light& light, const directional_light& directional_light) {
-	_impl->begin_shadow_pass(transform, light, directional_light);
+void graphics::begin_shadow_pass(const transform& transform, const light& light, const directional_light& directional_light, int cascade) {
+	_impl->begin_shadow_pass(transform, light, directional_light, cascade);
 }
 
 void graphics::draw_shadow(const transform& transform, const geometry& geometry) {
