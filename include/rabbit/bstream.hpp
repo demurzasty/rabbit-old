@@ -9,6 +9,14 @@
 #include <type_traits>
 
 namespace rb {
+	class ibstream {
+	public:
+		virtual ~istream() = default;
+
+	private:
+
+	};
+
 	enum class bstream_mode {
 		read,
 		write

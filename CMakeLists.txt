@@ -45,6 +45,7 @@ add_custom_target (shaders DEPENDS ${SPIRV_BINARY_FILES})
 set (SRC 
 	"src/app.cpp"
 	"src/assets.cpp"
+	"src/bstream.cpp"
 	"src/camera_manager.cpp"
 	"src/compression.cpp"
 	"src/environment.cpp"

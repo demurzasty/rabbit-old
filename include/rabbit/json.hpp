@@ -1,7 +1,9 @@
 #pragma once 
 
 #include "assets.hpp"
+#include "vec2.hpp"
 #include "vec3.hpp"
+#include "vec4.hpp"
 #include "color.hpp"
 
 #include <nlohmann/json.hpp>
@@ -13,10 +15,66 @@ namespace rb {
 
 	class json_read_visitor {
 	public:
+		void operator()(const char* name, vec2u& data) {
+			if (json.contains(name)) {
+				const auto& array = json[name];
+				data = { array[0], array[1] };
+			}
+		}
+
+		void operator()(const char* name, vec3u& data) {
+			if (json.contains(name)) {
+				const auto& array = json[name];
+				data = { array[0], array[1], array[2] };
+			}
+		}
+
+		void operator()(const char* name, vec4u& data) {
+			if (json.contains(name)) {
+				const auto& array = json[name];
+				data = { array[0], array[1], array[2], array[3] };
+			}
+		}
+
+		void operator()(const char* name, vec2i& data) {
+			if (json.contains(name)) {
+				const auto& array = json[name];
+				data = { array[0], array[1] };
+			}
+		}
+
+		void operator()(const char* name, vec3i& data) {
+			if (json.contains(name)) {
+				const auto& array = json[name];
+				data = { array[0], array[1], array[2] };
+			}
+		}
+
+		void operator()(const char* name, vec4i& data) {
+			if (json.contains(name)) {
+				const auto& array = json[name];
+				data = { array[0], array[1], array[2], array[3] };
+			}
+		}
+
+		void operator()(const char* name, vec2f& data) {
+			if (json.contains(name)) {
+				const auto& array = json[name];
+				data = { array[0], array[1] };
+			}
+		}
+
 		void operator()(const char* name, vec3f& data) {
 			if (json.contains(name)) {
 				const auto& array = json[name];
 				data = { array[0], array[1], array[2] };
+			}
+		}
+
+		void operator()(const char* name, vec4f& data) {
+			if (json.contains(name)) {
+				const auto& array = json[name];
+				data = { array[0], array[1], array[2], array[3] };
 			}
 		}
 
