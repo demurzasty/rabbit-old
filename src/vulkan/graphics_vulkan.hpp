@@ -14,6 +14,7 @@
 #include <vk_mem_alloc.h>
 
 #include <vector>
+#include <unordered_map>
 
 namespace rb {
 	class graphics_vulkan : public graphics_impl {
@@ -205,6 +206,10 @@ namespace rb {
 
 		void _create_gbuffer();
 
+		VkPipeline _create_gbuffer_pipeline(std::size_t flags);
+
+		VkPipeline _get_gbuffer_pipeline(std::size_t flags);
+
 		void _create_light();
 
 		void _create_forward();
@@ -335,7 +340,8 @@ namespace rb {
 		VkDescriptorSetLayout _gbuffer_descriptor_set_layout;
 		VkRenderPass _gbuffer_render_pass;
 		VkPipelineLayout _gbuffer_pipeline_layout;
-		VkPipeline _gbuffer_pipeline;
+		//VkPipeline _gbuffer_pipeline;
+		std::unordered_map<std::uint32_t, VkPipeline> _gbuffer_pipelines;
 
 		VkDescriptorSetLayout _light_descriptor_set_layout;
 		VkRenderPass _light_render_pass;

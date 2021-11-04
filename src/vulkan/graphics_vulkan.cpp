@@ -132,7 +132,9 @@ graphics_vulkan::~graphics_vulkan() {
     vkDestroyDescriptorSetLayout(_device, _light_descriptor_set_layout, nullptr);
     vkDestroyRenderPass(_device, _light_render_pass, nullptr);
 
-    vkDestroyPipeline(_device, _gbuffer_pipeline, nullptr);
+    for (const auto& [flags, pipeline] : _gbuffer_pipelines) {
+        vkDestroyPipeline(_device, pipeline, nullptr);
+    }
     vkDestroyPipelineLayout(_device, _gbuffer_pipeline_layout, nullptr);
     vkDestroyDescriptorSetLayout(_device, _gbuffer_descriptor_set_layout, nullptr);
     vkDestroyRenderPass(_device, _gbuffer_render_pass, nullptr);
@@ -264,8 +266,6 @@ void graphics_vulkan::begin_geometry_pass(const std::shared_ptr<viewport>& viewp
     const auto native_viewport = std::static_pointer_cast<viewport_vulkan>(viewport);
 
     native_viewport->begin_geometry_pass(_command_buffers[_command_index]);
-
-    vkCmdBindPipeline(_command_buffers[_command_index], VK_PIPELINE_BIND_POINT_GRAPHICS, _gbuffer_pipeline);
 }
 
 void graphics_vulkan::draw_geometry(const std::shared_ptr<viewport>& viewport, const transform& transform, const geometry& geometry) {
@@ -292,6 +292,10 @@ void graphics_vulkan::draw_geometry(const std::shared_ptr<viewport>& viewport, c
         mat4f::scaling(transform.scaling);
 
     vkCmdPushConstants(_command_buffers[_command_index], _gbuffer_pipeline_layout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(local_data), &local_data);
+    
+    const auto material_flags = geometry.material ? geometry.material->flags() : 0;
+    const auto pipeline = _get_gbuffer_pipeline(material_flags);
+    vkCmdBindPipeline(_command_buffers[_command_index], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
 
     vkCmdDrawIndexed(_command_buffers[_command_index], static_cast<std::uint32_t>(native_mesh->indices().size()), 1, 0, 0, 0);
 }
@@ -1503,6 +1507,9 @@ void graphics_vulkan::_create_gbuffer() {
     pipeline_layout_info.pPushConstantRanges = &push_constant_range;
     RB_VK(vkCreatePipelineLayout(_device, &pipeline_layout_info, nullptr, &_gbuffer_pipeline_layout),
         "Failed to create Vulkan pipeline layout");
+}
+
+VkPipeline graphics_vulkan::_create_gbuffer_pipeline(std::size_t flags) {
 
     VkShaderModule gbuffer_shader_modules[2];
 
@@ -1642,11 +1649,43 @@ void graphics_vulkan::_create_gbuffer() {
     vertex_shader_stage_info.module = gbuffer_shader_modules[0];
     vertex_shader_stage_info.pName = "main";
 
+    struct specialization_data_t {
+        int use_albedo_map{ 0 };
+        int use_normal_map{ 0 };
+        int use_roughness_map{ 0 };
+        int use_metallic_map{ 0 };
+        int use_emissive_map{ 0 };
+        int use_ambient_map{ 0 };
+    } specialization_data;
+
+    specialization_data.use_albedo_map = flags & material_flags::albedo_map_bit;
+    specialization_data.use_normal_map = flags & material_flags::normal_map_bit;
+    specialization_data.use_roughness_map = flags & material_flags::roughness_map_bit;
+    specialization_data.use_metallic_map = flags & material_flags::metallic_map_bit;
+    specialization_data.use_emissive_map = flags & material_flags::emissive_map_bit;
+    specialization_data.use_ambient_map = flags & material_flags::ambient_map_bit;
+
+    VkSpecializationMapEntry specializtion_map_entries[6]{
+        { 0, offsetof(specialization_data_t, use_albedo_map), sizeof(int) },
+        { 1, offsetof(specialization_data_t, use_normal_map), sizeof(int) },
+        { 2, offsetof(specialization_data_t, use_roughness_map), sizeof(int) },
+        { 3, offsetof(specialization_data_t, use_metallic_map), sizeof(int) },
+        { 4, offsetof(specialization_data_t, use_emissive_map), sizeof(int) },
+        { 5, offsetof(specialization_data_t, use_ambient_map), sizeof(int) }
+    };
+
+    VkSpecializationInfo specialization_info;
+    specialization_info.dataSize = sizeof(specialization_data);
+    specialization_info.mapEntryCount = 6;
+    specialization_info.pMapEntries = specializtion_map_entries;
+    specialization_info.pData = &specialization_data;
+
     VkPipelineShaderStageCreateInfo fragment_shader_stage_info{};
     fragment_shader_stage_info.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
     fragment_shader_stage_info.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
     fragment_shader_stage_info.module = gbuffer_shader_modules[1];
     fragment_shader_stage_info.pName = "main";
+    fragment_shader_stage_info.pSpecializationInfo = &specialization_info;
 
     VkPipelineShaderStageCreateInfo shader_stages[] = {
         vertex_shader_stage_info,
@@ -1654,7 +1693,7 @@ void graphics_vulkan::_create_gbuffer() {
     };
 
     VkDynamicState dynamic_states[]{
-        VK_DYNAMIC_STATE_VIEWPORT, 
+        VK_DYNAMIC_STATE_VIEWPORT,
         VK_DYNAMIC_STATE_SCISSOR
     };
 
@@ -1680,11 +1719,24 @@ void graphics_vulkan::_create_gbuffer() {
     pipeline_info.renderPass = _gbuffer_render_pass;
     pipeline_info.basePipelineHandle = VK_NULL_HANDLE;
     pipeline_info.pDynamicState = &dynamic_state_info;
-    RB_VK(vkCreateGraphicsPipelines(_device, VK_NULL_HANDLE, 1, &pipeline_info, nullptr, &_gbuffer_pipeline),
+
+    VkPipeline pipeline;
+    RB_VK(vkCreateGraphicsPipelines(_device, VK_NULL_HANDLE, 1, &pipeline_info, nullptr, &pipeline),
         "Failed to create Vulkan graphics pipeline");
 
     vkDestroyShaderModule(_device, gbuffer_shader_modules[1], nullptr);
     vkDestroyShaderModule(_device, gbuffer_shader_modules[0], nullptr);
+
+    return pipeline;
+}
+
+VkPipeline graphics_vulkan::_get_gbuffer_pipeline(std::size_t flags) {
+    auto& pipeline = _gbuffer_pipelines[flags];
+    if (pipeline) {
+        return pipeline;
+    }
+
+    return pipeline = _create_gbuffer_pipeline(flags);
 }
 
 void graphics_vulkan::_create_light() {
