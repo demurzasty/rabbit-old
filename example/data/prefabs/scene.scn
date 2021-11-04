@@ -40,7 +40,9 @@
       "light": {
         "color": [ 255, 255, 255, 255 ]
       },
-      "directional_light": {}
+      "directional_light": {
+        "shadow_enabled": true
+      }
     },
     {
       "identity": {

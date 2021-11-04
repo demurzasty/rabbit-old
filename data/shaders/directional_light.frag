@@ -35,6 +35,8 @@ layout (std140, push_constant) uniform light_data {
     vec3 u_light_color; // precomputed intensity in color
 };
 
+layout (constant_id = 0) const int SHADOW_ENABLED = 0;
+
 const vec2 poisson_disk[64] = {
 	vec2( -0.04117257, -0.1597612 ),
 	vec2( 0.06731031, -0.4353096 ),
@@ -203,16 +205,18 @@ vec3 extract_position(sampler2D depth_map, vec2 texcoord) {
 }
 
 float compute_shadow(in vec3 position) {
-	for (int i = 0; i < 4; ++i) {
-		vec4 shadow_position = u_light_proj_views[i] * vec4(position, 1.0);
-		shadow_position.xyz = shadow_position.xyz / shadow_position.w;
+	if (SHADOW_ENABLED == 1) {
+		for (int i = 0; i < 4; ++i) {
+			vec4 shadow_position = u_light_proj_views[i] * vec4(position, 1.0);
+			shadow_position.xyz = shadow_position.xyz / shadow_position.w;
 
-		vec2 shadow_coord = vec2(shadow_position.x, shadow_position.y) * 0.5 + 0.5;
-		if (shadow_coord.x >= 0.0 && shadow_coord.x <= 1.0 &&
-			shadow_coord.y >= 0.0 && shadow_coord.y <= 1.0 &&
-			shadow_position.z >= 0.0 && shadow_position.z <= 1.0) {
-			return sin(pcss(vec3(shadow_coord.xy, shadow_position.z - 0.001 * i), i) * PI * 0.5);
-		} 
+			vec2 shadow_coord = vec2(shadow_position.x, shadow_position.y) * 0.5 + 0.5;
+			if (shadow_coord.x >= 0.0 && shadow_coord.x <= 1.0 &&
+				shadow_coord.y >= 0.0 && shadow_coord.y <= 1.0 &&
+				shadow_position.z >= 0.0 && shadow_position.z <= 1.0) {
+				return sin(pcss(vec3(shadow_coord.xy, shadow_position.z - 0.001 * i), i) * PI * 0.5);
+			} 
+		}
 	}
 	return 1.0;
 }

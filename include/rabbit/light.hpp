@@ -13,10 +13,11 @@ namespace rb {
 	};
 
 	struct directional_light {
-		int dummy{ 0 };
+		bool shadow_enabled{ false };
 
 		template<typename Visitor>
 		static void visit(Visitor& visitor, directional_light& directional_light) {
+			visitor("shadow_enabled", directional_light.shadow_enabled);
 		}
 	};
 

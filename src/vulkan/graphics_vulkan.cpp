@@ -116,6 +116,7 @@ graphics_vulkan::~graphics_vulkan() {
     vkDestroyPipeline(_device, _point_light_pipeline, nullptr);
     vkDestroyPipelineLayout(_device, _point_light_pipeline_layout, nullptr);
 
+    vkDestroyPipeline(_device, _directional_light_shadow_pipeline, nullptr);
     vkDestroyPipeline(_device, _directional_light_pipeline, nullptr);
     vkDestroyPipelineLayout(_device, _directional_light_pipeline_layout, nullptr);
 
@@ -410,7 +411,9 @@ void graphics_vulkan::draw_directional_light(const std::shared_ptr<viewport>& vi
 
     vkCmdPushConstants(_command_buffers[_command_index], _directional_light_pipeline_layout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(directional_light_data), &directional_light_data);
 
-    vkCmdBindPipeline(_command_buffers[_command_index], VK_PIPELINE_BIND_POINT_GRAPHICS, _directional_light_pipeline);
+    vkCmdBindPipeline(_command_buffers[_command_index], VK_PIPELINE_BIND_POINT_GRAPHICS, 
+        directional_light.shadow_enabled ? _directional_light_shadow_pipeline : _directional_light_pipeline);
+    
     vkCmdDrawIndexed(_command_buffers[_command_index], 6, 1, 0, 0, 0);
 }
 
@@ -2330,6 +2333,22 @@ void graphics_vulkan::_create_directional_light_pipeline() {
     pipeline_info.basePipelineHandle = VK_NULL_HANDLE;
     pipeline_info.pDynamicState = &dynamic_state_info;
     RB_VK(vkCreateGraphicsPipelines(_device, VK_NULL_HANDLE, 1, &pipeline_info, nullptr, &_directional_light_pipeline),
+        "Failed to create Vulkan graphics pipeline");
+
+    VkSpecializationMapEntry specialization_map_entry;
+    specialization_map_entry.constantID = 0;
+    specialization_map_entry.offset = 0;
+    specialization_map_entry.size = sizeof(int);
+
+    int specialization_data = 1;
+
+    VkSpecializationInfo specialization_info;
+    specialization_info.dataSize = sizeof(int);
+    specialization_info.mapEntryCount = 1;
+    specialization_info.pMapEntries = &specialization_map_entry;
+    specialization_info.pData = &specialization_data;
+    shader_stages[1].pSpecializationInfo = &specialization_info;
+    RB_VK(vkCreateGraphicsPipelines(_device, VK_NULL_HANDLE, 1, &pipeline_info, nullptr, &_directional_light_shadow_pipeline),
         "Failed to create Vulkan graphics pipeline");
 
     vkDestroyShaderModule(_device, directional_light_shader_modules[1], nullptr);

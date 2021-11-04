@@ -43,6 +43,10 @@ void renderer::draw(registry& registry) {
     graphics::end_geometry_pass(_viewport);
 
     registry.view<transform, light, directional_light>().each([this, &registry](transform& transform, light& light, directional_light& directional_light) {
+        if (!directional_light.shadow_enabled) {
+            return;
+        }
+
         for (auto cascade = 0u; cascade < graphics_limits::max_shadow_cascades; ++cascade) {
             graphics::begin_shadow_pass(transform, light, directional_light, cascade);
         

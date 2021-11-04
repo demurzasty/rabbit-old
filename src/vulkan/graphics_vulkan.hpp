@@ -351,6 +351,7 @@ namespace rb {
 
 		VkPipelineLayout _directional_light_pipeline_layout;
 		VkPipeline _directional_light_pipeline;
+		VkPipeline _directional_light_shadow_pipeline;
 
 		VkPipelineLayout _point_light_pipeline_layout;
 		VkPipeline _point_light_pipeline;
