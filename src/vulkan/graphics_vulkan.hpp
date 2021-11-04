@@ -206,9 +206,13 @@ namespace rb {
 
 		void _create_gbuffer();
 
-		VkPipeline _create_gbuffer_pipeline(std::size_t flags);
+		VkPipelineLayout _create_gbuffer_pipeline_layout(const std::shared_ptr<material>& material);
 
-		VkPipeline _get_gbuffer_pipeline(std::size_t flags);
+		VkPipelineLayout _get_gbuffer_pipeline_layout(const std::shared_ptr<material>& material);
+
+		VkPipeline _create_gbuffer_pipeline(const std::shared_ptr<material>& material);
+
+		VkPipeline _get_gbuffer_pipeline(const std::shared_ptr<material>& material);
 
 		void _create_light();
 
@@ -339,8 +343,8 @@ namespace rb {
 
 		VkDescriptorSetLayout _gbuffer_descriptor_set_layout;
 		VkRenderPass _gbuffer_render_pass;
-		VkPipelineLayout _gbuffer_pipeline_layout;
-		//VkPipeline _gbuffer_pipeline;
+		// VkPipelineLayout _gbuffer_pipeline_layout;
+		std::unordered_map<std::uint32_t, VkPipelineLayout> _gbuffer_pipeline_layouts;
 		std::unordered_map<std::uint32_t, VkPipeline> _gbuffer_pipelines;
 
 		VkDescriptorSetLayout _light_descriptor_set_layout;

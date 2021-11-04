@@ -16,10 +16,11 @@ namespace rb {
 	public:
 		material_vulkan(VkDevice device,
 			VmaAllocator allocator,
-			VkDescriptorSetLayout descriptor_set_layout,
 			const material_desc& desc);
 
 		~material_vulkan();
+
+		VkDescriptorSetLayout descriptor_set_layout() const;
 
 		VkDescriptorSet descriptor_set() const;
 

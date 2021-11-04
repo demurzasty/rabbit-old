@@ -1,5 +1,13 @@
 #version 450
 
+layout (constant_id = 0) const int ALBEDO_MAP = 0;
+layout (constant_id = 1) const int NORMAL_MAP = 1;
+layout (constant_id = 2) const int ROUGHNESS_MAP = 2;
+layout (constant_id = 3) const int METALLIC_MAP = 3;
+layout (constant_id = 4) const int EMISSIVE_MAP = 4;
+layout (constant_id = 5) const int AMBIENT_MAP = 5;
+layout (constant_id = 6) const int MAX_MAPS = 6;
+
 layout (location = 0) in vec3 v_position;
 layout (location = 1) in vec2 v_texcoord;
 layout (location = 2) in vec3 v_normal;
@@ -21,19 +29,7 @@ layout (std140, set = 1, binding = 0) uniform material_data {
     float u_metallic;
 };
 
-layout(set = 1, binding = 1) uniform sampler2D u_albedo_map;
-layout(set = 1, binding = 2) uniform sampler2D u_normal_map;
-layout(set = 1, binding = 3) uniform sampler2D u_roughness_map;
-layout(set = 1, binding = 4) uniform sampler2D u_metallic_map;
-layout(set = 1, binding = 5) uniform sampler2D u_emissive_map;
-layout(set = 1, binding = 6) uniform sampler2D u_ambient_map;
-
-layout (constant_id = 0) const int USE_ALBEDO_MAP = 0;
-layout (constant_id = 1) const int USE_NORMAL_MAP = 0;
-layout (constant_id = 2) const int USE_ROUGHNESS_MAP = 0;
-layout (constant_id = 3) const int USE_METALLIC_MAP = 0;
-layout (constant_id = 4) const int USE_EMISSIVE_MAP = 0;
-layout (constant_id = 5) const int USE_AMBIENT_MAP = 0;
+layout(set = 1, binding = 1) uniform sampler2D u_maps[MAX_MAPS];
 
 mat3 cotangent_frame(vec3 n, vec3 p, vec2 uv) {
     // get edge vectors of the pixel triangle
@@ -60,37 +56,36 @@ vec3 perturb(vec3 map, vec3 n, vec3 v, vec2 texcoord) {
 
 void main() {
     vec4 albedo = vec4(u_base_color, 1.0);
-    if (USE_ALBEDO_MAP != 0) {
-        albedo *= texture(u_albedo_map, v_texcoord);
+    if (ALBEDO_MAP > -1) {
+        albedo *= texture(u_maps[ALBEDO_MAP], v_texcoord);
         if (albedo.a < 0.5) {
             discard;
         }
     }
 
     vec3 normal = v_normal;
-    if (USE_NORMAL_MAP != 0) {
-        normal = perturb(texture(u_normal_map, v_texcoord).rgb * 2.0 - 1.0, normalize(normal), normalize(u_camera_position - v_position), v_texcoord);
+    if (NORMAL_MAP > -1) {
+        normal = perturb(texture(u_maps[NORMAL_MAP], v_texcoord).rgb * 2.0 - 1.0, normalize(normal), normalize(u_camera_position - v_position), v_texcoord);
     }
 
     float roughness = u_roughness;
-    if (USE_ROUGHNESS_MAP != 0) {
-        roughness *= texture(u_roughness_map, v_texcoord).r;
+    if (ROUGHNESS_MAP > -1) {
+        roughness *= texture(u_maps[ROUGHNESS_MAP], v_texcoord).r;
     }
    
     float metallic = u_metallic;
-    if (USE_METALLIC_MAP != 0) {
-        metallic *= texture(u_metallic_map, v_texcoord).r;
+    if (METALLIC_MAP > -1) {
+        metallic *= texture(u_maps[METALLIC_MAP], v_texcoord).r;
     }
     
     vec3 emissive = vec3(0.0);
-    if (USE_EMISSIVE_MAP != 0) {
-        emissive = texture(u_emissive_map, v_texcoord).rgb;
+    if (EMISSIVE_MAP > -1) {
+        emissive = texture(u_maps[EMISSIVE_MAP], v_texcoord).rgb;
     }
 
-
     float ao = 1.0;
-    if (USE_AMBIENT_MAP != 0) {
-        ao = texture(u_ambient_map, v_texcoord).r;
+    if (AMBIENT_MAP > -1) {
+        ao = texture(u_maps[AMBIENT_MAP], v_texcoord).r;
     }
 
     o_albedo = vec4(albedo.rgb, roughness);

@@ -6,12 +6,51 @@ using namespace rb;
 
 material_vulkan::material_vulkan(VkDevice device,
     VmaAllocator allocator,
-    VkDescriptorSetLayout descriptor_set_layout,
     const material_desc& desc)
     : material(desc)
     , _device(device)
-    , _allocator(allocator)
-    , _descriptor_set_layout(descriptor_set_layout) {
+    , _allocator(allocator) {
+    std::vector<VkDescriptorSetLayoutBinding> material_bindings;
+    material_bindings.push_back({ 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr });
+
+    std::uint32_t map_count{ 0 };
+    if (flags() & material_flags::albedo_map_bit) {
+        map_count++;
+    }
+
+    if (flags() & material_flags::normal_map_bit) {
+        map_count++;
+    }
+
+    if (flags() & material_flags::roughness_map_bit) {
+        map_count++;
+    }
+
+    if (flags() & material_flags::metallic_map_bit) {
+        map_count++;
+    }
+
+    if (flags() & material_flags::emissive_map_bit) {
+        map_count++;
+    }
+
+    if (flags() & material_flags::ambient_map_bit) {
+        map_count++;
+    }
+    
+    if (map_count > 0) {
+        material_bindings.push_back({ 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, map_count, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr });
+    }
+
+    VkDescriptorSetLayoutCreateInfo material_descriptor_set_layout_info;
+    material_descriptor_set_layout_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+    material_descriptor_set_layout_info.pNext = nullptr;
+    material_descriptor_set_layout_info.flags = 0;
+    material_descriptor_set_layout_info.bindingCount = static_cast<std::uint32_t>(material_bindings.size());
+    material_descriptor_set_layout_info.pBindings = material_bindings.data();
+    RB_VK(vkCreateDescriptorSetLayout(_device, &material_descriptor_set_layout_info, nullptr, &_descriptor_set_layout),
+        "Failed to create Vulkan descriptor set layout");
+
     VkBufferCreateInfo uniform_buffer_info;
     uniform_buffer_info.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
     uniform_buffer_info.pNext = nullptr;
@@ -77,38 +116,57 @@ material_vulkan::material_vulkan(VkDevice device,
     };
 
     const auto image_view = [](const std::shared_ptr<texture>& texture) {
-        return std::static_pointer_cast<texture_vulkan>(texture)->image_view();
+        return texture ? std::static_pointer_cast<texture_vulkan>(texture)->image_view() : VK_NULL_HANDLE;
     };
 
     const auto sampler = [](const std::shared_ptr<texture>& texture) {
-        return std::static_pointer_cast<texture_vulkan>(texture)->sampler();
+        return texture ? std::static_pointer_cast<texture_vulkan>(texture)->sampler() : VK_NULL_HANDLE;
     };
 
-    VkDescriptorImageInfo image_infos[6]{
-        { sampler(desc.albedo_map), image_view(desc.albedo_map), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL },
-        { sampler(desc.normal_map), image_view(desc.normal_map), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL },
-        { sampler(desc.roughness_map), image_view(desc.roughness_map), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL },
-        { sampler(desc.metallic_map), image_view(desc.metallic_map), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL },
-        { sampler(desc.emissive_map), image_view(desc.emissive_map), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL },
-        { sampler(desc.ambient_map), image_view(desc.ambient_map), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL },
-    };
+    std::vector<VkDescriptorImageInfo> image_infos;
 
-    VkWriteDescriptorSet write_infos[7]{
-        { VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET, nullptr, _descriptor_set, 0, 0, 1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, nullptr, &buffer_infos[0], nullptr },
-        { VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET, nullptr, _descriptor_set, 1, 0, 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, &image_infos[0], nullptr, nullptr },
-        { VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET, nullptr, _descriptor_set, 2, 0, 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, &image_infos[1], nullptr, nullptr },
-        { VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET, nullptr, _descriptor_set, 3, 0, 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, &image_infos[2], nullptr, nullptr },
-        { VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET, nullptr, _descriptor_set, 4, 0, 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, &image_infos[3], nullptr, nullptr },
-        { VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET, nullptr, _descriptor_set, 5, 0, 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, &image_infos[4], nullptr, nullptr },
-        { VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET, nullptr, _descriptor_set, 6, 0, 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, &image_infos[5], nullptr, nullptr },
-    };
+    if (flags() & material_flags::albedo_map_bit) {
+        image_infos.push_back({ sampler(desc.albedo_map), image_view(desc.albedo_map), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL });
+    }
 
-    vkUpdateDescriptorSets(_device, 7, write_infos, 0, nullptr);
+    if (flags() & material_flags::normal_map_bit) {
+        image_infos.push_back({ sampler(desc.normal_map), image_view(desc.normal_map), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL });
+    }
+
+    if (flags() & material_flags::roughness_map_bit) {
+        image_infos.push_back({ sampler(desc.roughness_map), image_view(desc.roughness_map), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL });
+    }
+
+    if (flags() & material_flags::metallic_map_bit) {
+        image_infos.push_back({ sampler(desc.metallic_map), image_view(desc.metallic_map), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL });
+    }
+
+    if (flags() & material_flags::emissive_map_bit) {
+        image_infos.push_back({ sampler(desc.emissive_map), image_view(desc.emissive_map), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL });
+    }
+
+    if (flags() & material_flags::ambient_map_bit) {
+        image_infos.push_back({ sampler(desc.ambient_map), image_view(desc.ambient_map), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL });
+    }
+
+    std::vector<VkWriteDescriptorSet> write_infos;
+    write_infos.push_back({ VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET, nullptr, _descriptor_set, 0, 0, 1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, nullptr, &buffer_infos[0], nullptr });
+    
+    if (!image_infos.empty()) {
+        write_infos.push_back({ VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET, nullptr, _descriptor_set, 1, 0, static_cast<std::uint32_t>(image_infos.size()), VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, image_infos.data(), nullptr, nullptr });
+    }
+
+    vkUpdateDescriptorSets(_device, static_cast<std::uint32_t>(write_infos.size()), write_infos.data(), 0, nullptr);
 }
 
 material_vulkan::~material_vulkan() {
+    vkDestroyDescriptorSetLayout(_device, _descriptor_set_layout, nullptr);
     vkDestroyDescriptorPool(_device, _descriptor_pool, nullptr);
     vmaDestroyBuffer(_allocator, _uniform_buffer, _uniform_buffer_allocation);
+}
+
+VkDescriptorSetLayout material_vulkan::descriptor_set_layout() const {
+    return _descriptor_set_layout;
 }
 
 VkDescriptorSet material_vulkan::descriptor_set() const {

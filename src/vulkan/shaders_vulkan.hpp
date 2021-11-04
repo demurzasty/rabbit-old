@@ -13,6 +13,7 @@ namespace rb {
 		static span<const std::uint32_t> prefilter_frag();
 		static span<const std::uint32_t> geometry_vert();
 		static span<const std::uint32_t> geometry_frag();
+		static span<const std::uint32_t> geometry_nomaps_frag();
 		static span<const std::uint32_t> forward_vert();
 		static span<const std::uint32_t> forward_frag();
 		static span<const std::uint32_t> skybox_vert();

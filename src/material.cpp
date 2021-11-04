@@ -53,38 +53,26 @@ std::shared_ptr<material> material::load(ibstream& stream) {
 
     if (const auto uuid = read_uuid(stream); uuid) {
         desc.albedo_map = assets::load<texture>(uuid);
-    } else {
-        desc.albedo_map = texture::make_one_color(color::white(), { 2, 2 });
     }
 
     if (const auto uuid = read_uuid(stream); uuid) {
         desc.normal_map = assets::load<texture>(uuid);
-    } else {
-        desc.normal_map = texture::make_one_color({ 127, 127, 255, 255 }, { 2, 2 });
-    }
+    } 
 
     if (const auto uuid = read_uuid(stream); uuid) {
         desc.roughness_map = assets::load<texture>(uuid);
-    } else {
-        desc.roughness_map = texture::make_one_color(color::white(), { 2, 2 });
     }
 
     if (const auto uuid = read_uuid(stream); uuid) {
         desc.metallic_map = assets::load<texture>(uuid);
-    } else {
-        desc.metallic_map = texture::make_one_color(color::white(), { 2, 2 });
     }
 
     if (const auto uuid = read_uuid(stream); uuid) {
         desc.emissive_map = assets::load<texture>(uuid);
-    } else {
-        desc.emissive_map = texture::make_one_color(color::black(), { 2, 2 });
     }
 
     if (const auto uuid = read_uuid(stream); uuid) {
         desc.ambient_map = assets::load<texture>(uuid);
-    } else {
-        desc.ambient_map = texture::make_one_color(color::white(), { 2, 2 });
     }
 
     return graphics::make_material(desc);

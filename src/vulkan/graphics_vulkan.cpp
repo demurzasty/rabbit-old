@@ -135,7 +135,9 @@ graphics_vulkan::~graphics_vulkan() {
     for (const auto& [flags, pipeline] : _gbuffer_pipelines) {
         vkDestroyPipeline(_device, pipeline, nullptr);
     }
-    vkDestroyPipelineLayout(_device, _gbuffer_pipeline_layout, nullptr);
+    for (const auto& [flags, pipeline_layout] : _gbuffer_pipeline_layouts) {
+        vkDestroyPipelineLayout(_device, pipeline_layout, nullptr);
+    }
     vkDestroyDescriptorSetLayout(_device, _gbuffer_descriptor_set_layout, nullptr);
     vkDestroyRenderPass(_device, _gbuffer_render_pass, nullptr);
 
@@ -239,7 +241,7 @@ std::shared_ptr<environment> graphics_vulkan::make_environment(const environment
 }
 
 std::shared_ptr<material> graphics_vulkan::make_material(const material_desc& desc) {
-	return std::make_shared<material_vulkan>(_device, _allocator, _material_descriptor_set_layout, desc);
+	return std::make_shared<material_vulkan>(_device, _allocator, desc);
 }
 
 std::shared_ptr<mesh> graphics_vulkan::make_mesh(const mesh_desc& desc) {
@@ -277,8 +279,11 @@ void graphics_vulkan::draw_geometry(const std::shared_ptr<viewport>& viewport, c
         native_material->descriptor_set()
     };
 
+    const auto pipeline_layout = _get_gbuffer_pipeline_layout(native_material);
+    const auto pipeline = _get_gbuffer_pipeline(native_material);
+
     vkCmdBindDescriptorSets(_command_buffers[_command_index],
-        VK_PIPELINE_BIND_POINT_GRAPHICS, _gbuffer_pipeline_layout, 0, 2, descriptor_sets,
+        VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 2, descriptor_sets,
         0, nullptr);
 
     VkDeviceSize offset{ 0 };
@@ -291,10 +296,8 @@ void graphics_vulkan::draw_geometry(const std::shared_ptr<viewport>& viewport, c
         mat4f::rotation(transform.rotation) *
         mat4f::scaling(transform.scaling);
 
-    vkCmdPushConstants(_command_buffers[_command_index], _gbuffer_pipeline_layout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(local_data), &local_data);
+    vkCmdPushConstants(_command_buffers[_command_index], pipeline_layout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(local_data), &local_data);
     
-    const auto material_flags = geometry.material ? geometry.material->flags() : 0;
-    const auto pipeline = _get_gbuffer_pipeline(material_flags);
     vkCmdBindPipeline(_command_buffers[_command_index], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
 
     vkCmdDrawIndexed(_command_buffers[_command_index], static_cast<std::uint32_t>(native_mesh->indices().size()), 1, 0, 0, 0);
@@ -1486,6 +1489,10 @@ void graphics_vulkan::_create_gbuffer() {
     render_pass_info.pDependencies = dependencies.data();
     RB_VK(vkCreateRenderPass(_device, &render_pass_info, nullptr, &_gbuffer_render_pass),
         "Failed to create Vulkan render pass.");
+}
+
+VkPipelineLayout graphics_vulkan::_create_gbuffer_pipeline_layout(const std::shared_ptr<material>& material) {
+    const auto native_material = std::static_pointer_cast<material_vulkan>(material);
 
     VkPushConstantRange push_constant_range;
     push_constant_range.offset = 0;
@@ -1494,7 +1501,7 @@ void graphics_vulkan::_create_gbuffer() {
 
     VkDescriptorSetLayout layouts[2]{
         _main_descriptor_set_layout, // main
-        _material_descriptor_set_layout // material
+        native_material->descriptor_set_layout() // material
     };
 
     VkPipelineLayoutCreateInfo pipeline_layout_info;
@@ -1505,11 +1512,27 @@ void graphics_vulkan::_create_gbuffer() {
     pipeline_layout_info.pSetLayouts = layouts;
     pipeline_layout_info.pushConstantRangeCount = 1;
     pipeline_layout_info.pPushConstantRanges = &push_constant_range;
-    RB_VK(vkCreatePipelineLayout(_device, &pipeline_layout_info, nullptr, &_gbuffer_pipeline_layout),
+
+    VkPipelineLayout pipeline_layout;
+    RB_VK(vkCreatePipelineLayout(_device, &pipeline_layout_info, nullptr, &pipeline_layout),
         "Failed to create Vulkan pipeline layout");
+
+    return pipeline_layout;
 }
 
-VkPipeline graphics_vulkan::_create_gbuffer_pipeline(std::size_t flags) {
+VkPipelineLayout graphics_vulkan::_get_gbuffer_pipeline_layout(const std::shared_ptr<material>& material) {
+    const auto flags = material ? material->flags() : 0;
+    auto& pipeline_layout = _gbuffer_pipeline_layouts[flags];
+    if (pipeline_layout) {
+        return pipeline_layout;
+    }
+    return pipeline_layout = _create_gbuffer_pipeline_layout(material);
+}
+
+VkPipeline graphics_vulkan::_create_gbuffer_pipeline(const std::shared_ptr<material>& material) {
+    const auto native_material = std::static_pointer_cast<material_vulkan>(material);
+
+    const auto pipeline_layout = _get_gbuffer_pipeline_layout(material);
 
     VkShaderModule gbuffer_shader_modules[2];
 
@@ -1526,8 +1549,13 @@ VkPipeline graphics_vulkan::_create_gbuffer_pipeline(std::size_t flags) {
     fragment_shader_module_info.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
     fragment_shader_module_info.pNext = nullptr;
     fragment_shader_module_info.flags = 0;
-    fragment_shader_module_info.codeSize = shaders_vulkan::geometry_frag().size_bytes();
-    fragment_shader_module_info.pCode = shaders_vulkan::geometry_frag().data();
+    if (material->flags()) {
+        fragment_shader_module_info.codeSize = shaders_vulkan::geometry_frag().size_bytes();
+        fragment_shader_module_info.pCode = shaders_vulkan::geometry_frag().data();
+    } else {
+        fragment_shader_module_info.codeSize = shaders_vulkan::geometry_nomaps_frag().size_bytes();
+        fragment_shader_module_info.pCode = shaders_vulkan::geometry_nomaps_frag().data();
+    }
     RB_VK(vkCreateShaderModule(_device, &fragment_shader_module_info, nullptr, &gbuffer_shader_modules[1]),
         "Failed to create shader module");
 
@@ -1650,33 +1678,51 @@ VkPipeline graphics_vulkan::_create_gbuffer_pipeline(std::size_t flags) {
     vertex_shader_stage_info.pName = "main";
 
     struct specialization_data_t {
-        int use_albedo_map{ 0 };
-        int use_normal_map{ 0 };
-        int use_roughness_map{ 0 };
-        int use_metallic_map{ 0 };
-        int use_emissive_map{ 0 };
-        int use_ambient_map{ 0 };
+        int albedo_map{ -1 };
+        int normal_map{ -1 };
+        int roughness_map{ -1 };
+        int metallic_map{ -1 };
+        int emissive_map{ -1 };
+        int ambient_map{ -1 };
+        int max_maps{ -1 };
     } specialization_data;
 
-    specialization_data.use_albedo_map = flags & material_flags::albedo_map_bit;
-    specialization_data.use_normal_map = flags & material_flags::normal_map_bit;
-    specialization_data.use_roughness_map = flags & material_flags::roughness_map_bit;
-    specialization_data.use_metallic_map = flags & material_flags::metallic_map_bit;
-    specialization_data.use_emissive_map = flags & material_flags::emissive_map_bit;
-    specialization_data.use_ambient_map = flags & material_flags::ambient_map_bit;
+    const auto flags = material->flags();
 
-    VkSpecializationMapEntry specializtion_map_entries[6]{
-        { 0, offsetof(specialization_data_t, use_albedo_map), sizeof(int) },
-        { 1, offsetof(specialization_data_t, use_normal_map), sizeof(int) },
-        { 2, offsetof(specialization_data_t, use_roughness_map), sizeof(int) },
-        { 3, offsetof(specialization_data_t, use_metallic_map), sizeof(int) },
-        { 4, offsetof(specialization_data_t, use_emissive_map), sizeof(int) },
-        { 5, offsetof(specialization_data_t, use_ambient_map), sizeof(int) }
+    int index{ 0 };
+    if (flags & material_flags::albedo_map_bit) {
+        specialization_data.albedo_map = index++;
+    }
+    if (flags & material_flags::normal_map_bit) {
+        specialization_data.normal_map = index++;
+    }
+    if (flags & material_flags::roughness_map_bit) {
+        specialization_data.roughness_map = index++;
+    }
+    if (flags & material_flags::metallic_map_bit) {
+        specialization_data.metallic_map = index++;
+    }
+    if (flags & material_flags::emissive_map_bit) {
+        specialization_data.emissive_map = index++;
+    }
+    if (flags & material_flags::ambient_map_bit) {
+        specialization_data.ambient_map = index++;
+    }
+    specialization_data.max_maps = index;
+
+    VkSpecializationMapEntry specializtion_map_entries[7]{
+        { 0, offsetof(specialization_data_t, albedo_map), sizeof(int) },
+        { 1, offsetof(specialization_data_t, normal_map), sizeof(int) },
+        { 2, offsetof(specialization_data_t, roughness_map), sizeof(int) },
+        { 3, offsetof(specialization_data_t, metallic_map), sizeof(int) },
+        { 4, offsetof(specialization_data_t, emissive_map), sizeof(int) },
+        { 5, offsetof(specialization_data_t, ambient_map), sizeof(int) },
+        { 6, offsetof(specialization_data_t, max_maps), sizeof(int) }
     };
 
     VkSpecializationInfo specialization_info;
     specialization_info.dataSize = sizeof(specialization_data);
-    specialization_info.mapEntryCount = 6;
+    specialization_info.mapEntryCount = 7;
     specialization_info.pMapEntries = specializtion_map_entries;
     specialization_info.pData = &specialization_data;
 
@@ -1685,7 +1731,10 @@ VkPipeline graphics_vulkan::_create_gbuffer_pipeline(std::size_t flags) {
     fragment_shader_stage_info.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
     fragment_shader_stage_info.module = gbuffer_shader_modules[1];
     fragment_shader_stage_info.pName = "main";
-    fragment_shader_stage_info.pSpecializationInfo = &specialization_info;
+
+    if (material->flags()) {
+        fragment_shader_stage_info.pSpecializationInfo = &specialization_info;
+    }
 
     VkPipelineShaderStageCreateInfo shader_stages[] = {
         vertex_shader_stage_info,
@@ -1715,7 +1764,7 @@ VkPipeline graphics_vulkan::_create_gbuffer_pipeline(std::size_t flags) {
     pipeline_info.pMultisampleState = &multisampling_state_info;
     pipeline_info.pColorBlendState = &color_blend_state_info;
     pipeline_info.pDepthStencilState = &depth_stencil_state_info;
-    pipeline_info.layout = _gbuffer_pipeline_layout;
+    pipeline_info.layout = pipeline_layout;
     pipeline_info.renderPass = _gbuffer_render_pass;
     pipeline_info.basePipelineHandle = VK_NULL_HANDLE;
     pipeline_info.pDynamicState = &dynamic_state_info;
@@ -1730,13 +1779,13 @@ VkPipeline graphics_vulkan::_create_gbuffer_pipeline(std::size_t flags) {
     return pipeline;
 }
 
-VkPipeline graphics_vulkan::_get_gbuffer_pipeline(std::size_t flags) {
+VkPipeline graphics_vulkan::_get_gbuffer_pipeline(const std::shared_ptr<material>& material) {
+    const auto flags = material ? material->flags() : 0;
     auto& pipeline = _gbuffer_pipelines[flags];
     if (pipeline) {
         return pipeline;
     }
-
-    return pipeline = _create_gbuffer_pipeline(flags);
+    return pipeline = _create_gbuffer_pipeline(material);
 }
 
 void graphics_vulkan::_create_light() {
