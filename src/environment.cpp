@@ -29,7 +29,7 @@ std::shared_ptr<environment> environment::load(bstream& stream) {
     stream.read(compressed_pixels.get(), compressed_size);
 
     const auto uncompressed_pixels = std::make_unique<std::uint8_t[]>(desc.size.x * desc.size.y * 4 * 6);
-    compression::uncompress(compressed_pixels.get(), compressed_size, uncompressed_pixels.get());
+    compression::uncompress(compressed_pixels.get(), compressed_size, uncompressed_pixels.get(), desc.size.x * desc.size.y * 4 * 6);
 
     desc.data = uncompressed_pixels.get();
     return graphics::make_environment(desc);

@@ -39,7 +39,7 @@ std::shared_ptr<texture> texture::load(bstream& stream) {
 	
 	const auto bits_per_pixel = calculate_bits_per_pixel(desc.format);
 	const auto pixels = std::make_unique<std::uint8_t[]>(desc.size.x * desc.size.y * bits_per_pixel / 8);
-	compression::uncompress(compressed_pixels.get(), compressed_size, pixels.get());
+	compression::uncompress(compressed_pixels.get(), compressed_size, pixels.get(), desc.size.x * desc.size.y * bits_per_pixel / 8);
 
 	desc.data = pixels.get();
 	return graphics::make_texture(desc);
