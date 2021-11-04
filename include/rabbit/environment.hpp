@@ -18,9 +18,9 @@ namespace rb {
 	public:
 		static constexpr auto magic_number{ fnv1a("environment") };
 
-		static std::shared_ptr<environment> load(bstream& stream);
+		static std::shared_ptr<environment> load(ibstream& stream);
 
-		static void import(const std::string& input, const std::string& output, const json& metadata);
+		static void import(ibstream& input, obstream& output, const json& metadata);
 
 		virtual ~environment() = default;
 

@@ -26,9 +26,9 @@ namespace rb {
 	public:
 		static constexpr auto magic_number{ fnv1a("material") };
 
-		static std::shared_ptr<material> load(bstream& stream);
+		static std::shared_ptr<material> load(ibstream& stream);
 
-		static void import(const std::string& input, const std::string& output, const json& metadata);
+		static void import(ibstream& input, obstream& output, const json& metadata);
 
 		virtual ~material() = default;
 

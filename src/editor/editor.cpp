@@ -41,6 +41,7 @@ void editor::scan() {
 	auto resources_json = json::object();
 
 	std::for_each(std::execution::par_unseq, entries.begin(), entries.end(), [&](const auto& dir_entry) {
+	//for (const auto& dir_entry : std::filesystem::recursive_directory_iterator{ "data" }) {
 		if (!dir_entry.is_regular_file()) {
 			return;
 		}
@@ -89,7 +90,10 @@ void editor::scan() {
 		if (last_write_time > cached_last_write_time || !std::filesystem::exists(output_path)) {
 			print("importing: {}\n", path.string());
 
-			importer(path.string(), output_path.string(), metadata);
+			fibstream input{ path.string() };
+			fobstream output{ output_path.string() };
+
+			importer(input, output, metadata);
 
 			cache["last_write_time"] = last_write_time;
 			std::ofstream{ cache_path } << std::setw(4) << cache;
@@ -101,7 +105,7 @@ void editor::scan() {
 		resources_json[resource_path] = uuid;
 	});
 
-	bstream resources_stream{ (package_directory / "resources").string(), bstream_mode::write };
+	fobstream resources_stream{ (package_directory / "resources").string() };
 	const auto cbor = json::to_cbor(resources_json);
 	resources_stream.write<std::uint32_t>(cbor.size());
 	resources_stream.write<std::uint8_t>(cbor);

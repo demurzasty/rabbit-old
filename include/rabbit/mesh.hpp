@@ -26,9 +26,9 @@ namespace rb {
 	public:
 		static constexpr auto magic_number{ fnv1a("mesh") };
 
-		static std::shared_ptr<mesh> load(bstream& stream);
+		static std::shared_ptr<mesh> load(ibstream& stream);
 
-		static void import(const std::string& input, const std::string& output, const json& metadata);
+		static void import(ibstream& input, obstream& output, const json& metadata);
 
 		static std::shared_ptr<mesh> make_box(const vec3f& extent, const vec2f& uv_scale);
 

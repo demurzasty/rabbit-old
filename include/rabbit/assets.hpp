@@ -37,7 +37,7 @@ namespace rb {
 	};
 
 	class assets {
-		using loader = std::function<std::shared_ptr<void>(bstream&)>;
+		using loader = std::function<std::shared_ptr<void>(ibstream&)>;
 
 	public:
 		static void init();

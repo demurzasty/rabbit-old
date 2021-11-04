@@ -3,6 +3,7 @@
 #include "vec2.hpp"
 #include "color.hpp"
 #include "span.hpp"
+#include "bstream.hpp"
 
 #include <vector>
 #include <memory>
@@ -14,6 +15,8 @@ namespace rb {
     class image {
     public:
         static image load_from_file(const std::string& filename);
+
+        static image load_from_stream(ibstream& stream);
 
         image() = default;
 

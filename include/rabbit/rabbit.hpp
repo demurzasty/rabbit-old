@@ -43,6 +43,7 @@
 #include "version.hpp"
 #include "vertex.hpp"
 #include "viewport.hpp"
+#include "visitor.hpp"
 #include "window.hpp"
 
 #if !RB_PROD_BUILD

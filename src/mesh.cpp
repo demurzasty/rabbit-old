@@ -36,7 +36,7 @@ static bspheref calculate_bsphere(const span<const vertex>& vertices) {
     return bsphere;
 }
 
-std::shared_ptr<mesh> mesh::load(bstream& stream) {
+std::shared_ptr<mesh> mesh::load(ibstream& stream) {
     std::uint32_t vertex_count;
     stream.read(vertex_count);
     const auto vertices = std::make_unique<vertex[]>(vertex_count);
@@ -63,17 +63,31 @@ std::shared_ptr<mesh> mesh::load(bstream& stream) {
     return graphics::make_mesh(desc);
 }
 
-void mesh::import(const std::string& input, const std::string& output, const json& metadata) {
-    std::ifstream istream{ input, std::ios::in };
-    RB_ASSERT(istream.is_open(), "Cannot open file");
-
+void mesh::import(ibstream& input, obstream& output, const json& metadata) {
     std::vector<vertex> vertices;
     std::vector<vec3f> positions;
     std::vector<vec2f> texcoords;
     std::vector<vec3f> normals;
 
+    const auto getline = [](ibstream& stream, std::string& line) -> bool {
+        line.clear();
+
+        char c;
+        while (!stream.eof()) {
+            stream.read(c);
+
+            if (c == '\n') {
+                break;
+            }
+
+            line.push_back(c);
+        }
+
+        return !line.empty();
+    };
+
     std::string line;
-    while (std::getline(istream, line)) {
+    while (getline(input, line)) {
         std::istringstream iss{ line };
         std::vector<std::string> results{ std::istream_iterator<std::string>{ iss }, std::istream_iterator<std::string>{} };
 
@@ -140,15 +154,14 @@ void mesh::import(const std::string& input, const std::string& output, const jso
 
     const auto bsphere = calculate_bsphere({ indexed_vertices.get(), vertex_size });
 
-    bstream stream{ output, bstream_mode::write };
-    stream.write(mesh::magic_number);
-    stream.write<std::uint32_t>(vertex_size);
-    stream.write(indexed_vertices.get(), vertex_size * sizeof(vertex));
-    stream.write<std::uint32_t>(vertices.size());
-    stream.write(indices.get(), vertices.size() * sizeof(std::uint32_t));
-    stream.write<std::uint32_t>(convex_hull.size() / 3); // in triangle count
-    stream.write(convex_hull.data(), convex_hull.size() * sizeof(vec3f));
-    stream.write(bsphere);
+    output.write(mesh::magic_number);
+    output.write<std::uint32_t>(vertex_size);
+    output.write(indexed_vertices.get(), vertex_size * sizeof(vertex));
+    output.write<std::uint32_t>(vertices.size());
+    output.write(indices.get(), vertices.size() * sizeof(std::uint32_t));
+    output.write<std::uint32_t>(convex_hull.size() / 3); // in triangle count
+    output.write(convex_hull.data(), convex_hull.size() * sizeof(vec3f));
+    output.write(bsphere);
 }
 
 std::shared_ptr<mesh> mesh::make_box(const vec3f& extent, const vec2f& uv_scale) {

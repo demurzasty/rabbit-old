@@ -18,7 +18,7 @@ static std::array<const char*, 6> faces = {
     "back"
 };
 
-std::shared_ptr<environment> environment::load(bstream& stream) {
+std::shared_ptr<environment> environment::load(ibstream& stream) {
     environment_desc desc;
     stream.read(desc.size);
 
@@ -35,17 +35,9 @@ std::shared_ptr<environment> environment::load(bstream& stream) {
     return graphics::make_environment(desc);
 }
 
-void environment::import(const std::string& input, const std::string& output, const json& metadata) {
-    // Try to open file.
-    std::fstream istream{ input, std::ios::in };
-    RB_ASSERT(istream.is_open(), "Cannot open file");
-
-    // Load json from file.
+void environment::import(ibstream& input, obstream& output, const json& metadata) {
     json json;
-    istream >> json;
-
-    // We do not need open stream anymore.
-    istream.close();
+    input.read(json);
 
     // Get individual faces texture filenames.
     std::array<std::string, 6> filenames;
@@ -67,12 +59,11 @@ void environment::import(const std::string& input, const std::string& output, co
     }
 
     const auto compressed_pixels = compression::compress<color>(buffer);
-
-    bstream stream{ output, bstream_mode::write };
-    stream.write(environment::magic_number);
-    stream.write(size);
-    stream.write<std::uint32_t>(compressed_pixels.size());
-    stream.write<std::uint8_t>(compressed_pixels);
+    
+    output.write(environment::magic_number);
+    output.write(size);
+    output.write<std::uint32_t>(compressed_pixels.size());
+    output.write<std::uint8_t>(compressed_pixels);
 }
 
 const vec2u& environment::size() const {

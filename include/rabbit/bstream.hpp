@@ -1,92 +1,161 @@
 #pragma once 
 
-#include "config.hpp"
 #include "span.hpp"
 #include "uuid.hpp"
+#include "json.hpp"
 
+#include <ios>
 #include <string>
 #include <cstdio>
+#include <memory>
 #include <type_traits>
 
 namespace rb {
+	// input binary stream
 	class ibstream {
 	public:
-		virtual ~istream() = default;
+		ibstream() = default;
 
-	private:
+		virtual ~ibstream() = default;
 
-	};
+		ibstream(const ibstream&) = delete;
+		ibstream(ibstream&&) = delete;
 
-	enum class bstream_mode {
-		read,
-		write
-	};
+		ibstream& operator=(const ibstream&) = delete;
+		ibstream& operator=(ibstream&&) = delete;
 
-	class bstream {
-	public:
-		bstream(const std::string& filename, bstream_mode mode)
-			: _file(fopen(filename.c_str(), mode == bstream_mode::read ? "rb" : "wb")) {
-		}
+		virtual void read(void* data, std::streamsize size) = 0;
 
-		bstream(const bstream&) = delete;
-		bstream(bstream&&) = default;
+		virtual void seek(std::streamoff offset) = 0;
 
-		bstream& operator=(const bstream&) = delete;
-		bstream& operator=(bstream&&) = default;
+		virtual bool eof() = 0;
 
-		~bstream() {
-			fclose(_file);
-		}
+		virtual std::streamsize size() = 0;
 
-		std::size_t size() {
-			const auto curr = ftell(_file);
+		void read(uuid& uuid);
 
-			fseek(_file, 0, SEEK_END);
-			const auto size = ftell(_file);
-			fseek(_file, curr, SEEK_SET);
-
-			return size;
-		}
-
-		void write(const void* data, std::size_t size) {
-			fwrite(data, 1, size, _file);
-		}
-
-		void read(void* data, std::size_t size) {
-			fread(data, 1, size, _file);
-		}
-
-		void write(const uuid& uuid) {
-			write(uuid.data());
-		}
-
-		void read(uuid& uuid) {
-			std::uint8_t data[16];
-			read(data, sizeof(data));
-			uuid = { data };
-		}
-
-		template<typename T>
-		void write(const span<const T>& data) {
-			write(data.data(), data.size_bytes());
-		}
+		void read(json& json);
 
 		template<typename T>
 		void read(const span<T>& data) {
 			read(data.data(), data.size_bytes());
 		}
 
-		template<typename T, std::enable_if_t<std::is_standard_layout_v<T> && std::is_trivial_v<T>, int> = 0>
-		void write(const T& data) {
-			write(&data, sizeof(T));
-		}
-
 		template<typename T, std::enable_if_t<std::is_standard_layout_v<T>&& std::is_trivial_v<T>, int> = 0>
 		void read(T& data) {
 			read(&data, sizeof(T));
 		}
+	};
+
+	// output binary stream 
+	class obstream {
+	public:
+		obstream() = default;
+
+		virtual ~obstream() = default;
+
+		obstream(const obstream&) = delete;
+		obstream(obstream&&) = delete;
+
+		obstream& operator=(const obstream&) = delete;
+		obstream& operator=(obstream&&) = delete;
+
+		virtual void write(const void* data, std::streamsize size) = 0;
+
+		void write(const uuid& uuid);
+
+		template<typename T>
+		void write(const span<const T>& data) {
+			write(data.data(), data.size_bytes());
+		}
+
+		template<typename T, std::enable_if_t<std::is_standard_layout_v<T>&& std::is_trivial_v<T>, int> = 0>
+		void write(const T& data) {
+			write(&data, sizeof(T));
+		}
+	};
+
+	// file input binary stream 
+	class fibstream : public ibstream {
+	public:
+		fibstream(const std::string& filename);
+
+		virtual ~fibstream() = default;
+
+		virtual void read(void* data, std::streamsize size) override;
+
+		virtual void seek(std::streamoff offset) override;
+
+		virtual bool eof() override;
+
+		virtual std::streamsize size() override;
+
+		const std::string& filename() const;
+
+		using ibstream::read;
 
 	private:
-		FILE* _file;
+		std::string _filename;
+		std::shared_ptr<std::ifstream> _stream;
+	};
+
+	// file output binary stream
+	class fobstream : public obstream {
+	public:
+		fobstream(const std::string& filename);
+
+		virtual ~fobstream() = default;
+
+		virtual void write(const void* data, std::streamsize size) override;
+
+		const std::string& filename() const;
+
+		using obstream::write;
+
+	private:
+		std::string _filename;
+		std::shared_ptr<std::ofstream> _stream;
+	};
+
+	// memory input binary stream
+	class mibstream : public ibstream {
+	public:
+		mibstream(const span<const std::uint8_t>& memory);
+
+		virtual ~mibstream() = default;
+
+		virtual void read(void* data, std::streamsize size) override;
+
+		virtual void seek(std::streamoff offset) override;
+
+		virtual bool eof() override;
+
+		virtual std::streamsize size() override;
+
+		const span<const std::uint8_t> memory() const;
+
+		using ibstream::read;
+
+	private:
+		std::streampos _position{ 0 };
+		std::vector<std::uint8_t> _memory;
+	};
+
+	// memory output binary stream
+	class mobstream : public obstream {
+	public:
+		mobstream() = default;
+
+		virtual ~mobstream() = default;
+
+		virtual void write(const void* data, std::streamsize size) override;
+
+		const span<const std::uint8_t> memory() const;
+
+		using obstream::write;
+
+	private:
+		std::streampos _position{ 0 };
+		std::vector<std::uint8_t> _memory;
 	};
 }

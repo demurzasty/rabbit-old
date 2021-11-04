@@ -41,9 +41,9 @@ namespace rb {
 	public:
 		static constexpr auto magic_number{ fnv1a("texture") };
 
-		static std::shared_ptr<texture> load(bstream& stream);
+		static std::shared_ptr<texture> load(ibstream& stream);
 
-		static void import(const std::string& input, const std::string& output, const json& metadata);
+		static void import(ibstream& input, obstream& output, const json& metadata);
 
 		static std::shared_ptr<texture> make_one_color(const color& color, const vec2u& size);
 

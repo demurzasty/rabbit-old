@@ -1,6 +1,5 @@
 #include <rabbit/assets.hpp>
-
-#include <fstream>
+#include <rabbit/config.hpp>
 
 using namespace rb;
 
@@ -17,7 +16,7 @@ void assets::release() {
 }
 
 void assets::load_resources() {
-    bstream stream{ "package/resources", bstream_mode::read };
+    fibstream stream{ "package/resources" };
 
     std::uint32_t cbor_size;
     stream.read(cbor_size);
@@ -42,7 +41,7 @@ std::shared_ptr<void> assets::_load(std::type_index type_index, const uuid& uuid
 
     fnv1a_result_t asset_magic_number;
 
-    bstream stream{ "package/" + uuid.to_string(), bstream_mode::read };
+    fibstream stream{ "package/" + uuid.to_string() };
     stream.read(asset_magic_number);
 
     RB_ASSERT(asset_magic_number == magic_number, "Asset type is not compatible.");

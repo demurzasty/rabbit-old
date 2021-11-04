@@ -9,13 +9,13 @@
 
 using namespace rb;
 
-std::shared_ptr<material> material::load(bstream& stream) {
+std::shared_ptr<material> material::load(ibstream& stream) {
     material_desc desc;
     stream.read(desc.base_color);
     stream.read(desc.roughness);
     stream.read(desc.metallic);
 
-    const auto read_uuid = [](bstream& stream) -> uuid {
+    const auto read_uuid = [](ibstream& stream) -> uuid {
         uuid uuid;
         stream.read(uuid);
         return uuid;
@@ -60,13 +60,9 @@ std::shared_ptr<material> material::load(bstream& stream) {
     return graphics::make_material(desc);
 }
 
-void material::import(const std::string& input, const std::string& output, const json& metadata) {
-    std::ifstream istream{ input, std::ios::in };
-    RB_ASSERT(istream.is_open(), "Cannot open file");
-
+void material::import(ibstream& input, obstream& output, const json& metadata) {
     json json;
-    istream >> json;
-    istream.close();
+    input.read(json);
 
     vec3f base_color{ 1.0f, 1.0f, 1.0f };
     float roughness{ 0.8f };
@@ -85,46 +81,45 @@ void material::import(const std::string& input, const std::string& output, const
         metallic = json["metallic"];
     }
 
-    bstream stream{ output, bstream_mode::write };
-    stream.write(material::magic_number);
-    stream.write(base_color);
-    stream.write(roughness);
-    stream.write(metallic);
+    output.write(material::magic_number);
+    output.write(base_color);
+    output.write(roughness);
+    output.write(metallic);
     
     if (json.contains("albedo_map")) {
-        stream.write(uuid::from_string(json["albedo_map"]).value());
+        output.write(uuid::from_string(json["albedo_map"]).value());
     } else {
-        stream.write(uuid{}.data());
+        output.write(uuid{}.data());
     }
 
     if (json.contains("normal_map")) {
-        stream.write(uuid::from_string(json["normal_map"]).value());
+        output.write(uuid::from_string(json["normal_map"]).value());
     } else {
-        stream.write(uuid{}.data());
+        output.write(uuid{}.data());
     }
 
     if (json.contains("roughness_map")) {
-        stream.write(uuid::from_string(json["roughness_map"]).value());
+        output.write(uuid::from_string(json["roughness_map"]).value());
     } else {
-        stream.write(uuid{}.data());
+        output.write(uuid{}.data());
     }
 
     if (json.contains("metallic_map")) {
-        stream.write(uuid::from_string(json["metallic_map"]).value());
+        output.write(uuid::from_string(json["metallic_map"]).value());
     } else {
-        stream.write(uuid{}.data());
+        output.write(uuid{}.data());
     }
 
     if (json.contains("emissive_map")) {
-        stream.write(uuid::from_string(json["emissive_map"]).value());
+        output.write(uuid::from_string(json["emissive_map"]).value());
     } else {
-        stream.write(uuid{}.data());
+        output.write(uuid{}.data());
     }
 
     if (json.contains("ambient_map")) {
-        stream.write(uuid::from_string(json["ambient_map"]).value());
+        output.write(uuid::from_string(json["ambient_map"]).value());
     } else {
-        stream.write(uuid{}.data());
+        output.write(uuid{}.data());
     }
 }
 

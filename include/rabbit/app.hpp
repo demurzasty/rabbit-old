@@ -3,6 +3,7 @@
 #include "system.hpp"
 #include "json.hpp"
 #include "uuid.hpp"
+#include "visitor.hpp"
 
 #include <list>
 #include <typeinfo>
