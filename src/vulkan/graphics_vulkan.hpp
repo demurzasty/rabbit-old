@@ -25,6 +25,7 @@ namespace rb {
 			mat4f inv_proj_view;
 			vec3f camera_position; float padding;
 			mat4f light_proj_view[4];
+			mat4f last_proj_view;
 		};
 
 		struct alignas(16) light_data {
@@ -141,6 +142,8 @@ namespace rb {
 
 		void draw_sharpen(const std::shared_ptr<viewport>& viewport, float strength) override;
 
+		void draw_motion_blur(const std::shared_ptr<viewport>& viewport) override;
+
 		void end_postprocess_pass(const std::shared_ptr<viewport>& viewport) override;
 
 		void begin_immediate_pass() override;
@@ -233,6 +236,8 @@ namespace rb {
 		void _create_blur_pipeline();
 
 		void _create_sharpen_pipeline();
+
+		void _create_motion_blur_pipeline();
 
 		void _create_skybox_pipeline();
 
@@ -398,6 +403,9 @@ namespace rb {
 
 		VkPipelineLayout _sharpen_pipeline_layout;
 		VkPipeline _sharpen_pipeline;
+
+		VkPipelineLayout _motion_blur_pipeline_layout;
+		VkPipeline _motion_blur_pipeline;
 
 		VkPipelineLayout _present_pipeline_layout;
 		VkPipeline _present_pipeline;

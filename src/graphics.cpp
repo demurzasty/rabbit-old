@@ -134,6 +134,10 @@ void graphics::draw_sharpen(const std::shared_ptr<viewport>& viewport, float str
 	_impl->draw_sharpen(viewport, std::max(strength, 0.0f));
 }
 
+void graphics::draw_motion_blur(const std::shared_ptr<viewport>& viewport) {
+	_impl->draw_motion_blur(viewport);
+}
+
 void graphics::end_postprocess_pass(const std::shared_ptr<viewport>& viewport) {
 	_impl->end_postprocess_pass(viewport);
 }

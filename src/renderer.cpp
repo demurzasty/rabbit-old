@@ -81,6 +81,10 @@ void renderer::draw(registry& registry) {
 
     graphics::draw_sharpen(_viewport, 0.25f);
 
+    graphics::next_postprocess_pass(_viewport);
+
+    graphics::draw_motion_blur(_viewport);
+
     graphics::end_postprocess_pass(_viewport);
 
     graphics::present(_viewport);

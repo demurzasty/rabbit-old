@@ -22,6 +22,7 @@
 #include <rabbit/generated/shaders/fxaa.frag.spv.h>
 #include <rabbit/generated/shaders/blur.frag.spv.h>
 #include <rabbit/generated/shaders/sharpen.frag.spv.h>
+#include <rabbit/generated/shaders/motion_blur.frag.spv.h>
 #include <rabbit/generated/shaders/present.frag.spv.h>
 
 using namespace rb;
@@ -112,6 +113,10 @@ span<const std::uint32_t> shaders_vulkan::blur_frag() {
 
 span<const std::uint32_t> shaders_vulkan::sharpen_frag() {
 	return ::sharpen_frag;
+}
+
+span<const std::uint32_t> shaders_vulkan::motion_blur_frag() {
+	return ::motion_blur_frag;
 }
 
 span<const std::uint32_t> shaders_vulkan::present_frag() {

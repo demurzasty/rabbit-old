@@ -86,6 +86,8 @@ namespace rb {
 
 		virtual void draw_sharpen(const std::shared_ptr<viewport>& viewport, float strength) = 0;
 
+		virtual void draw_motion_blur(const std::shared_ptr<viewport>& viewport) = 0;
+
 		virtual void end_postprocess_pass(const std::shared_ptr<viewport>& viewport) = 0;
 
 		virtual void begin_immediate_pass() = 0;
@@ -166,6 +168,8 @@ namespace rb {
 		static void draw_blur(const std::shared_ptr<viewport>& viewport, int strength);
 
 		static void draw_sharpen(const std::shared_ptr<viewport>& viewport, float strength);
+
+		static void draw_motion_blur(const std::shared_ptr<viewport>& viewport);
 
 		static void end_postprocess_pass(const std::shared_ptr<viewport>& viewport);
 
