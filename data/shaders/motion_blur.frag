@@ -22,7 +22,7 @@ layout (set = 1, binding = 3) uniform sampler2D u_depth_map;
 
 layout (set = 2, binding = 0) uniform sampler2D u_postprocess_map;
 
-const int strength = 25;
+const int strength = 5;
 
 vec3 extract_position(float depth, vec2 texcoord) {
     vec4 position;
