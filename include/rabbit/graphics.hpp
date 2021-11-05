@@ -24,6 +24,7 @@ namespace rb {
 		static constexpr std::size_t prefilter_map_size{ 128 };
 		static constexpr std::size_t shadow_map_size{ 1024 };
 		static constexpr std::size_t max_shadow_cascades{ 4 };
+		static constexpr std::size_t ssao_image_reduction{ 4 };
 	};
 
 	class graphics_impl {

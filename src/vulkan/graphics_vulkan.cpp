@@ -7,8 +7,6 @@
 #include "shaders_vulkan.hpp"
 #include "utils_vulkan.hpp"
 
-#define SSAO_IMAGE_REDUCTION 4
-
 #define VMA_IMPLEMENTATION
 #include <vk_mem_alloc.h>
 
@@ -522,7 +520,7 @@ void graphics_vulkan::pre_draw_ssao(const std::shared_ptr<viewport>& viewport) {
     render_pass_begin_info.renderPass = _ssao_render_pass;
     render_pass_begin_info.framebuffer = _ssao_framebuffer;
     render_pass_begin_info.renderArea.offset = { 0, 0 };
-    render_pass_begin_info.renderArea.extent = { _swapchain_extent.width / SSAO_IMAGE_REDUCTION, _swapchain_extent.height / SSAO_IMAGE_REDUCTION };
+    render_pass_begin_info.renderArea.extent = { _swapchain_extent.width / (int)graphics_limits::ssao_image_reduction, (int)_swapchain_extent.height / graphics_limits::ssao_image_reduction };
     render_pass_begin_info.clearValueCount = sizeof(clear_values) / sizeof(*clear_values);
     render_pass_begin_info.pClearValues = clear_values;
 
@@ -2881,7 +2879,7 @@ void graphics_vulkan::_create_ssao_pipeline() {
     image_info.flags = 0;
     image_info.imageType = VK_IMAGE_TYPE_2D;
     image_info.format = VK_FORMAT_R8_UNORM;
-    image_info.extent = { _swapchain_extent.width / SSAO_IMAGE_REDUCTION, _swapchain_extent.height / SSAO_IMAGE_REDUCTION, 1 };
+    image_info.extent = { _swapchain_extent.width / (int)graphics_limits::ssao_image_reduction, _swapchain_extent.height / (int)graphics_limits::ssao_image_reduction, 1 };
     image_info.mipLevels = 1;
     image_info.arrayLayers = 1;
     image_info.samples = VK_SAMPLE_COUNT_1_BIT;
@@ -2979,8 +2977,8 @@ void graphics_vulkan::_create_ssao_pipeline() {
     framebuffer_info.renderPass = _ssao_render_pass;
     framebuffer_info.attachmentCount = 1;
     framebuffer_info.pAttachments = &_ssao_image_view;
-    framebuffer_info.width = _swapchain_extent.width / SSAO_IMAGE_REDUCTION;
-    framebuffer_info.height = _swapchain_extent.height / SSAO_IMAGE_REDUCTION;
+    framebuffer_info.width = _swapchain_extent.width / graphics_limits::ssao_image_reduction;
+    framebuffer_info.height = _swapchain_extent.height / graphics_limits::ssao_image_reduction;
     framebuffer_info.layers = 1;
     RB_VK(vkCreateFramebuffer(_device, &framebuffer_info, nullptr, &_ssao_framebuffer),
         "Failed to create Vulkan framebuffer");
@@ -3130,14 +3128,14 @@ void graphics_vulkan::_create_ssao_pipeline() {
     VkViewport viewport;
     viewport.x = 0.0f;
     viewport.y = 0.0f;
-    viewport.width = static_cast<float>(_swapchain_extent.width / SSAO_IMAGE_REDUCTION);
-    viewport.height = static_cast<float>(_swapchain_extent.height / SSAO_IMAGE_REDUCTION);
+    viewport.width = static_cast<float>(_swapchain_extent.width / graphics_limits::ssao_image_reduction);
+    viewport.height = static_cast<float>(_swapchain_extent.height / graphics_limits::ssao_image_reduction);
     viewport.minDepth = 0.0f;
     viewport.maxDepth = 1.0f;
 
     VkRect2D scissor;
     scissor.offset = { 0, 0 };
-    scissor.extent = { _swapchain_extent.width / SSAO_IMAGE_REDUCTION, _swapchain_extent.height / SSAO_IMAGE_REDUCTION };
+    scissor.extent = { _swapchain_extent.width / (int)graphics_limits::ssao_image_reduction, _swapchain_extent.height / (int)graphics_limits::ssao_image_reduction };
 
     VkPipelineViewportStateCreateInfo viewport_state_info;
     viewport_state_info.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
