@@ -75,15 +75,23 @@ void renderer::draw(registry& registry) {
 
     graphics::begin_postprocess_pass(_viewport);
 
-    graphics::draw_fxaa(_viewport);
+    if (_viewport->fxaa_enabled) {
+        graphics::next_postprocess_pass(_viewport);
 
-    graphics::next_postprocess_pass(_viewport);
+        graphics::draw_fxaa(_viewport);
+    }
 
-    graphics::draw_sharpen(_viewport, 0.25f);
+    if (_viewport->sharpen_enabled) {
+        graphics::next_postprocess_pass(_viewport);
 
-    graphics::next_postprocess_pass(_viewport);
+        graphics::draw_sharpen(_viewport, _viewport->sharpen_factor);
+    }
 
-    graphics::draw_motion_blur(_viewport);
+    if (_viewport->motion_blur_enabled) {
+        graphics::next_postprocess_pass(_viewport);
+
+        graphics::draw_motion_blur(_viewport);
+    }
 
     graphics::end_postprocess_pass(_viewport);
 

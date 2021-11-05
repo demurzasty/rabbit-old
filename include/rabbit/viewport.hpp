@@ -19,6 +19,10 @@ namespace rb {
 
     public:
         entity camera{ null };
+        bool motion_blur_enabled{ true };
+        bool fxaa_enabled{ true };
+        bool sharpen_enabled{ true };
+        float sharpen_factor{ 0.25f };
 
     private:
         const vec2u _size;

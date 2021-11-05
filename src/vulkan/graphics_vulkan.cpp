@@ -564,8 +564,6 @@ void graphics_vulkan::begin_postprocess_pass(const std::shared_ptr<viewport>& vi
 
     vkCmdBindPipeline(_command_buffers[_command_index], VK_PIPELINE_BIND_POINT_GRAPHICS, _forward_copy_pipeline);
     vkCmdDrawIndexed(_command_buffers[_command_index], 6, 1, 0, 0, 0);
-
-    next_postprocess_pass(viewport);
 }
 
 void graphics_vulkan::next_postprocess_pass(const std::shared_ptr<viewport>& viewport) {
