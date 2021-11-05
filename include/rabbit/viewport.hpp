@@ -1,6 +1,7 @@
 #pragma once 
 
 #include "vec2.hpp"
+#include "entity.hpp"
 
 namespace rb {
     struct viewport_desc {
@@ -15,6 +16,9 @@ namespace rb {
 
     protected:
         viewport(const viewport_desc& desc);
+
+    public:
+        entity camera{ null };
 
     private:
         const vec2u _size;

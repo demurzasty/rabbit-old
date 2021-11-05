@@ -3,7 +3,6 @@
 #include <rabbit/light.hpp>
 #include <rabbit/input.hpp>
 #include <rabbit/settings.hpp>
-#include <rabbit/camera_manager.hpp>
 
 using namespace rb;
 
@@ -12,26 +11,26 @@ void renderer::initialize(registry& registry) {
 }
 
 void renderer::update(registry& registry, float elapsed_time) {
-    if (!registry.valid(camera_manager::main_camera)) {
+    if (!registry.valid(_viewport->camera)) {
         for (auto entity : registry.view<camera>()) {
-            camera_manager::main_camera = entity;
+            _viewport->camera = entity;
             break;
         }
     }
 }
 
 void renderer::draw(registry& registry) {
-    if (!registry.valid(camera_manager::main_camera)) {
+    if (!registry.valid(_viewport->camera)) {
         return;
     }
 
-    if (!registry.all_of<transform, camera>(camera_manager::main_camera)) {
+    if (!registry.all_of<transform, camera>(_viewport->camera)) {
         return;
     }
 
     graphics::begin();
 
-    const auto& [camera_transform, camera] = registry.get<transform, rb::camera>(camera_manager::main_camera);
+    const auto& [camera_transform, camera] = registry.get<transform, rb::camera>(_viewport->camera);
     graphics::set_camera(camera_transform, camera);
 
     graphics::begin_geometry_pass(_viewport);

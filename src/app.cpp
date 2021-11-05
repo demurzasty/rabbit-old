@@ -15,7 +15,6 @@ void app::setup() {
 	app::submodule<input>();
 	app::submodule<graphics>();
 	app::submodule<assets>();
-	app::submodule<camera_manager>();
 
 #if !RB_PROD_BUILD
 	app::submodule<editor>();

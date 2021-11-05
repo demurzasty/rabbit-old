@@ -46,7 +46,6 @@ set (SRC
 	"src/app.cpp"
 	"src/assets.cpp"
 	"src/bstream.cpp"
-	"src/camera_manager.cpp"
 	"src/compression.cpp"
 	"src/environment.cpp"
 	"src/graphics.cpp"
