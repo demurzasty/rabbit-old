@@ -67,7 +67,7 @@ void main() {
     vec2 brdf = texture(u_brdf_map, vec2(n_dot_v, roughness)).rg;
     vec3 spec = prefilter_color * (ks * brdf.x + brdf.y);
 
-    vec3 ambient = kd * diff + spec + texture(u_emissive_map, v_texcoord).rgb;
+    vec3 ambient = kd * diff + spec + emissive;
 
     o_color = vec4(ambient * ao, 0.0);
 }
