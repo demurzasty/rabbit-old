@@ -41,7 +41,6 @@ void editor::scan() {
 	auto resources_json = json::object();
 
 	std::for_each(std::execution::par_unseq, entries.begin(), entries.end(), [&](const auto& dir_entry) {
-	//for (const auto& dir_entry : std::filesystem::recursive_directory_iterator{ "data" }) {
 		if (!dir_entry.is_regular_file()) {
 			return;
 		}
@@ -69,6 +68,10 @@ void editor::scan() {
 		} else {
 			metadata["uuid"] = uuid::generate().to_string();
 			std::ofstream{ meta_path } << std::setw(4) << metadata;
+		}
+
+		if (metadata.contains("noimport") && metadata["noimport"]) {
+			return;
 		}
 
 		const std::string uuid{ metadata["uuid"] };
