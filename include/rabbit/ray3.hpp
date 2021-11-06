@@ -12,13 +12,13 @@ namespace rb {
 		vec3<T> direction;
 
 		static ray3<T> pick_ray(const vec2<T>& point, const vec4<T>& viewport, const mat4<T>& inv_proj_view) {
-			vec3<T> near{ point.x, point.y, 0 };
-			vec3<T> far{ point.x, point.y, 1 };
+			vec3<T> z_min{ point.x, point.y, 0 };
+			vec3<T> z_far{ point.x, point.y, 1 };
 
-			near = unproject(near, viewport, inv_proj_view);
-			far = unproject(far, viewport, inv_proj_view);
+			z_min = unproject(z_min, viewport, inv_proj_view);
+			z_far = unproject(z_far, viewport, inv_proj_view);
 
-			return { near, normalize(far - near) };
+			return { z_min, normalize(z_far - z_min) };
 		}
 	};
 

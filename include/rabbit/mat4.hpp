@@ -18,9 +18,9 @@ namespace rb {
             };
         }
 
-        static mat4<T> perspective(T fovy, T aspect, T near, T far) {
+        static mat4<T> perspective(T fovy, T aspect, T z_min, T z_far) {
             const auto r = fovy / 2;
-            const auto delta = near - far;
+            const auto delta = z_min - z_far;
             const auto s = std::sin(r);
 
             if (delta == 0 || s == 0 || aspect == 0) {
@@ -32,8 +32,8 @@ namespace rb {
             return {
                 cotangent / aspect, 0, 0, 0,
                 0, cotangent, 0, 0,
-                0, 0, (near + far) / delta, -1,
-                0, 0, (2 * near * far) / delta, 0
+                0, 0, (z_min + z_far) / delta, -1,
+                0, 0, (2 * z_min * z_far) / delta, 0
             };
         }
 

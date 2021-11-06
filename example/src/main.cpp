@@ -59,7 +59,8 @@ public:
         if (_time > 1.0f) {
             window::set_title(format("RabBit FPS: {}", _fps));
             _fps = 0;
-            _time = std::fmodf(_time, 1.0f);
+           // _time = std::modf(_time, 1.0f);
+            _time -= 1.0f;
         }
     }
 

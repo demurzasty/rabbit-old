@@ -531,7 +531,7 @@ void graphics_vulkan::pre_draw_ssao(const std::shared_ptr<viewport>& viewport) {
     render_pass_begin_info.renderPass = _ssao_render_pass;
     render_pass_begin_info.framebuffer = _ssao_framebuffer;
     render_pass_begin_info.renderArea.offset = { 0, 0 };
-    render_pass_begin_info.renderArea.extent = { _swapchain_extent.width / (int)graphics_limits::ssao_image_reduction, (int)_swapchain_extent.height / graphics_limits::ssao_image_reduction };
+    render_pass_begin_info.renderArea.extent = { _swapchain_extent.width / (unsigned int)graphics_limits::ssao_image_reduction, _swapchain_extent.height / (unsigned int)graphics_limits::ssao_image_reduction };
     render_pass_begin_info.clearValueCount = sizeof(clear_values) / sizeof(*clear_values);
     render_pass_begin_info.pClearValues = clear_values;
 

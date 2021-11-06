@@ -30,7 +30,7 @@ namespace rb {
 			return std::nullopt;
 		}
 
-		const auto position = dot(normal, ray.position);
+		const auto position = dot(plane.normal, ray.position);
 		const auto distance = (-plane.d - position) / direction;
 		if (distance < 0) {
 			return std::nullopt;
