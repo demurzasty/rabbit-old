@@ -18,6 +18,8 @@ namespace rb {
 
         static image load_from_stream(ibstream& stream);
 
+        static image resize(const image& image, const vec2u& new_size);
+
         image() = default;
 
         image(const image&) = delete;

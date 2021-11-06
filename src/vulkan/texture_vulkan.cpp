@@ -89,12 +89,21 @@ void texture_vulkan::_create_image(const texture_desc& desc) {
 }
 
 void texture_vulkan::_update_image(VkQueue graphics_queue, VkCommandPool command_pool, const texture_desc& desc) {
+    // Calculate total size.
+    std::uint32_t buffer_size{ 0 };
+
+    vec2u mipmap_size{ desc.size };
+    for (auto i = 0u; i < desc.mipmaps; ++i) {
+        buffer_size += mipmap_size.x * mipmap_size.y * bits_per_pixel() / 8;
+        mipmap_size = mipmap_size / 2u;
+    }
+
     // Create staging buffer.
     VkBufferCreateInfo buffer_info;
     buffer_info.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
     buffer_info.pNext = nullptr;
     buffer_info.flags = 0;
-    buffer_info.size = desc.size.x * desc.size.y * bits_per_pixel() / 8;
+    buffer_info.size = buffer_size;
     buffer_info.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
     buffer_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
     buffer_info.queueFamilyIndexCount = 0;
@@ -137,18 +146,25 @@ void texture_vulkan::_update_image(VkQueue graphics_queue, VkCommandPool command
     vkCmdPipelineBarrier(command_buffer, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT,
         VK_PIPELINE_STAGE_TRANSFER_BIT, 0, 0, nullptr, 0, nullptr, 1, &barrier);
 
-    VkBufferImageCopy region{};
-    region.bufferOffset = 0;
-    region.bufferRowLength = 0;
-    region.bufferImageHeight = 0;
-    region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-    region.imageSubresource.mipLevel = 0;
-    region.imageSubresource.baseArrayLayer = 0;
-    region.imageSubresource.layerCount = 1;
-    region.imageOffset = { 0, 0, 0 };
-    region.imageExtent = { desc.size.x, desc.size.y, 1 };
+    mipmap_size = desc.size;
+    std::uint32_t buffer_offset{ 0 };
+    for (auto i = 0u; i < desc.mipmaps; ++i) {
+        VkBufferImageCopy region{};
+        region.bufferOffset = buffer_offset;
+        region.bufferRowLength = 0;
+        region.bufferImageHeight = 0;
+        region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+        region.imageSubresource.mipLevel = i;
+        region.imageSubresource.baseArrayLayer = 0;
+        region.imageSubresource.layerCount = 1;
+        region.imageOffset = { 0, 0, 0 };
+        region.imageExtent = { mipmap_size.x, mipmap_size.y, 1 };
 
-    vkCmdCopyBufferToImage(command_buffer, staging_buffer, _image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+        vkCmdCopyBufferToImage(command_buffer, staging_buffer, _image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
+   
+        buffer_offset += mipmap_size.x * mipmap_size.y * bits_per_pixel() / 8;
+        mipmap_size = mipmap_size / 2u;
+    }
 
     barrier.sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER;
     barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;

@@ -1,8 +1,12 @@
 #include <rabbit/image.hpp>
+#include <rabbit/config.hpp>
 
 #define STBI_MAX_DIMENSIONS 8192
 #define STB_IMAGE_IMPLEMENTATION
 #include <stb_image.h>
+
+#define STB_IMAGE_RESIZE_IMPLEMENTATION
+#include <stb_image_resize.h>
 
 using namespace rb;
 
@@ -47,6 +51,15 @@ image image::load_from_stream(ibstream& stream) {
     }
 
     return { reinterpret_cast<const color*>(pixels.get()), vec2u{ static_cast<unsigned int>(width), static_cast<unsigned int>(height) } };
+}
+
+image image::resize(const image& image, const vec2u& new_size) {
+    const auto pixels = std::make_unique<color[]>(new_size.x * new_size.y);
+    const auto result = stbir_resize_uint8(reinterpret_cast<const unsigned char*>(image.pixels().data()), image.size().x, image.size().y, image.stride(), 
+        reinterpret_cast<unsigned char*>(pixels.get()), new_size.x, new_size.y, new_size.x * 4, 4);
+
+    RB_ASSERT(result, "Cannot resize image from: ({}, {}) to: ({}, {}).", image.size().x, image.size().y, new_size.x, new_size.y);
+    return { pixels.get(), new_size };
 }
 
 image::operator bool() const {

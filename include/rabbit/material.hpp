@@ -17,6 +17,8 @@ namespace rb {
 		static constexpr std::uint32_t metallic_map_bit = (1 << 3);
 		static constexpr std::uint32_t emissive_map_bit = (1 << 4);
 		static constexpr std::uint32_t ambient_map_bit = (1 << 5);
+		static constexpr std::uint32_t all_maps_bits = albedo_map_bit | normal_map_bit |
+			roughness_map_bit | metallic_map_bit | emissive_map_bit | ambient_map_bit;
 	};
 
 	struct material_desc {
