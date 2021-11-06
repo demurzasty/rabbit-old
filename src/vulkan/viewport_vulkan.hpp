@@ -24,6 +24,8 @@ namespace rb {
             VkDescriptorSetLayout forward_descriptor_set_layout,
             VkRenderPass postprocess_render_pass,
             VkDescriptorSetLayout postprocess_descriptor_set_layout,
+            VkRenderPass fill_render_pass,
+            VkDescriptorSetLayout fill_descriptor_set_layout,
             const viewport_desc& desc);
 
         ~viewport_vulkan();
@@ -52,6 +54,10 @@ namespace rb {
 
         VkDescriptorSet last_postprocess_descriptor_set() const;
 
+        VkDescriptorSet fill_descriptor_set() const;
+
+        VkFramebuffer fill_framebuffer() const;
+
     private:
         void _create_descriptor_pool(const viewport_desc& desc);
 
@@ -66,6 +72,8 @@ namespace rb {
         void _create_forward(const viewport_desc& desc);
 
         void _create_postprocess(const viewport_desc& desc);
+
+        void _create_fill(VkRenderPass fill_render_pass, VkDescriptorSetLayout fill_descriptor_set_layout, const viewport_desc& desc);
 
     private:
         VkDevice _device;
@@ -110,6 +118,12 @@ namespace rb {
         VkImageView _postprocess_images_views[2];
         VkFramebuffer _postprocess_framebuffers[2];
         VkDescriptorSet _postprocess_descriptor_sets[2];
+
+        VkImage _fill_image;
+        VmaAllocation _fill_image_allocation;
+        VkImageView _fill_image_view;
+        VkFramebuffer _fill_framebuffer;
+        VkDescriptorSet _fill_descriptor_set;
 
         std::size_t _current_postprocess_image_index{ 0 };
     };

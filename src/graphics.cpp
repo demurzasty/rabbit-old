@@ -110,6 +110,18 @@ void graphics::pre_draw_ssao(const std::shared_ptr<viewport>& viewport) {
 	_impl->pre_draw_ssao(viewport);
 }
 
+void graphics::begin_fill_pass(const std::shared_ptr<viewport>& viewport) {
+	_impl->begin_fill_pass(viewport);
+}
+
+void graphics::draw_fill(const std::shared_ptr<viewport>& viewport, const transform& transform, const geometry& geometry) {
+	_impl->draw_fill(viewport, transform, geometry);
+}
+
+void graphics::end_fill_pass(const std::shared_ptr<viewport>& viewport) {
+	_impl->end_fill_pass(viewport);
+}
+
 void graphics::begin_postprocess_pass(const std::shared_ptr<viewport>& viewport) {
 	_impl->begin_postprocess_pass(viewport);
 }
@@ -136,6 +148,10 @@ void graphics::draw_sharpen(const std::shared_ptr<viewport>& viewport, float str
 
 void graphics::draw_motion_blur(const std::shared_ptr<viewport>& viewport) {
 	_impl->draw_motion_blur(viewport);
+}
+
+void graphics::draw_outline(const std::shared_ptr<viewport>& viewport) {
+	_impl->draw_outline(viewport);
 }
 
 void graphics::end_postprocess_pass(const std::shared_ptr<viewport>& viewport) {

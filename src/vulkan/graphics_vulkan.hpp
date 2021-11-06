@@ -130,6 +130,12 @@ namespace rb {
 
 		void pre_draw_ssao(const std::shared_ptr<viewport>& viewport) override;
 
+		void begin_fill_pass(const std::shared_ptr<viewport>& viewport) override;
+
+		void draw_fill(const std::shared_ptr<viewport>& viewport, const transform& transform, const geometry& geometry) override;
+
+		void end_fill_pass(const std::shared_ptr<viewport>& viewport) override;
+
 		void begin_postprocess_pass(const std::shared_ptr<viewport>& viewport) override;
 
 		void next_postprocess_pass(const std::shared_ptr<viewport>& viewport) override;
@@ -143,6 +149,8 @@ namespace rb {
 		void draw_sharpen(const std::shared_ptr<viewport>& viewport, float strength) override;
 
 		void draw_motion_blur(const std::shared_ptr<viewport>& viewport) override;
+
+		void draw_outline(const std::shared_ptr<viewport>& viewport) override;
 
 		void end_postprocess_pass(const std::shared_ptr<viewport>& viewport) override;
 
@@ -239,6 +247,10 @@ namespace rb {
 
 		void _create_motion_blur_pipeline();
 
+		void _create_fill_pipeline();
+
+		void _create_outline_pipeline();
+
 		void _create_skybox_pipeline();
 
 		void _create_present_pipeline();
@@ -250,6 +262,8 @@ namespace rb {
 		void _command_end();
 
 		VkFormat _get_supported_depth_format();
+
+		VkFormat _get_supported_shadow_format();
 
 		bool _is_format_supported(VkFormat format, VkFormatFeatureFlags flags);
 
@@ -406,6 +420,14 @@ namespace rb {
 
 		VkPipelineLayout _motion_blur_pipeline_layout;
 		VkPipeline _motion_blur_pipeline;
+
+		VkRenderPass _fill_render_pass;
+		VkDescriptorSetLayout _fill_descriptor_set_layout;
+		VkPipelineLayout _fill_pipeline_layout;
+		VkPipeline _fill_pipeline;
+
+		VkPipelineLayout _outline_pipeline_layout;
+		VkPipeline _outline_pipeline; 
 
 		VkPipelineLayout _present_pipeline_layout;
 		VkPipeline _present_pipeline;

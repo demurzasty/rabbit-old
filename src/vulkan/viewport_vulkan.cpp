@@ -14,6 +14,8 @@ viewport_vulkan::viewport_vulkan(VkDevice device,
     VkDescriptorSetLayout forward_descriptor_set_layout,
     VkRenderPass postprocess_render_pass,
     VkDescriptorSetLayout postprocess_descriptor_set_layout,
+    VkRenderPass fill_render_pass,
+    VkDescriptorSetLayout fill_descriptor_set_layout,
     const viewport_desc& desc)
     : viewport(desc)
     , _device(device)
@@ -33,9 +35,14 @@ viewport_vulkan::viewport_vulkan(VkDevice device,
     _create_light(desc);
     _create_forward(desc);
     _create_postprocess(desc);
+    _create_fill(fill_render_pass, fill_descriptor_set_layout, desc);
 }
 
 viewport_vulkan::~viewport_vulkan() {
+    vkDestroyFramebuffer(_device, _fill_framebuffer, nullptr);
+    vkDestroyImageView(_device, _fill_image_view, nullptr);
+    vmaDestroyImage(_allocator, _fill_image, _fill_image_allocation);
+
     for (auto i = 0u; i < 2u; ++i) {
         vkDestroyFramebuffer(_device, _postprocess_framebuffers[i], nullptr);
         vkDestroyImageView(_device, _postprocess_images_views[i], nullptr);
@@ -222,16 +229,24 @@ VkDescriptorSet viewport_vulkan::last_postprocess_descriptor_set() const {
     return _postprocess_descriptor_sets[_current_postprocess_image_index];
 }
 
+VkDescriptorSet viewport_vulkan::fill_descriptor_set() const {
+    return _fill_descriptor_set;
+}
+
+VkFramebuffer viewport_vulkan::fill_framebuffer() const {
+    return _fill_framebuffer;
+}
+
 void viewport_vulkan::_create_descriptor_pool(const viewport_desc& desc) {
     VkDescriptorPoolSize pool_sizes[1]{
-        { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 8 }
+        { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 9 }
     };
 
     VkDescriptorPoolCreateInfo descriptor_pool_info;
     descriptor_pool_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
     descriptor_pool_info.pNext = nullptr;
     descriptor_pool_info.flags = 0;
-    descriptor_pool_info.maxSets = 5;
+    descriptor_pool_info.maxSets = 6;
     descriptor_pool_info.poolSizeCount = 1;
     descriptor_pool_info.pPoolSizes = pool_sizes;
     RB_VK(vkCreateDescriptorPool(_device, &descriptor_pool_info, nullptr, &_descriptor_pool),
@@ -647,4 +662,83 @@ void viewport_vulkan::_create_postprocess(const viewport_desc& desc) {
     };
 
     vkUpdateDescriptorSets(_device, 2, write_infos, 0, nullptr);
+}
+
+void viewport_vulkan::_create_fill(VkRenderPass fill_render_pass, VkDescriptorSetLayout fill_descriptor_set_layout, const viewport_desc& desc) {
+    VkImageCreateInfo image_info;
+    image_info.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+    image_info.pNext = nullptr;
+    image_info.flags = 0;
+    image_info.imageType = VK_IMAGE_TYPE_2D;
+    image_info.format = VK_FORMAT_R8_UNORM;
+    image_info.extent = { size().x, size().y, 1 };
+    image_info.mipLevels = 1;
+    image_info.arrayLayers = 1;
+    image_info.samples = VK_SAMPLE_COUNT_1_BIT;
+    image_info.tiling = VK_IMAGE_TILING_OPTIMAL;
+    image_info.usage = VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+    image_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+    image_info.queueFamilyIndexCount = 0;
+    image_info.pQueueFamilyIndices = 0;
+    image_info.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+
+    VmaAllocationCreateInfo allocation_info = {};
+    allocation_info.usage = VMA_MEMORY_USAGE_GPU_ONLY;
+    RB_VK(vmaCreateImage(_allocator, &image_info, &allocation_info, &_fill_image, &_fill_image_allocation, nullptr),
+        "Failed to create Vulkan image.");
+
+    VkImageViewCreateInfo image_view_info;
+    image_view_info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+    image_view_info.pNext = nullptr;
+    image_view_info.flags = 0;
+    image_view_info.image = _fill_image;
+    image_view_info.viewType = VK_IMAGE_VIEW_TYPE_2D;
+    image_view_info.format = VK_FORMAT_R8_UNORM;
+    image_view_info.components.r = VK_COMPONENT_SWIZZLE_R;
+    image_view_info.components.g = VK_COMPONENT_SWIZZLE_G;
+    image_view_info.components.b = VK_COMPONENT_SWIZZLE_B;
+    image_view_info.components.a = VK_COMPONENT_SWIZZLE_A;
+    image_view_info.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    image_view_info.subresourceRange.baseMipLevel = 0;
+    image_view_info.subresourceRange.levelCount = 1;
+    image_view_info.subresourceRange.baseArrayLayer = 0;
+    image_view_info.subresourceRange.layerCount = 1;
+    RB_VK(vkCreateImageView(_device, &image_view_info, nullptr, &_fill_image_view),
+        "Failed to create Vulkan image view");
+
+    VkFramebufferCreateInfo framebuffer_info;
+    framebuffer_info.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+    framebuffer_info.pNext = nullptr;
+    framebuffer_info.flags = 0;
+    framebuffer_info.renderPass = fill_render_pass;
+    framebuffer_info.attachmentCount = 1;
+    framebuffer_info.pAttachments = &_fill_image_view;
+    framebuffer_info.width = size().x;
+    framebuffer_info.height = size().y;
+    framebuffer_info.layers = 1;
+    RB_VK(vkCreateFramebuffer(_device, &framebuffer_info, nullptr, &_fill_framebuffer),
+        "Failed to create fill framebuffer");
+
+    VkDescriptorSetLayoutBinding bindings[1]{
+        { 0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr },
+    };
+
+    VkDescriptorSetAllocateInfo descriptor_set_allocate_info;
+    descriptor_set_allocate_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+    descriptor_set_allocate_info.pNext = nullptr;
+    descriptor_set_allocate_info.descriptorPool = _descriptor_pool;
+    descriptor_set_allocate_info.descriptorSetCount = 1;
+    descriptor_set_allocate_info.pSetLayouts = &fill_descriptor_set_layout;
+    RB_VK(vkAllocateDescriptorSets(_device, &descriptor_set_allocate_info, &_fill_descriptor_set),
+        "Failed to allocatore desctiptor set");
+
+    VkDescriptorImageInfo image_infos[1]{
+        { _sampler, _fill_image_view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL },
+    };
+
+    VkWriteDescriptorSet write_infos[1]{
+        { VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET, nullptr, _fill_descriptor_set, 0, 0, 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, &image_infos[0], nullptr, nullptr },
+    };
+
+    vkUpdateDescriptorSets(_device, 1, write_infos, 0, nullptr);
 }
