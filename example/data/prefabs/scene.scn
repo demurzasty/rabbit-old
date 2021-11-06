@@ -12,23 +12,7 @@
       "geometry": {
         "mesh": "2e610701-2c15-289a-7faa-437266196638",
         "material": "ac7ac63e-1bc2-d3b5-47d8-3dc0e4350cad"
-      },
-      "children": [
-        {
-          "identity": {
-            "name": "Coat2"
-          },
-          "transform": {
-            "position": [ 3.0, 0.0, 0.0 ],
-            "rotation": [ 0.0, 0.0, 0.0 ],
-            "scaling": [ 1.0, 1.0, 1.0 ]
-          },
-          "geometry": {
-            "mesh": "2e610701-2c15-289a-7faa-437266196638",
-            "material": "ac7ac63e-1bc2-d3b5-47d8-3dc0e4350cad"
-          }
-        }
-      ]
+      }
     },
     {
       "identity": {
@@ -75,7 +59,7 @@
         "field_of_view": 45.0,
         "z_near": 0.1,
         "z_far": 100.0,
-        "environment": "909f8cc5-9fc9-a107-9dcd-c4ae66b564df"
+        "environment": "01d84041-4221-3169-1a9d-e28b2a1175c5"
       }
     }
   ]
