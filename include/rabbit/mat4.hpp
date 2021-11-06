@@ -4,6 +4,7 @@
 #include "vec4.hpp"
 
 #include <cmath>
+#include <limits>
 
 namespace rb {
 	template<typename T>
@@ -310,6 +311,21 @@ namespace rb {
             a[2] * b[12] + a[6] * b[13] + a[10] * b[14] + a[14] * b[15],
             a[3] * b[12] + a[7] * b[13] + a[11] * b[14] + a[15] * b[15]
         };
+    }
+
+    template<typename T>
+    bool operator==(const mat4<T>& a, const mat4<T>& b) {
+        for (auto i = 0u; i < 16u; ++i) {
+            if (std::abs(a[i] - b[i]) > std::numeric_limits<T>::epsilon()) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    template<typename T>
+    bool operator!=(const mat4<T>& a, const mat4<T>& b) {
+        return !(a == b);
     }
 
     template<typename T>

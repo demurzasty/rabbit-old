@@ -25,7 +25,7 @@ namespace rb {
 			mat4f inv_proj_view;
 			vec3f camera_position; float padding;
 			mat4f light_proj_view[4];
-			mat4f last_proj_view;
+			mat4f last_proj_view{ mat4f::identity() };
 		};
 
 		struct alignas(16) light_data {
