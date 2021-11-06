@@ -8,14 +8,9 @@ using namespace rb;
 
 void renderer::initialize(registry& registry) {
     _viewport = graphics::make_viewport({ settings::window_size });
-    _viewport->motion_blur_enabled = false;
 }
 
 void renderer::update(registry& registry, float elapsed_time) {
-    if (input::is_key_pressed(keycode::m)) {
-        _viewport->motion_blur_enabled = !_viewport->motion_blur_enabled;
-    }
-
     if (!registry.valid(_viewport->camera)) {
         for (auto entity : registry.view<camera>()) {
             _viewport->camera = entity;
