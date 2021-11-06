@@ -47,13 +47,13 @@ namespace rb {
 
 		virtual void begin_geometry_pass(const std::shared_ptr<viewport>& viewport) = 0;
 
-		virtual void draw_geometry(const std::shared_ptr<viewport>& viewport, const transform& transform, const geometry& geometry) = 0;
+		virtual void draw_geometry(const std::shared_ptr<viewport>& viewport, const mat4f& world, const geometry& geometry) = 0;
 
 		virtual void end_geometry_pass(const std::shared_ptr<viewport>& viewport) = 0;
 
 		virtual void begin_shadow_pass(const transform& transform, const light& light, const directional_light& directional_light, std::size_t cascade) = 0;
 
-		virtual void draw_shadow(const transform& transform, const geometry& geometry, std::size_t cascade) = 0;
+		virtual void draw_shadow(const mat4f& world, const geometry& geometry, std::size_t cascade) = 0;
 
 		virtual void end_shadow_pass() = 0;
 
@@ -138,13 +138,13 @@ namespace rb {
 
 		static void begin_geometry_pass(const std::shared_ptr<viewport>& viewport);
 
-		static void draw_geometry(const std::shared_ptr<viewport>& viewport, const transform& transform, const geometry& geometry);
+		static void draw_geometry(const std::shared_ptr<viewport>& viewport, const mat4f& world, const geometry& geometry);
 
 		static void end_geometry_pass(const std::shared_ptr<viewport>& viewport);
 
 		static void begin_shadow_pass(const transform& transform, const light& light, const directional_light& directional_light, std::size_t cascade);
 
-		static void draw_shadow(const transform& transform, const geometry& geometry, std::size_t cascade);
+		static void draw_shadow(const mat4f& world, const geometry& geometry, std::size_t cascade);
 
 		static void end_shadow_pass();
 

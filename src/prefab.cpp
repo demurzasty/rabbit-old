@@ -1,6 +1,7 @@
 #include <rabbit/prefab.hpp>
 #include <rabbit/config.hpp>
 #include <rabbit/app.hpp>
+#include <rabbit/transform.hpp>
 
 #include <fstream>
 
@@ -25,27 +26,35 @@ std::shared_ptr<prefab> prefab::load(ibstream& stream) {
     bytes.resize(size);
     stream.read(&bytes[0], bytes.size());
 
-    const auto json = json::from_cbor(bytes);
+    return std::shared_ptr<prefab>(new prefab(json::from_cbor(bytes)));
+}
 
-    const auto applier = [json](registry& registry) {
-        for (auto jentity : json["entities"]) {
-            auto entity = registry.create();
-            for (auto& item : jentity.items()) {
+void prefab::apply(registry& registry) {
+    if (_json.contains("entities")) {
+        _apply_entities(registry, _json["entities"], null);
+    }
+}
+
+prefab::prefab(json json)
+    : _json(json) {
+}
+
+void prefab::_apply_entities(registry& registry, const json& jentities, entity parent) {
+    for (auto jentity : jentities) {
+        auto entity = registry.create();
+        if (registry.valid(parent)) {
+            registry.get_or_emplace<transform>(entity).parent = parent;
+        }
+
+        for (auto& item : jentity.items()) {
+            if (item.key() == "children") {
+                _apply_entities(registry, item.value(), entity);
+            } else {
                 json_read_visitor visitor{ item.value() };
 
                 const auto deserializer = app::get_deserializer(item.key());
                 deserializer(registry, entity, visitor);
             }
         }
-    };
-
-    return std::make_shared<prefab>(applier);
-}
-
-prefab::prefab(std::function<void(registry&)> applier)
-    : _applier(applier) {
-}
-
-void prefab::apply(registry& registry) {
-    _applier(registry);
+    }
 }

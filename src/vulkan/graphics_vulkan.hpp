@@ -102,13 +102,13 @@ namespace rb {
 
 		void begin_geometry_pass(const std::shared_ptr<viewport>& viewport) override;
 
-		void draw_geometry(const std::shared_ptr<viewport>& viewport, const transform& transform, const geometry& geometry) override;
+		void draw_geometry(const std::shared_ptr<viewport>& viewport, const mat4f& world, const geometry& geometry) override;
 
 		void end_geometry_pass(const std::shared_ptr<viewport>& viewport) override;
 
 		void begin_shadow_pass(const transform& transform, const light& light, const directional_light& directional_light, std::size_t cascade) override;
 
-		void draw_shadow(const transform& transform, const geometry& geometry, std::size_t cascade) override;
+		void draw_shadow(const mat4f& world, const geometry& geometry, std::size_t cascade) override;
 
 		void end_shadow_pass() override;
 

@@ -290,7 +290,7 @@ void graphics_vulkan::begin_geometry_pass(const std::shared_ptr<viewport>& viewp
     native_viewport->begin_geometry_pass(_command_buffers[_command_index]);
 }
 
-void graphics_vulkan::draw_geometry(const std::shared_ptr<viewport>& viewport, const transform& transform, const geometry& geometry) {
+void graphics_vulkan::draw_geometry(const std::shared_ptr<viewport>& viewport, const mat4f& world, const geometry& geometry) {
     const auto native_material = std::static_pointer_cast<material_vulkan>(geometry.material);
     const auto native_mesh = std::static_pointer_cast<mesh_vulkan>(geometry.mesh);
 
@@ -312,9 +312,7 @@ void graphics_vulkan::draw_geometry(const std::shared_ptr<viewport>& viewport, c
     vkCmdBindIndexBuffer(_command_buffers[_command_index], native_mesh->index_buffer(), 0, VK_INDEX_TYPE_UINT32);
 
     local_data local_data;
-    local_data.world = mat4f::translation(transform.position) *
-        mat4f::rotation(transform.rotation) *
-        mat4f::scaling(transform.scaling);
+    local_data.world = world;
 
     vkCmdPushConstants(_command_buffers[_command_index], pipeline_layout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(local_data), &local_data);
     
@@ -353,7 +351,7 @@ void graphics_vulkan::begin_shadow_pass(const transform& transform, const light&
     vkCmdBindPipeline(_command_buffers[_command_index], VK_PIPELINE_BIND_POINT_GRAPHICS, _shadow_pipeline);
 }
 
-void graphics_vulkan::draw_shadow(const transform& transform, const geometry& geometry, std::size_t cascade) {
+void graphics_vulkan::draw_shadow(const mat4f& world, const geometry& geometry, std::size_t cascade) {
     const auto native_material = std::static_pointer_cast<material_vulkan>(geometry.material);
     const auto native_mesh = std::static_pointer_cast<mesh_vulkan>(geometry.mesh);
 
@@ -361,10 +359,6 @@ void graphics_vulkan::draw_shadow(const transform& transform, const geometry& ge
     VkBuffer buffer{ native_mesh->vertex_buffer() };
     vkCmdBindVertexBuffers(_command_buffers[_command_index], 0, 1, &buffer, &offset);
     vkCmdBindIndexBuffer(_command_buffers[_command_index], native_mesh->index_buffer(), 0, VK_INDEX_TYPE_UINT32);
-
-    const auto world = mat4f::translation(transform.position) *
-        mat4f::rotation(transform.rotation) *
-        mat4f::scaling(transform.scaling);
 
     shadow_data shadow_data;
     shadow_data.proj_view_world = _camera_data.light_proj_view[cascade] * world;

@@ -18,11 +18,14 @@ namespace rb {
 
         static std::shared_ptr<prefab> load(ibstream& stream);
 
-        prefab(std::function<void(registry&)> applier);
-
         void apply(registry& registry);
 
     private:
-        std::function<void(registry&)> _applier;
+        prefab(json json);
+
+        void _apply_entities(registry& registry, const json& jentities, entity parent);
+
+    private:
+        json _json;
     };
 }

@@ -29,7 +29,7 @@ namespace rb {
 		template<typename Component>
 		static void component(const std::string& name) {
 			_deserializers.emplace(name, [](registry& registry, entity entity, json_read_visitor& visitor) {
-				auto& comp = registry.emplace<Component>(entity);
+				auto& comp = registry.get_or_emplace<Component>(entity);
 				Component::visit(visitor, comp);
 			});
 		}

@@ -35,8 +35,8 @@ void renderer::draw(registry& registry) {
 
     graphics::begin_geometry_pass(_viewport);
 
-    registry.view<transform, geometry>().each([this](transform& transform, geometry& geometry) {
-        graphics::draw_geometry(_viewport, transform, geometry);
+    registry.view<transform, geometry>().each([this, &registry](entity entity, transform& transform, geometry& geometry) {
+        graphics::draw_geometry(_viewport, calculate_world(registry, entity), geometry);
     });
 
     graphics::end_geometry_pass(_viewport);
@@ -49,8 +49,8 @@ void renderer::draw(registry& registry) {
         for (auto cascade = 0u; cascade < graphics_limits::max_shadow_cascades; ++cascade) {
             graphics::begin_shadow_pass(transform, light, directional_light, cascade);
         
-            registry.view<rb::transform, geometry>().each([cascade](rb::transform& transform, geometry& geometry) {
-                graphics::draw_shadow(transform, geometry, cascade);
+            registry.view<rb::transform, geometry>().each([this, cascade, &registry](entity entity, rb::transform& transform, geometry& geometry) {
+                graphics::draw_shadow(calculate_world(registry, entity), geometry, cascade);
             });
 
             graphics::end_shadow_pass();

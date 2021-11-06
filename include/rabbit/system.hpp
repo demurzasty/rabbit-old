@@ -1,6 +1,7 @@
 #pragma once 
 
 #include "entity.hpp"
+#include "mat4.hpp"
 
 namespace rb {
 	class system {
@@ -13,5 +14,7 @@ namespace rb {
 
 	protected:
 		entity find_by_name(registry& registry, const std::string& name);
+		
+		mat4f system::calculate_world(rb::registry& registry, entity entity);
 	};
 }

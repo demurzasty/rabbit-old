@@ -52,9 +52,9 @@ void graphics::begin_geometry_pass(const std::shared_ptr<viewport>& viewport) {
 	_impl->begin_geometry_pass(viewport);
 }
 
-void graphics::draw_geometry(const std::shared_ptr<viewport>& viewport, const transform& transform, const geometry& geometry) {
+void graphics::draw_geometry(const std::shared_ptr<viewport>& viewport, const mat4f& world, const geometry& geometry) {
 	if (geometry.mesh && geometry.material) {
-		_impl->draw_geometry(viewport, transform, geometry);
+		_impl->draw_geometry(viewport, world, geometry);
 	}
 }
 
@@ -66,8 +66,8 @@ void graphics::begin_shadow_pass(const transform& transform, const light& light,
 	_impl->begin_shadow_pass(transform, light, directional_light, cascade);
 }
 
-void graphics::draw_shadow(const transform& transform, const geometry& geometry, std::size_t cascade) {
-	_impl->draw_shadow(transform, geometry, cascade);
+void graphics::draw_shadow(const mat4f& world, const geometry& geometry, std::size_t cascade) {
+	_impl->draw_shadow(world, geometry, cascade);
 }
 
 void graphics::end_shadow_pass() {
