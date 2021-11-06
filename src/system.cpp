@@ -31,8 +31,7 @@ mat4f system::calculate_world(rb::registry& registry, entity entity) {
             mat4f::scaling(transform.scaling);
 
         return calculate_world(registry, transform.parent) * world;
-    }
-    else {
+    } else {
         return mat4f::identity();
     }
 }

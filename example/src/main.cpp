@@ -61,12 +61,6 @@ public:
             _fps = 0;
             _time = std::fmodf(_time, 1.0f);
         }
-
-        registry.view<transform, geometry, identity>().each([elapsed_time](transform& transform, geometry& geometry, identity& identity) {
-            if (identity.name == "Coat") {
-                transform.rotation.y += elapsed_time;
-            }
-        });
     }
 
     void draw(registry& registry) override {
