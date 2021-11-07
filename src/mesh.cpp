@@ -349,7 +349,7 @@ std::shared_ptr<mesh> mesh::make_sphere(std::size_t stacks, std::size_t slices, 
     }
 
     mesh_lod lods[]{
-        { 0, slices * slices * 6 }
+        { 0u, static_cast<std::uint32_t>(slices * slices * 6) }
     };
 
     mesh_desc desc;
