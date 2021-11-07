@@ -891,7 +891,7 @@ void graphics_vulkan::flush() {
         vkWaitForFences(_device, 1, &fence, VK_TRUE, 1000000000);
         vkDestroyFence(_device, fence, nullptr);
     }
-    vkFreeCommandBuffers(_device, _command_pool, 3, _command_buffers);
+    vkFreeCommandBuffers(_device, _command_pool, max_command_buffers, _command_buffers);
 
     _environment.reset();
 }
@@ -6861,7 +6861,7 @@ void graphics_vulkan::_create_command_buffers() {
     command_buffer_alloc_info.pNext = nullptr;
     command_buffer_alloc_info.commandPool = _command_pool;
     command_buffer_alloc_info.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-    command_buffer_alloc_info.commandBufferCount = 3;
+    command_buffer_alloc_info.commandBufferCount = max_command_buffers;
 
     RB_VK(vkAllocateCommandBuffers(_device, &command_buffer_alloc_info, _command_buffers),
         "Failed to allocate command buffer");
@@ -6877,7 +6877,7 @@ void graphics_vulkan::_create_command_buffers() {
 }
 
 VkCommandBuffer graphics_vulkan::_command_begin() {
-    _command_index = (_command_index + 1) % 3;
+    _command_index = (_command_index + 1) % max_command_buffers;
 
     RB_VK(vkWaitForFences(_device, 1, &_fences[_command_index], VK_TRUE, 1000000000),
         "Failed to wait for render fence");

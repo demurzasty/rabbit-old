@@ -19,6 +19,8 @@
 namespace rb {
 	class graphics_vulkan : public graphics_impl {
 	public:
+		static constexpr std::size_t max_command_buffers{ 3 };
+
 		struct alignas(16) camera_data {
 			mat4f projection;
 			mat4f view;
@@ -434,8 +436,10 @@ namespace rb {
 		VkPipeline _light_copy_pipeline;
 		VkPipeline _forward_copy_pipeline;
 
-		VkCommandBuffer _command_buffers[3];
-		VkFence _fences[3];
+		VkCommandBuffer _shadow_command_buffer;
+
+		VkCommandBuffer _command_buffers[max_command_buffers];
+		VkFence _fences[max_command_buffers];
 		std::size_t _command_index{ 0 };
 
 		bool _first_render_pass{ false };
