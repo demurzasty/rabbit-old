@@ -5,10 +5,12 @@
 namespace rb {
 	struct light {
 		color color{ color::white() };
+		float intensity{ 1.0f };
 
 		template<typename Visitor>
 		static void visit(Visitor& visitor, light& light) {
 			visitor("color", light.color);
+			visitor("intensity", light.intensity);
 		}
 	};
 

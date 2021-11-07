@@ -428,7 +428,7 @@ void graphics_vulkan::draw_directional_light(const std::shared_ptr<viewport>& vi
 
     directional_light_data directional_light_data;
     directional_light_data.light_dir = dir;
-    directional_light_data.light_color = { light.color.r / 255.0f, light.color.g / 255.0f, light.color.b / 255.0f };
+    directional_light_data.light_color = vec3f{ light.color.r / 255.0f, light.color.g / 255.0f, light.color.b / 255.0f } * light.intensity;
 
     vkCmdPushConstants(_command_buffers[_command_index], _directional_light_pipeline_layout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(directional_light_data), &directional_light_data);
 
@@ -458,7 +458,7 @@ void graphics_vulkan::draw_point_light(const std::shared_ptr<viewport>& viewport
     point_light_data point_light_data;
     point_light_data.light_position = transform.position;
     point_light_data.light_radius = point_light.radius;
-    point_light_data.light_color = { light.color.r / 255.0f, light.color.g / 255.0f, light.color.b / 255.0f };
+    point_light_data.light_color = vec3f{ light.color.r / 255.0f, light.color.g / 255.0f, light.color.b / 255.0f } * light.intensity;
 
     vkCmdPushConstants(_command_buffers[_command_index], _point_light_pipeline_layout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(point_light_data), &point_light_data);
 
