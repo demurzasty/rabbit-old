@@ -45,6 +45,13 @@ namespace rb {
 		void read(T& data) {
 			read(&data, sizeof(T));
 		}
+
+		template<typename T>
+		T read() {
+			T data;
+			read(data);
+			return data;
+		}
 	};
 
 	// output binary stream 

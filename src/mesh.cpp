@@ -164,6 +164,17 @@ void mesh::import(ibstream& input, obstream& output, const json& metadata) {
     output.write(bsphere);
 }
 
+void mesh::save(obstream& stream, const span<const vertex>& vertices, const span<const std::uint32_t>& indices) {
+    stream.write(mesh::magic_number);
+    stream.write<std::uint32_t>(vertices.size());
+    stream.write(vertices.data(), vertices.size_bytes());
+    stream.write<std::uint32_t>(indices.size());
+    stream.write(indices.data(), indices.size_bytes());
+    stream.write<std::uint32_t>(0);
+    // stream.write(convex_hull.data(), convex_hull.size() * sizeof(vec3f));
+    stream.write(calculate_bsphere(vertices));
+}
+
 std::shared_ptr<mesh> mesh::make_box(const vec3f& extent, const vec2f& uv_scale) {
     vertex vertices[24]{
         { { -extent.x, extent.y, extent.z }, { 0.0f, 0.0f }, { 0.0f, 0.0f, 1.0f } },

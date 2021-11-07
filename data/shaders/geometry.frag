@@ -70,12 +70,12 @@ void main() {
 
     float roughness = u_roughness;
     if (ROUGHNESS_MAP > -1) {
-        roughness *= texture(u_maps[ROUGHNESS_MAP], v_texcoord).r;
+        roughness *= texture(u_maps[ROUGHNESS_MAP], v_texcoord).g;
     }
    
     float metallic = u_metallic;
     if (METALLIC_MAP > -1) {
-        metallic *= texture(u_maps[METALLIC_MAP], v_texcoord).r;
+        metallic *= texture(u_maps[METALLIC_MAP], v_texcoord).b;
     }
     
     vec3 emissive = vec3(0.0);

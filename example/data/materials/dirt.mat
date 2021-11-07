@@ -1,9 +1,0 @@
-{
-  "base_color": [ 1.0, 1.0, 1.0 ],
-  "roughness": 1.0,
-  "metallic": 0.0,
-  "albedo_map": "5a973efc-4f23-4025-d671-d52a387895be",
-  "normal_map": "4db965c2-ea5e-2824-08df-9d2e7b8523a5",
-  "roughness_map": "c2feddf1-4036-72ac-51d6-70507bb7de67",
-  "ambient_map": "c6443d6c-e60c-b561-d285-8f31b09c91ce"
-}

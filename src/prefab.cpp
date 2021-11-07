@@ -29,9 +29,11 @@ std::shared_ptr<prefab> prefab::load(ibstream& stream) {
     return std::shared_ptr<prefab>(new prefab(json::from_cbor(bytes)));
 }
 
-void prefab::apply(registry& registry) {
+void prefab::apply(registry& registry, entity parent) {
     if (_json.contains("entities")) {
-        _apply_entities(registry, _json["entities"], null);
+        _apply_entities(registry, _json["entities"], parent);
+    } else if (_json.contains("children")) {
+        _apply_entities(registry, _json["children"], parent);
     }
 }
 
@@ -47,13 +49,23 @@ void prefab::_apply_entities(registry& registry, const json& jentities, entity p
         }
 
         for (auto& item : jentity.items()) {
-            if (item.key() == "children") {
+            if (item.key() == "children" || item.key() == "entities") {
                 _apply_entities(registry, item.value(), entity);
             } else {
-                json_read_visitor visitor{ item.value() };
+                if (item.value().is_object()) {
+                    json_read_visitor visitor{ item.value() };
 
-                const auto deserializer = app::get_deserializer(item.key());
-                deserializer(registry, entity, visitor);
+                    const auto deserializer = app::get_deserializer(item.key());
+                    deserializer(registry, entity, visitor);
+                } else if (item.value().is_string()) {
+                    if (const auto uuid = uuid::from_string(item.value()); uuid) {
+                        const auto prefab = assets::load<rb::prefab>(uuid.value());
+                        if (prefab && prefab->_json.contains("entities")) {
+                            prefab->apply(registry, entity);
+                            // _apply_entities(registry, prefab->_json["entities"], entity);
+                        }
+                    }
+                }
             }
         }
     }

@@ -1,32 +1,34 @@
 {
   "entities": [
     {
-      "identity": {
-        "name": "Coat"
-      },
-      "transform": {
-        "position": [ 0.0, 0.0, 0.0 ],
-        "rotation": [ 0.0, 0.0, 0.0 ],
-        "scaling": [ 1.0, 1.0, 1.0 ]
-      },
-      "geometry": {
-        "mesh": "2e610701-2c15-289a-7faa-437266196638",
-        "material": "ac7ac63e-1bc2-d3b5-47d8-3dc0e4350cad"
-      }
-    },
-    {
-      "identity": {
-        "name": "Ground"
-      },
       "transform": {
         "position": [ 0.0, -0.5, 0.0 ],
         "rotation": [ 0.0, 0.0, 0.0 ],
         "scaling": [ 1.0, 1.0, 1.0 ]
       },
-      "geometry": {
-        "mesh": "114f7126-e6b9-54cd-1718-50d9d50c17c1",
-        "material": "64d95cc8-51eb-f88e-fc71-964d3a2400db"
-      }
+      "children": [
+        "966976ad-f207-2534-0804-87d64e299bd0"
+      ]
+    },
+    {
+      "transform": {
+        "position": [ -2.5, 1.5, 0.0 ],
+        "rotation": [ 0.0, 0.0, 0.0 ],
+        "scaling": [ 0.2, 0.2, 0.2 ]
+      },
+      "children": [
+        "6faef073-9403-52e3-3a66-ce834f5f29e7"
+      ]
+    },
+    {
+      "transform": {
+        "position": [ 2.5, 0.0, 0.0 ],
+        "rotation": [ 0.0, 0.0, 0.0 ],
+        "scaling": [ 5.0, 5.0, 5.0 ]
+      },
+      "children": [
+        "22d7a317-5722-30cd-30d2-714b65dc320f"
+      ]
     },
     {
       "identity": {

@@ -53,6 +53,7 @@ set (SRC
 	"src/input.cpp"
 	"src/material.cpp"
 	"src/mesh.cpp"
+	"src/model.cpp"
 	"src/prefab.cpp"
 	"src/renderer.cpp"
 	"src/s3tc.cpp"

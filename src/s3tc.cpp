@@ -8,7 +8,7 @@
 using namespace rb;
 
 void s3tc::bc1(const void* uncompressed_pixels, std::size_t uncompressed_size, std::size_t stride, void* compressed_pixels) {
-	static int init = (rgbcx::init(rgbcx::bc1_approx_mode::cBC1IdealRound4), 0);
+	static int init = (rgbcx::init(rgbcx::bc1_approx_mode::cBC1Ideal), 0);
 
 	struct block {
 		color colors[2];

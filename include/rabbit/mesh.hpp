@@ -30,6 +30,8 @@ namespace rb {
 
 		static void import(ibstream& input, obstream& output, const json& metadata);
 
+		static void save(obstream& stream, const span<const vertex>& vertices, const span<const std::uint32_t>& indices);
+
 		static std::shared_ptr<mesh> make_box(const vec3f& extent, const vec2f& uv_scale);
 
 		static std::shared_ptr<mesh> make_sphere(std::size_t stacks, std::size_t slices, float radius);

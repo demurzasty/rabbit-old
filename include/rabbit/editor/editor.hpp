@@ -23,6 +23,8 @@ namespace rb {
 
 		static void scan();
 
+		static uuid import(const std::string& filename);
+
 		template<typename Asset, typename... Extensions>
 		static void add_importer(Extensions&&... extensions) {
 			(_importers.emplace(extensions, &Asset::import), ...);

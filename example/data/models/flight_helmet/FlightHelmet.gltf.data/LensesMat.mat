@@ -1,0 +1,15 @@
+{
+    "albedo_map": "e25f7960-182c-368d-f42f-9397183e3d4c",
+    "ambient_map": "4cdec131-9b11-14a8-46e4-069d9864caa2",
+    "base_color": [
+        1.0,
+        1.0,
+        1.0,
+        1.0
+    ],
+    "metallic": 1.0,
+    "metallic_map": "4cdec131-9b11-14a8-46e4-069d9864caa2",
+    "normal_map": "b52e703b-c372-2289-d7a8-e735b0d0c2f3",
+    "roughness": 1.0,
+    "roughness_map": "4cdec131-9b11-14a8-46e4-069d9864caa2"
+}

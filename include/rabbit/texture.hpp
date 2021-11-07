@@ -15,7 +15,8 @@ namespace rb {
 		r8,
 		rg8,
 		rgba8,
-		bc1
+		bc1,
+		bc3
 	};
 
 	enum class texture_filter {

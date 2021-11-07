@@ -67,21 +67,19 @@ void texture::import(ibstream& input, obstream& output, const json& metadata) {
 	// Calculate mipmap count based on image size
 	const auto mipmap_count = calculate_mipmap_levels(image.size());
 
-	// 2. Compress mipmaps pixels to lossy, gpu friendly BC1
 	mobstream stream;
 	for (auto i = 0u; i < mipmap_count; ++i) {
+		// Compress mipmaps pixels to lossy, gpu friendly BC1
 		const auto bc1_pixels = s3tc::bc1(image);
-
 		RB_ASSERT(!bc1_pixels.empty(), "Cannot compress image.");
-
 		stream.write(bc1_pixels.data(), bc1_pixels.size());
 
 		image = image::resize(image, image.size() / 2u);
 	}
-	const auto bc1_pixels = stream.memory();
+	const auto pixels = stream.memory();
 
-	// 3. Compress to lossles, storage friendly zlib
-	const auto compressed_pixels = compression::compress(bc1_pixels);
+	// Compress to lossles, storage friendly zlib
+	const auto compressed_pixels = compression::compress(pixels);
 
 	RB_ASSERT(!compressed_pixels.empty(), "Cannot compress image.");
 
@@ -93,7 +91,7 @@ void texture::import(ibstream& input, obstream& output, const json& metadata) {
 	output.write<std::uint32_t>(mipmap_count);
 	output.write<std::uint32_t>(compressed_pixels.size());
 	output.write<std::uint8_t>(compressed_pixels);
-	output.write<std::uint32_t>(bc1_pixels.size_bytes());
+	output.write<std::uint32_t>(pixels.size_bytes());
 }
 
 std::shared_ptr<texture> texture::make_one_color(const color& color, const vec2u& size) {

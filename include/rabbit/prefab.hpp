@@ -18,7 +18,7 @@ namespace rb {
 
         static std::shared_ptr<prefab> load(ibstream& stream);
 
-        void apply(registry& registry);
+        void apply(registry& registry, entity parent);
 
     private:
         prefab(json json);

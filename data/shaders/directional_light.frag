@@ -122,7 +122,7 @@ vec2 find_blocker(vec2 texcoord, float z_receiver, float cascade) {
 	ivec2 texture_size = textureSize(u_shadow_map, 0).xy;
 	vec2 texel = vec2(1.0 / texture_size.x, 1.0 / texture_size.y);
 
-	float search_width = length(texel) * 20.0;
+	float search_width = length(texel) * 20.0 / (cascade + 1);
 	float blockerSum = 0;
 	float numBlockers = 0;
 	

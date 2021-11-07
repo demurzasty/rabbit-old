@@ -71,7 +71,7 @@ void app::_main_loop(const std::string& initial_scene) {
 	registry registry;
 	if (!initial_scene.empty()) {
 		auto scene = assets::load<prefab>(initial_scene);
-		scene->apply(registry);
+		scene->apply(registry, null);
 	}
 
 	for (auto& system : systems) {
