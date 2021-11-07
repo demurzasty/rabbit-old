@@ -3,6 +3,16 @@
 #extension GL_ARB_shading_language_420pack : enable
 
 #define PI 3.14159265359
+#define PCSS_BLOCKER_SEARCH_NUM_SAMPLES 8
+#define PCF_NUM_SAMPLES 64
+
+layout (constant_id = 0) const int ALBEDO_MAP = 0;
+layout (constant_id = 1) const int NORMAL_MAP = 1;
+layout (constant_id = 2) const int ROUGHNESS_MAP = 2;
+layout (constant_id = 3) const int METALLIC_MAP = 3;
+layout (constant_id = 4) const int EMISSIVE_MAP = 4;
+layout (constant_id = 5) const int AMBIENT_MAP = 5;
+layout (constant_id = 6) const int MAX_MAPS = 6;
 
 struct Light {
 	vec3 dir_or_pos;
@@ -11,43 +21,166 @@ struct Light {
 	int type;
 };
 
+const int light_count = 1;
+
+const Light lights[1] = {
+    { normalize(vec3(-1, -1, -1)), 0.0, vec3(1.0, 1.0, 1.0), 0 }
+};
+
 layout (location = 0) in vec3 v_position;
 layout (location = 1) in vec2 v_texcoord;
 layout (location = 2) in vec3 v_normal;
-layout (location = 3) in vec4 v_shadow_coord;
 
 layout (std140, set = 0, binding = 0) uniform CameraData {
     mat4 proj;
     mat4 view;
+    mat4 u_inv_proj_view;
     vec3 u_camera_position;
+	mat4 u_light_proj_views[4];
 };
 
-layout (std140, set = 0, binding = 2) uniform LightListData {
-    Light lights[16];
-    mat4 light_proj_view;
-    int light_count;
-};
+//layout (std140, set = 0, binding = 2) uniform LightListData {
+//    Light lights[16];
+//    mat4 light_proj_view;
+//    int light_count;
+//};
+
+layout(set = 0, binding = 1) uniform sampler2D u_brdf_map;
+layout(set = 0, binding = 2) uniform sampler2DArray u_shadow_map;
 
 layout (std140, set = 1, binding = 0) uniform MaterialData {
     vec3 u_base_color;
     float u_roughness;
     float u_metallic;
 };
-
-layout(set = 0, binding = 1) uniform sampler2D u_brdf_map;
-layout(set = 0, binding = 3) uniform sampler2D u_shadow_map;
+layout(set = 1, binding = 1) uniform sampler2D u_maps[MAX_MAPS];
 
 layout(set = 2, binding = 0) uniform samplerCube u_radiance_map;
 layout(set = 2, binding = 1) uniform samplerCube u_irradiance_map;
 layout(set = 2, binding = 2) uniform samplerCube u_prefilter_map;
 
-layout(set = 1, binding = 1) uniform sampler2D u_albedo_map;
-layout(set = 1, binding = 2) uniform sampler2D u_normal_map;
-layout(set = 1, binding = 3) uniform sampler2D u_roughness_map;
-layout(set = 1, binding = 4) uniform sampler2D u_metallic_map;
-layout(set = 1, binding = 5) uniform sampler2D u_emissive_map;
-
 layout (location = 0) out vec4 out_color;
+
+
+const vec2 poisson_disk[64] = {
+	vec2( -0.04117257, -0.1597612 ),
+	vec2( 0.06731031, -0.4353096 ),
+	vec2( -0.206701, -0.4089882 ),
+	vec2( 0.1857469, -0.2327659 ),
+	vec2( -0.2757695, -0.159873 ),
+	vec2( -0.2301117, 0.1232693 ),
+	vec2( 0.05028719, 0.1034883 ),
+	vec2( 0.236303, 0.03379251 ),
+	vec2( 0.1467563, 0.364028 ),
+	vec2( 0.516759, 0.2052845 ),
+	vec2( 0.2962668, 0.2430771 ),
+	vec2( 0.3650614, -0.1689287 ),
+	vec2( 0.5764466, -0.07092822 ),
+	vec2( -0.5563748, -0.4662297 ),
+	vec2( -0.3765517, -0.5552908 ),
+	vec2( -0.4642121, -0.157941 ),
+	vec2( -0.2322291, -0.7013807 ),
+	vec2( -0.05415121, -0.6379291 ),
+	vec2( -0.7140947, -0.6341782 ),
+	vec2( -0.4819134, -0.7250231 ),
+	vec2( -0.7627537, -0.3445934 ),
+	vec2( -0.7032605, -0.13733 ),
+	vec2( 0.8593938, 0.3171682 ),
+	vec2( 0.5223953, 0.5575764 ),
+	vec2( 0.7710021, 0.1543127 ),
+	vec2( 0.6919019, 0.4536686 ),
+	vec2( 0.3192437, 0.4512939 ),
+	vec2( 0.1861187, 0.595188 ),
+	vec2( 0.6516209, -0.3997115 ),
+	vec2( 0.8065675, -0.1330092 ),
+	vec2( 0.3163648, 0.7357415 ),
+	vec2( 0.5485036, 0.8288581 ),
+	vec2( -0.2023022, -0.9551743 ),
+	vec2( 0.165668, -0.6428169 ),
+	vec2( 0.2866438, -0.5012833 ),
+	vec2( -0.5582264, 0.2904861 ),
+	vec2( -0.2522391, 0.401359 ),
+	vec2( -0.428396, 0.1072979 ),
+	vec2( -0.06261792, 0.3012581 ),
+	vec2( 0.08908027, -0.8632499 ),
+	vec2( 0.9636437, 0.05915006 ),
+	vec2( 0.8639213, -0.309005 ),
+	vec2( -0.03422072, 0.6843638 ),
+	vec2( -0.3734946, -0.8823979 ),
+	vec2( -0.3939881, 0.6955767 ),
+	vec2( -0.4499089, 0.4563405 ),
+	vec2( 0.07500362, 0.9114207 ),
+	vec2( -0.9658601, -0.1423837 ),
+	vec2( -0.7199838, 0.4981934 ),
+	vec2( -0.8982374, 0.2422346 ),
+	vec2( -0.8048639, 0.01885651 ),
+	vec2( -0.8975322, 0.4377489 ),
+	vec2( -0.7135055, 0.1895568 ),
+	vec2( 0.4507209, -0.3764598 ),
+	vec2( -0.395958, -0.3309633 ),
+	vec2( -0.6084799, 0.02532744 ),
+	vec2( -0.2037191, 0.5817568 ),
+	vec2( 0.4493394, -0.6441184 ),
+	vec2( 0.3147424, -0.7852007 ),
+	vec2( -0.5738106, 0.6372389 ),
+	vec2( 0.5161195, -0.8321754 ),
+	vec2( 0.6553722, -0.6201068 ),
+	vec2( -0.2554315, 0.8326268 ),
+	vec2( -0.5080366, 0.8539945 )
+};
+
+// pseudorandom number generator
+float rand(vec2 co) {
+	return fract(sin(dot(co.xy ,vec2(12.9898,78.233))) * 43758.5453);
+}
+float rand(vec4 co) {
+	float dot_product = dot(co, vec4(12.9898,78.233,45.164,94.673));
+	return fract(sin(dot_product) * 43758.5453);
+}
+
+// parallel plane estimation
+float penumbra_size(float z_receiver, float z_blocker) {
+	return (z_receiver - z_blocker) / z_blocker * 12.0;
+}
+
+vec2 find_blocker(vec2 texcoord, float z_receiver, float cascade) {
+	ivec2 texture_size = textureSize(u_shadow_map, 0).xy;
+	vec2 texel = vec2(1.0 / texture_size.x, 1.0 / texture_size.y);
+
+	float search_width = length(texel) * 20.0 / (cascade + 1);
+	float blockerSum = 0;
+	float numBlockers = 0;
+	
+	for (int i = 0; i < PCSS_BLOCKER_SEARCH_NUM_SAMPLES; i++) {
+		vec2 coord = texcoord + poisson_disk[i] * search_width;
+		float smap = texture(u_shadow_map, vec3(coord, cascade)).r;
+		if (smap < z_receiver) {
+			blockerSum += smap;
+			numBlockers++;
+		}
+	}
+	return vec2(blockerSum / numBlockers, numBlockers);
+}
+
+float pcf(vec2 texcoord, float z_receiver, float filter_radius, float cascade) {
+	ivec2 texture_size = textureSize(u_shadow_map, 0).xy;
+	vec2 texel = vec2(1.0 / texture_size.x, 1.0 / texture_size.y);
+
+	float theta = rand(vec4(texcoord, gl_FragCoord.xy));
+	mat2 rotation = mat2(vec2(cos(theta), sin(theta)), vec2(-sin(theta), cos(theta)));
+
+	float shadow = 0.0;
+	for (int i = 0; i < PCF_NUM_SAMPLES; ++i) {
+		vec2 offset = rotation * poisson_disk[i] * texel * filter_radius;
+		shadow += step(z_receiver, texture(u_shadow_map, vec3(texcoord + offset, cascade)).r);
+	}
+	return shadow / PCF_NUM_SAMPLES;
+}
+
+float pcss(vec3 texcoord, float cascade) {
+	vec2 blockers = find_blocker(texcoord.xy, texcoord.z, cascade);
+	return pcf(texcoord.xy, texcoord.z, 2.0 + penumbra_size(texcoord.z, blockers.x), cascade);
+}
 
 float distribution_ggx(vec3 n, vec3 h, float roughness) {
     float a = roughness * roughness;
@@ -114,36 +247,67 @@ vec3 perturb(vec3 map, vec3 n, vec3 v, vec2 texcoord) {
 }
 
 float compute_shadow() {
-    vec3 shadow_position = (v_shadow_coord.xyz / v_shadow_coord.w);
+	for (int i = 0; i < 4; ++i) {
+		vec4 shadow_position = u_light_proj_views[i] * vec4(v_position, 1.0);
+		shadow_position.xyz = shadow_position.xyz / shadow_position.w;
+		shadow_position.y = -shadow_position.y;
 
-    vec2 shadow_coord = vec2(shadow_position.x, shadow_position.y) * 0.5 + 0.5;
-    if (shadow_coord.x < 0.0 || shadow_coord.x > 1.0 ||
-        shadow_coord.y < 0.0 || shadow_coord.y > 1.0) {
-        return 1.0;
-    }
-
-    return step(shadow_position.z, texture(u_shadow_map, shadow_coord).x);
+		vec2 shadow_coord = vec2(shadow_position.x, shadow_position.y) * 0.5 + 0.5;
+		if (shadow_coord.x >= 0.0 && shadow_coord.x <= 1.0 &&
+			shadow_coord.y >= 0.0 && shadow_coord.y <= 1.0 &&
+			shadow_position.z >= 0.0 && shadow_position.z <= 1.0) {
+			return sin(pcss(vec3(shadow_coord.xy, shadow_position.z - 0.001 * i), i) * PI * 0.5);
+		} 
+	}
+	return 1.0;
 }
 
 void main() {
-    vec3 albedo = u_base_color * texture(u_albedo_map, v_texcoord).rgb;
-    float roughness = u_roughness * texture(u_roughness_map, v_texcoord).r;
-    float metallic = u_metallic * texture(u_metallic_map, v_texcoord).r;
+    vec4 albedo = vec4(u_base_color, 1.0);
+    if (ALBEDO_MAP > -1) {
+        albedo *= texture(u_maps[ALBEDO_MAP], v_texcoord);
+        if (albedo.a < 0.5) {
+            discard;
+        }
+    }
+
+    vec3 normal = v_normal;
+    if (NORMAL_MAP > -1) {
+        normal = perturb(texture(u_maps[NORMAL_MAP], v_texcoord).rgb * 2.0 - 1.0, normalize(normal), normalize(u_camera_position - v_position), v_texcoord);
+    }
+
+    float roughness = u_roughness;
+    if (ROUGHNESS_MAP > -1) {
+        roughness *= texture(u_maps[ROUGHNESS_MAP], v_texcoord).g;
+    }
+   
+    float metallic = u_metallic;
+    if (METALLIC_MAP > -1) {
+        metallic *= texture(u_maps[METALLIC_MAP], v_texcoord).b;
+    }
+    
+    vec3 emissive = vec3(0.0);
+    if (EMISSIVE_MAP > -1) {
+        emissive = texture(u_maps[EMISSIVE_MAP], v_texcoord).rgb;
+    }
+
+    float ao = 1.0;
+    if (AMBIENT_MAP > -1) {
+        ao = texture(u_maps[AMBIENT_MAP], v_texcoord).r;
+    }
 
     vec3 v = normalize(u_camera_position - v_position);
-    vec3 n = normalize(v_normal);
-
-    n = perturb(texture(u_normal_map, v_texcoord).rgb * 2.0 - 1.0, n, v, v_texcoord);
+    vec3 n = normalize(normal);
 
     float n_dot_v = abs(dot(n, v)) + 1e-5;
 
-    vec3 f0 = mix(vec3(0.04), albedo, metallic);
+    vec3 f0 = mix(vec3(0.04), albedo.rgb, metallic);
 
     vec3 lo = vec3(0.0);
 
     float shadow = compute_shadow(); // texture_proj(v_shadow_coord / v_shadow_coord.w, vec2(0.0));
 
-    // TODO: Iterate through nearest lights.
+   //  TODO: Iterate through nearest lights.
     for (int i = 0; i < light_count; ++i)
     {
         // TODO: Light color and intensity.
@@ -176,14 +340,14 @@ void main() {
         float denominator = 4.0 * n_dot_v * n_dot_l + 0.001;
         vec3 specular = nominator / denominator;
 
-        lo += (kd * albedo / PI + specular) * radiance * intensity * n_dot_l * shadow;
+        lo += (kd * albedo.rgb / PI + specular) * radiance * intensity * n_dot_l * shadow;
     }
 
     vec3 ks = fresnel_schlick_roughness(max(dot(n, v), 0.0), f0, roughness);
     vec3 kd = (1.0 - ks) * (1.0 - metallic);
 
     vec3 irradiance = texture(u_irradiance_map, n).rgb;
-    vec3 diff = irradiance * albedo;
+    vec3 diff = irradiance * albedo.rgb;
 
     vec3 reflected = reflect(-v, n);
 
@@ -191,7 +355,7 @@ void main() {
     vec2 brdf = texture(u_brdf_map, vec2(n_dot_v, roughness)).rg;
     vec3 spec = prefilter_color * (ks * brdf.x + brdf.y);
 
-    vec3 ambient = kd * diff + spec + texture(u_emissive_map, v_texcoord).rgb;
+    vec3 ambient = kd * diff + spec + emissive;
 
     out_color = vec4(ambient + lo, 1.0);
 }

@@ -16,7 +16,7 @@ namespace rb {
 		float size{ 11.25 };
 		float field_of_view{ 45.0f };
 		float z_near{ 0.1f };
-		float z_far{ 100.0f };
+		float z_far{ 50.0f };
 		std::shared_ptr<environment> environment;
 
 		template<typename Visitor>

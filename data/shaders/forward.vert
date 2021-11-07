@@ -17,11 +17,11 @@ struct Light {
 	int type;
 };
 
-layout (std140, set = 0, binding = 2) uniform LightListData {
-    Light lights[16];
-    mat4 light_proj_view;
-    int light_count;
-};
+//layout (std140, set = 0, binding = 2) uniform LightListData {
+//    Light lights[16];
+//    mat4 light_proj_view;
+//    int light_count;
+//};
 
 #ifdef VULKAN 
 layout (std140, push_constant) uniform LocalData {
@@ -36,7 +36,6 @@ layout (std140, binding = 1) uniform LocalData {
 layout (location = 0) out vec3 v_position;
 layout (location = 1) out vec2 v_texcoord;
 layout (location = 2) out vec3 v_normal;
-layout (location = 3) out vec4 v_shadow_coord;
 
 const mat4 bias_mat = mat4( 
 	0.5, 0.0, 0.0, 0.0,
@@ -48,7 +47,7 @@ void main() {
     v_position = (world * vec4(in_position, 1.0)).xyz;
     v_texcoord = in_texcoord;
     v_normal = (world * vec4(normalize(in_normal), 0.0)).xyz;
-    v_shadow_coord = (light_proj_view * world) * vec4(in_position, 1.0);	
+    // v_shadow_coord = (light_proj_view * world) * vec4(in_position, 1.0);	
     gl_Position = proj * view * vec4(v_position, 1.0);
 
 #ifdef VULKAN

@@ -102,11 +102,11 @@ namespace rb {
 
 		void set_camera(const transform& transform, const camera& camera) override;
 
-		void begin_geometry_pass(const std::shared_ptr<viewport>& viewport) override;
+		void begin_depth_pass(const std::shared_ptr<viewport>& viewport) override;
 
-		void draw_geometry(const std::shared_ptr<viewport>& viewport, const mat4f& world, const geometry& geometry) override;
+		void draw_depth(const std::shared_ptr<viewport>& viewport, const mat4f& world, const geometry& geometry) override;
 
-		void end_geometry_pass(const std::shared_ptr<viewport>& viewport) override;
+		void end_depth_pass(const std::shared_ptr<viewport>& viewport) override;
 
 		void begin_shadow_pass(const transform& transform, const light& light, const directional_light& directional_light, std::size_t cascade) override;
 
@@ -114,19 +114,11 @@ namespace rb {
 
 		void end_shadow_pass() override;
 
-		void begin_light_pass(const std::shared_ptr<viewport>& viewport) override;
-
-		void draw_ambient(const std::shared_ptr<viewport>& viewport) override;
-
-		void draw_directional_light(const std::shared_ptr<viewport>& viewport, const transform& transform, const light& light, const directional_light& directional_light) override;
-
-		void draw_point_light(const std::shared_ptr<viewport>& viewport, const transform& transform, const light& light, const point_light& point_light) override;
+		void begin_forward_pass(const std::shared_ptr<viewport>& viewport) override;
 
 		void draw_skybox(const std::shared_ptr<viewport>& viewport) override;
 
-		void end_light_pass(const std::shared_ptr<viewport>& viewport) override;
-
-		void begin_forward_pass(const std::shared_ptr<viewport>& viewport) override;
+		void draw_forward(const std::shared_ptr<viewport>& viewport, const mat4f& world, const geometry& geometry) override;
 
 		void end_forward_pass(const std::shared_ptr<viewport>& viewport) override;
 
@@ -217,27 +209,19 @@ namespace rb {
 
 		void _create_environment();
 
-		void _create_gbuffer();
-
-		VkPipelineLayout _create_gbuffer_pipeline_layout(const std::shared_ptr<material>& material);
-
-		VkPipelineLayout _get_gbuffer_pipeline_layout(const std::shared_ptr<material>& material);
-
-		VkPipeline _create_gbuffer_pipeline(const std::shared_ptr<material>& material);
-
-		VkPipeline _get_gbuffer_pipeline(const std::shared_ptr<material>& material);
-
-		void _create_light();
+		void _create_depth();
 
 		void _create_forward();
 
+		VkPipelineLayout _create_forward_pipeline_layout(const std::shared_ptr<material>& material);
+
+		VkPipelineLayout _get_forward_pipeline_layout(const std::shared_ptr<material>& material);
+
+		VkPipeline _create_forward_pipeline(const std::shared_ptr<material>& material);
+
+		VkPipeline _get_forward_pipeline(const std::shared_ptr<material>& material);
+
 		void _create_postprocess();
-
-		void _create_ambient_pipeline();
-
-		void _create_directional_light_pipeline();
-
-		void _create_point_light_pipeline();
 
 		void _create_ssao_pipeline();
 
@@ -362,30 +346,18 @@ namespace rb {
 
 		VkDescriptorSetLayout _environment_descriptor_set_layout;
 
-		VkDescriptorSetLayout _gbuffer_descriptor_set_layout;
-		VkRenderPass _gbuffer_render_pass;
-		// VkPipelineLayout _gbuffer_pipeline_layout;
-		std::unordered_map<std::uint32_t, VkPipelineLayout> _gbuffer_pipeline_layouts;
-		std::unordered_map<std::uint32_t, VkPipeline> _gbuffer_pipelines;
-
-		VkDescriptorSetLayout _light_descriptor_set_layout;
-		VkRenderPass _light_render_pass;
+		VkDescriptorSetLayout _depth_descriptor_set_layout;
+		VkRenderPass _depth_render_pass;
+		VkPipelineLayout _depth_pipeline_layout;
+		VkPipeline _depth_pipeline;
 
 		VkDescriptorSetLayout _forward_descriptor_set_layout;
 		VkRenderPass _forward_render_pass;
+		std::unordered_map<std::uint32_t, VkPipelineLayout> _forward_pipeline_layouts;
+		std::unordered_map<std::uint32_t, VkPipeline> _forward_pipelines;
 
 		VkDescriptorSetLayout _postprocess_descriptor_set_layout;
 		VkRenderPass _postprocess_render_pass;
-
-		VkPipelineLayout _ambient_pipeline_layout;
-		VkPipeline _ambient_pipeline;
-
-		VkPipelineLayout _directional_light_pipeline_layout;
-		VkPipeline _directional_light_pipeline;
-		VkPipeline _directional_light_shadow_pipeline;
-
-		VkPipelineLayout _point_light_pipeline_layout;
-		VkPipeline _point_light_pipeline;
 
 		VkPipelineLayout _skybox_pipeline_layout;
 		VkPipeline _skybox_pipeline;

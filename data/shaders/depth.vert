@@ -11,7 +11,4 @@ layout (std140, push_constant) uniform ShadowData {
 
 void main() {
 	gl_Position =  proj_view_world * vec4(in_position, 1.0);
-#ifdef VULKAN
-    gl_Position.y = -gl_Position.y;
-#endif
 }

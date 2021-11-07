@@ -33,13 +33,13 @@ void renderer::draw(registry& registry) {
     const auto& [camera_transform, camera] = registry.get<transform, rb::camera>(_viewport->camera);
     graphics::set_camera(camera_transform, camera);
 
-    graphics::begin_geometry_pass(_viewport);
+    graphics::begin_depth_pass(_viewport);
 
     registry.view<transform, geometry>().each([this, &registry](entity entity, transform& transform, geometry& geometry) {
-        graphics::draw_geometry(_viewport, calculate_world(registry, entity), geometry);
+        graphics::draw_depth(_viewport, calculate_world(registry, entity), geometry);
     });
 
-    graphics::end_geometry_pass(_viewport);
+    graphics::end_depth_pass(_viewport);
 
     registry.view<transform, light, directional_light>().each([this, &registry](transform& transform, light& light, directional_light& directional_light) {
         if (!directional_light.shadow_enabled) {
@@ -57,41 +57,35 @@ void renderer::draw(registry& registry) {
         }
     });
 
-    graphics::begin_light_pass(_viewport);
-
-    graphics::draw_ambient(_viewport);
-
-    registry.view<transform, light, directional_light>().each([this, &registry](transform& transform, light& light, directional_light& directional_light) {
-        graphics::draw_directional_light(_viewport, transform, light, directional_light);
-    });
-
-    graphics::end_light_pass(_viewport);
-
     graphics::begin_forward_pass(_viewport);
 
     graphics::draw_skybox(_viewport);
+
+    registry.view<transform, geometry>().each([this, &registry](entity entity, transform& transform, geometry& geometry) {
+        graphics::draw_forward(_viewport, calculate_world(registry, entity), geometry);
+    });
 
     graphics::end_forward_pass(_viewport);
 
     graphics::begin_postprocess_pass(_viewport);
 
-    if (_viewport->fxaa_enabled) {
-        graphics::next_postprocess_pass(_viewport);
+    //if (_viewport->fxaa_enabled) {
+    //    graphics::next_postprocess_pass(_viewport);
 
-        graphics::draw_fxaa(_viewport);
-    }
+    //    graphics::draw_fxaa(_viewport);
+    //}
 
-    if (_viewport->sharpen_enabled) {
-        graphics::next_postprocess_pass(_viewport);
+    //if (_viewport->sharpen_enabled) {
+    //    graphics::next_postprocess_pass(_viewport);
 
-        graphics::draw_sharpen(_viewport, _viewport->sharpen_factor);
-    }
+    //    graphics::draw_sharpen(_viewport, _viewport->sharpen_factor);
+    //}
 
-    if (_viewport->motion_blur_enabled) {
-        graphics::next_postprocess_pass(_viewport);
+    //if (_viewport->motion_blur_enabled) {
+    //    graphics::next_postprocess_pass(_viewport);
 
-        graphics::draw_motion_blur(_viewport);
-    }
+    //    graphics::draw_motion_blur(_viewport);
+    //}
 
     graphics::end_postprocess_pass(_viewport);
 

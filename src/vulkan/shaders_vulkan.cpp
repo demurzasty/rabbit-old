@@ -12,6 +12,7 @@
 #include <rabbit/generated/shaders/geometry_nomaps.frag.spv.h>
 #include <rabbit/generated/shaders/forward.vert.spv.h>
 #include <rabbit/generated/shaders/forward.frag.spv.h>
+#include <rabbit/generated/shaders/forward_nomaps.frag.spv.h>
 #include <rabbit/generated/shaders/skybox.vert.spv.h>
 #include <rabbit/generated/shaders/skybox.frag.spv.h>
 #include <rabbit/generated/shaders/ambient.frag.spv.h>
@@ -72,6 +73,10 @@ span<const std::uint32_t> shaders_vulkan::forward_vert() {
 
 span<const std::uint32_t> shaders_vulkan::forward_frag() {
 	return ::forward_frag;
+}
+
+span<const std::uint32_t> shaders_vulkan::forward_nomaps_frag() {
+	return ::forward_nomaps_frag;
 }
 
 span<const std::uint32_t> shaders_vulkan::skybox_vert() {

@@ -45,11 +45,11 @@ namespace rb {
 
 		virtual void set_camera(const transform& transform, const camera& camera) = 0;
 
-		virtual void begin_geometry_pass(const std::shared_ptr<viewport>& viewport) = 0;
+		virtual void begin_depth_pass(const std::shared_ptr<viewport>& viewport) = 0;
 
-		virtual void draw_geometry(const std::shared_ptr<viewport>& viewport, const mat4f& world, const geometry& geometry) = 0;
+		virtual void draw_depth(const std::shared_ptr<viewport>& viewport, const mat4f& world, const geometry& geometry) = 0;
 
-		virtual void end_geometry_pass(const std::shared_ptr<viewport>& viewport) = 0;
+		virtual void end_depth_pass(const std::shared_ptr<viewport>& viewport) = 0;
 
 		virtual void begin_shadow_pass(const transform& transform, const light& light, const directional_light& directional_light, std::size_t cascade) = 0;
 
@@ -57,19 +57,11 @@ namespace rb {
 
 		virtual void end_shadow_pass() = 0;
 
-		virtual void begin_light_pass(const std::shared_ptr<viewport>& viewport) = 0;
-
-		virtual void draw_ambient(const std::shared_ptr<viewport>& viewport) = 0;
-
-		virtual void draw_directional_light(const std::shared_ptr<viewport>& viewport, const transform& transform, const light& light, const directional_light& directional_light) = 0;
-
-		virtual void draw_point_light(const std::shared_ptr<viewport>& viewport, const transform& transform, const light& light, const point_light& point_light) = 0;
+		virtual void begin_forward_pass(const std::shared_ptr<viewport>& viewport) = 0;
 
 		virtual void draw_skybox(const std::shared_ptr<viewport>& viewport) = 0;
 
-		virtual void end_light_pass(const std::shared_ptr<viewport>& viewport) = 0;
-
-		virtual void begin_forward_pass(const std::shared_ptr<viewport>& viewport) = 0;
+		virtual void draw_forward(const std::shared_ptr<viewport>& viewport, const mat4f& world, const geometry& geometry) = 0;
 
 		virtual void end_forward_pass(const std::shared_ptr<viewport>& viewport) = 0;
 
@@ -136,11 +128,11 @@ namespace rb {
 
 		static void set_camera(const transform& transform, const camera& camera);
 
-		static void begin_geometry_pass(const std::shared_ptr<viewport>& viewport);
+		static void begin_depth_pass(const std::shared_ptr<viewport>& viewport);
 
-		static void draw_geometry(const std::shared_ptr<viewport>& viewport, const mat4f& world, const geometry& geometry);
+		static void draw_depth(const std::shared_ptr<viewport>& viewport, const mat4f& world, const geometry& geometry);
 
-		static void end_geometry_pass(const std::shared_ptr<viewport>& viewport);
+		static void end_depth_pass(const std::shared_ptr<viewport>& viewport);
 
 		static void begin_shadow_pass(const transform& transform, const light& light, const directional_light& directional_light, std::size_t cascade);
 
@@ -148,19 +140,11 @@ namespace rb {
 
 		static void end_shadow_pass();
 
-		static void begin_light_pass(const std::shared_ptr<viewport>& viewport);
-
-		static void draw_ambient(const std::shared_ptr<viewport>& viewport);
-
-		static void draw_directional_light(const std::shared_ptr<viewport>& viewport, const transform& transform, const light& light, const directional_light& directional_light);
-
-		static void draw_point_light(const std::shared_ptr<viewport>& viewport, const transform& transform, const light& light, const point_light& point_light);
+		static void begin_forward_pass(const std::shared_ptr<viewport>& viewport);
 
 		static void draw_skybox(const std::shared_ptr<viewport>& viewport);
 
-		static void end_light_pass(const std::shared_ptr<viewport>& viewport);
-
-		static void begin_forward_pass(const std::shared_ptr<viewport>& viewport);
+		static void draw_forward(const std::shared_ptr<viewport>& viewport, const mat4f& world, const geometry& geometry);
 
 		static void end_forward_pass(const std::shared_ptr<viewport>& viewport);
 
@@ -173,20 +157,6 @@ namespace rb {
 		static void end_fill_pass(const std::shared_ptr<viewport>& viewport);
 
 		static void begin_postprocess_pass(const std::shared_ptr<viewport>& viewport);
-
-		static void next_postprocess_pass(const std::shared_ptr<viewport>& viewport);
-
-		static void draw_ssao(const std::shared_ptr<viewport>& viewport);
-
-		static void draw_fxaa(const std::shared_ptr<viewport>& viewport);
-
-		static void draw_blur(const std::shared_ptr<viewport>& viewport, int strength);
-
-		static void draw_sharpen(const std::shared_ptr<viewport>& viewport, float strength);
-
-		static void draw_motion_blur(const std::shared_ptr<viewport>& viewport);
-
-		static void draw_outline(const std::shared_ptr<viewport>& viewport);
 
 		static void end_postprocess_pass(const std::shared_ptr<viewport>& viewport);
 
