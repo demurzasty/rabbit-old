@@ -318,7 +318,14 @@ void graphics_vulkan::draw_geometry(const std::shared_ptr<viewport>& viewport, c
     
     vkCmdBindPipeline(_command_buffers[_command_index], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
 
-    vkCmdDrawIndexed(_command_buffers[_command_index], static_cast<std::uint32_t>(native_mesh->indices().size()), 1, 0, 0, 0);
+    const vec3f position{ world[12], world[13], world[14] };
+    const auto distance = length(_camera_data.camera_position - position);
+    const auto factor = std::min(distance, 100.0f) / 100.0f;
+    const auto lod_count = static_cast<std::uint32_t>(native_mesh->lods().size());
+    const auto lod_index = std::min(static_cast<std::uint32_t>(std::ceil(lod_count * (factor))), lod_count - 1);
+
+    const auto& lod = native_mesh->lods()[lod_index];
+    vkCmdDrawIndexed(_command_buffers[_command_index], lod.size, 1, lod.offset, 0, 0);
 }
 
 void graphics_vulkan::end_geometry_pass(const std::shared_ptr<viewport>& viewport) {
@@ -364,7 +371,8 @@ void graphics_vulkan::draw_shadow(const mat4f& world, const geometry& geometry, 
     shadow_data.proj_view_world = _camera_data.light_proj_view[cascade] * world;
     vkCmdPushConstants(_command_buffers[_command_index], _shadow_pipeline_layout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(shadow_data), &shadow_data);
 
-    vkCmdDrawIndexed(_command_buffers[_command_index], static_cast<std::uint32_t>(native_mesh->indices().size()), 1, 0, 0, 0);
+    const auto& lod = native_mesh->lods().back();
+    vkCmdDrawIndexed(_command_buffers[_command_index], lod.size, 1, lod.offset, 0, 0);
 }
 
 void graphics_vulkan::end_shadow_pass() {

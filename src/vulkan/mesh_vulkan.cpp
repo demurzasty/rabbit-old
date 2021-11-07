@@ -31,7 +31,7 @@ mesh_vulkan::mesh_vulkan(VkDevice device, VmaAllocator allocator, const mesh_des
     index_buffer_info.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
     index_buffer_info.pNext = nullptr;
     index_buffer_info.flags = 0;
-    index_buffer_info.size = desc.vertices.size_bytes();
+    index_buffer_info.size = desc.indices.size_bytes();
     index_buffer_info.usage = VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
     index_buffer_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
     index_buffer_info.queueFamilyIndexCount = 0;

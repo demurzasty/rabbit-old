@@ -13,9 +13,6 @@
 
 using namespace rb;
 
-// TODO: Vertex quantization
-// TODO: Add more formats (.gltf)
-
 static bspheref calculate_bsphere(const span<const vertex>& vertices) {
     bspheref bsphere{ vec3f::zero(), 0.0f };
 
@@ -42,10 +39,15 @@ std::shared_ptr<mesh> mesh::load(ibstream& stream) {
     const auto vertices = std::make_unique<vertex[]>(vertex_count);
     stream.read(vertices.get(), vertex_count * sizeof(vertex));
 
-    std::uint32_t index_count;
-    stream.read(index_count);
-    const auto indices = std::make_unique<std::uint32_t[]>(index_count);
-    stream.read(indices.get(), index_count * sizeof(std::uint32_t));
+    std::uint32_t total_index_count;
+    stream.read(total_index_count);
+    const auto indices = std::make_unique<std::uint32_t[]>(total_index_count);
+    stream.read(indices.get(), total_index_count * sizeof(std::uint32_t));
+
+    std::uint32_t lod_count;
+    stream.read(lod_count);
+    const auto lods = std::make_unique<mesh_lod[]>(lod_count);
+    stream.read(lods.get(), lod_count * sizeof(mesh_lod));
 
     std::uint32_t triangle_count;
     stream.read(triangle_count);
@@ -57,15 +59,17 @@ std::shared_ptr<mesh> mesh::load(ibstream& stream) {
 
     mesh_desc desc;
     desc.vertices = { vertices.get(), vertex_count };
-    desc.indices = { indices.get(), index_count };
+    desc.indices = { indices.get(), total_index_count };
+    desc.lods = { lods.get(), lod_count };
     desc.convex_hull = { triangles.get(), triangle_count };
     desc.bsphere = bsphere;
     return graphics::make_mesh(desc);
 }
 
-void mesh::import(ibstream& input, obstream& output, const json& metadata) {
-    std::vector<vertex> vertices;
-    std::vector<vec3f> positions;
+static void load_obj(ibstream& input, std::vector<vertex>& vertices, std::vector<std::uint32_t>& indices, std::vector<vec3f>& positions) {
+    vertices.clear();
+    positions.clear();
+    std::vector<vertex> temporal_vertices;
     std::vector<vec2f> texcoords;
     std::vector<vec3f> normals;
 
@@ -114,7 +118,7 @@ void mesh::import(ibstream& input, obstream& output, const json& metadata) {
                 for (int i = 1; i < 4; ++i) {
                     sscanf(results[i].c_str(), "%d/%d/%d", &a, &b, &c);
 
-                    vertices.push_back({
+                    temporal_vertices.push_back({
                         positions[a - 1],
                         texcoords[b - 1],
                         normals[c - 1]
@@ -124,19 +128,56 @@ void mesh::import(ibstream& input, obstream& output, const json& metadata) {
         }
     }
 
-    const auto remap = std::make_unique<std::uint32_t[]>(vertices.size());
-    const auto vertex_size = meshopt_generateVertexRemap(remap.get(), nullptr, vertices.size(), vertices.data(), vertices.size(), sizeof(vertex));
+    const auto remap = std::make_unique<std::uint32_t[]>(temporal_vertices.size());
+    const auto vertex_count = meshopt_generateVertexRemap(remap.get(), nullptr, temporal_vertices.size(), temporal_vertices.data(), temporal_vertices.size(), sizeof(vertex));
 
-    const auto indices = std::make_unique<std::uint32_t[]>(vertices.size());
-    meshopt_remapIndexBuffer(indices.get(), nullptr, vertices.size(), remap.get());
+    indices.resize(temporal_vertices.size());
+    meshopt_remapIndexBuffer(indices.data(), nullptr, temporal_vertices.size(), remap.get());
 
-    const auto indexed_vertices = std::make_unique<vertex[]>(vertex_size);
-    meshopt_remapVertexBuffer(indexed_vertices.get(), vertices.data(), vertices.size(), sizeof(vertex), remap.get());
+    vertices.resize(vertex_count);
+    meshopt_remapVertexBuffer(vertices.data(), temporal_vertices.data(), temporal_vertices.size(), sizeof(vertex), remap.get());
 
-    meshopt_optimizeVertexCache(indices.get(), indices.get(), vertices.size(), vertex_size);
+}
 
-    meshopt_optimizeOverdraw(indices.get(), indices.get(), vertices.size(), &indexed_vertices.get()->position.x, vertex_size, sizeof(vertex), 1.05f);
-    meshopt_optimizeVertexFetch(indexed_vertices.get(), indices.get(), vertices.size(), indexed_vertices.get(), vertex_size, sizeof(vertex));
+static void optimize(std::vector<vertex>& vertices, std::vector<std::uint32_t>& indices) {
+    meshopt_optimizeVertexCache(indices.data(), indices.data(), indices.size(), vertices.size());
+    meshopt_optimizeOverdraw(indices.data(), indices.data(), indices.size(), &vertices[0].position.x, vertices.size(), sizeof(vertex), 1.05f);
+}
+
+static void optimize_vertices(std::vector<vertex>& vertices, std::vector<std::uint32_t>& indices) {
+    meshopt_optimizeVertexFetch(vertices.data(), indices.data(), indices.size(), vertices.data(), vertices.size(), sizeof(vertex));
+}
+
+static std::vector<std::uint32_t> simplify(std::vector<vertex>& vertices, const std::vector<std::uint32_t>& indices, float threshold, float target_error) {
+    std::size_t target_index_count = static_cast<std::size_t>(indices.size() * threshold);
+
+    std::vector<std::uint32_t> lod(indices.size());
+    float lod_error = 0.f;
+
+    std::size_t lod_size = meshopt_simplify(&lod[0], indices.data(), indices.size(), &vertices[0].position.x, vertices.size(), sizeof(vertex), target_index_count, target_error, &lod_error);
+    lod.resize(lod_size);
+
+    optimize(vertices, lod);
+    return lod;
+}
+
+void mesh::import(ibstream& input, obstream& output, const json& metadata) {
+    std::vector<vertex> vertices;
+    std::vector<std::uint32_t> indices;
+    std::vector<vec3f> positions;
+    load_obj(input, vertices, indices, positions);
+
+    optimize(vertices, indices);
+    optimize_vertices(vertices, indices);
+
+    // level of details indices (excluding base indices)
+    std::array<std::vector<std::uint32_t>, 5> lods{
+        simplify(vertices, indices, 0.8f, 0.05f),
+        simplify(vertices, indices, 0.4f, 0.1f),
+        simplify(vertices, indices, 0.2f, 0.2f),
+        simplify(vertices, indices, 0.075f, 0.3f),
+        simplify(vertices, indices, 0.025f, 0.5f),
+    };
 
     quickhull::QuickHull<float> quickhull;
     auto hull = quickhull.getConvexHull(&positions[0].x, positions.size(), true, false);
@@ -152,13 +193,34 @@ void mesh::import(ibstream& input, obstream& output, const json& metadata) {
         });
     }
 
-    const auto bsphere = calculate_bsphere({ indexed_vertices.get(), vertex_size });
+    const auto bsphere = calculate_bsphere(vertices);
+
+    std::size_t total_index_count{ indices.size() };
+    for (const auto& lod : lods) {
+        total_index_count += lod.size();
+    }
 
     output.write(mesh::magic_number);
-    output.write<std::uint32_t>(vertex_size);
-    output.write(indexed_vertices.get(), vertex_size * sizeof(vertex));
+
     output.write<std::uint32_t>(vertices.size());
-    output.write(indices.get(), vertices.size() * sizeof(std::uint32_t));
+    output.write(vertices.data(), vertices.size() * sizeof(vertex));
+
+    output.write<std::uint32_t>(total_index_count);
+    output.write(indices.data(), indices.size() * sizeof(std::uint32_t)); // base indices
+    for (const auto& lod : lods) {
+        output.write(lod.data(), lod.size() * sizeof(std::uint32_t));
+    }
+
+    output.write<std::uint32_t>(lods.size() + 1); // including base indices
+    output.write(mesh_lod{ 0u, static_cast<std::uint32_t>(indices.size()) });
+
+    std::uint32_t offset{ static_cast<std::uint32_t>(indices.size()) };
+    for (const auto& lod : lods) {
+        const auto size = static_cast<std::uint32_t>(lod.size());
+        output.write(mesh_lod{ offset, size });
+        offset += size;
+    }
+
     output.write<std::uint32_t>(convex_hull.size() / 3); // in triangle count
     output.write(convex_hull.data(), convex_hull.size() * sizeof(vec3f));
     output.write(bsphere);
@@ -233,9 +295,14 @@ std::shared_ptr<mesh> mesh::make_box(const vec3f& extent, const vec2f& uv_scale)
         22, 23, 20
     };
 
+    mesh_lod lods[]{
+        { 0, 36 }
+    };
+
     mesh_desc desc;
     desc.vertices = vertices;
     desc.indices = indices;
+    desc.lods = lods;
     return graphics::make_mesh(desc);
 }
 
@@ -281,9 +348,14 @@ std::shared_ptr<mesh> mesh::make_sphere(std::size_t stacks, std::size_t slices, 
         }
     }
 
+    mesh_lod lods[]{
+        { 0, slices * slices * 6 }
+    };
+
     mesh_desc desc;
     desc.vertices = { vertices.get(), (slices + 1) * (stacks + 1) };
     desc.indices = { indices.get(), slices * slices * 6 };
+    desc.lods = lods;
     desc.bsphere = { { 0.0f, 0.0f, 0.0f }, radius };
     return graphics::make_mesh(desc);
 }
@@ -294,6 +366,10 @@ span<const vertex> mesh::vertices() const {
 
 span<const std::uint32_t> mesh::indices() const {
 	return _indices;
+}
+
+span<const mesh_lod> mesh::lods() const {
+    return _lods;
 }
 
 span<const trianglef> mesh::convex_hull() const {
@@ -307,6 +383,7 @@ const bspheref& mesh::bsphere() const {
 mesh::mesh(const mesh_desc& desc)
 	: _vertices(desc.vertices.begin(), desc.vertices.end())
 	, _indices(desc.indices.begin(), desc.indices.end())
+    , _lods(desc.lods.begin(), desc.lods.end())
     , _convex_hull(desc.convex_hull.begin(), desc.convex_hull.end())
     , _bsphere(desc.bsphere.has_value() ? desc.bsphere.value() : calculate_bsphere(desc.vertices)) {
     RB_ASSERT(!_vertices.empty(), "No vertices has been provided for mesh.");

@@ -15,9 +15,15 @@
 #include <optional>
 
 namespace rb {
+	struct mesh_lod {
+		std::uint32_t offset;
+		std::uint32_t size;
+	};
+
 	struct mesh_desc {
 		span<const vertex> vertices;
 		span<const std::uint32_t> indices;
+		span<const mesh_lod> lods;
 		span<const trianglef> convex_hull;
 		std::optional<bspheref> bsphere;
 	};
@@ -42,6 +48,8 @@ namespace rb {
 
 		span<const std::uint32_t> indices() const;
 
+		span<const mesh_lod> lods() const;
+
 		span<const trianglef> convex_hull() const;
 
 		const bspheref& bsphere() const;
@@ -50,9 +58,10 @@ namespace rb {
 		mesh(const mesh_desc& desc);
 
 	private:
-		std::vector<vertex> _vertices;
-		std::vector<std::uint32_t> _indices;
-		std::vector<trianglef> _convex_hull;
-		bspheref _bsphere;
+		const std::vector<vertex> _vertices;
+		const std::vector<std::uint32_t> _indices;
+		const std::vector<mesh_lod> _lods;
+		const std::vector<trianglef> _convex_hull;
+		const bspheref _bsphere;
 	};
 }
