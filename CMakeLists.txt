@@ -19,7 +19,7 @@ add_subdirectory ("lib")
 
 set (GLSLANG_VALIDATOR "${CMAKE_CURRENT_SOURCE_DIR}/bin/win32/glslangValidator.exe")
 
-file (GLOB_RECURSE GLSL_SOURCE_FILES "data/shaders/*.vert" "data/shaders/*.frag")
+file (GLOB_RECURSE GLSL_SOURCE_FILES "data/shaders/*.vert" "data/shaders/*.frag" "data/shaders/*.comp")
 
 foreach (GLSL_SRC ${GLSL_SOURCE_FILES})
 	get_filename_component (FILE_NAME ${GLSL_SRC} NAME)

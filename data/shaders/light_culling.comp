@@ -1,0 +1,169 @@
+#version 450
+
+// Based on:
+// https://github.com/bcrusco/Forward-Plus-Renderer/blob/master/Forward-Plus/Forward-Plus/source/shaders/light_culling.comp.glsl
+
+#define TILE_SIZE 16
+#define LIGHT_COUNT_PER_TILE 1024
+
+struct light {
+	vec4 position_or_direction; // .a < 0.5 ? point_light : directional_light
+	vec4 color; // .a = radius 
+};
+
+struct visible_index {
+	int index;
+};
+
+layout (std140, set = 0, binding = 0) uniform camera_data {
+    mat4 proj;
+    mat4 view;
+    vec3 camera_position;
+} u_camera;
+
+layout (set = 1, binding = 0) uniform sampler2D u_depth_map;
+
+// Shader storage buffer objects
+layout(std140, set = 2, binding = 0) readonly buffer light_buffer {
+	light data[];
+} u_light_buffer;
+
+layout(std140, set = 2, binding = 1) writeonly buffer visible_light_indices_buffer {
+	visible_index data[];
+} u_visible_light_indices_buffer;
+
+layout(std140, set = 2, binding = 2) uniform culling_data {
+	int light_count;
+} u_culling_data;
+
+// Shared values between all the threads in the group
+shared uint s_min_depth_int;
+shared uint s_max_depth_int;
+shared uint s_visible_light_count;
+shared vec4 s_frustum_planes[6];
+// Shared local storage for visible indices, will be written out to the global buffer at the end
+shared int s_visible_light_indices[LIGHT_COUNT_PER_TILE];
+shared mat4 s_proj_view;
+shared ivec2 s_viewport_size;
+
+// Took some light culling guidance from Dice's deferred renderer
+// http://www.dice.se/news/directx-11-rendering-battlefield-3/
+
+layout(local_size_x = TILE_SIZE, local_size_y = TILE_SIZE, local_size_z = 1) in;
+
+void main() {
+	ivec2 location = ivec2(gl_GlobalInvocationID.xy);
+	ivec2 item_id = ivec2(gl_LocalInvocationID.xy);
+	ivec2 tile_id = ivec2(gl_WorkGroupID.xy);
+	ivec2 tile_number = ivec2(gl_NumWorkGroups.xy);
+	uint index = tile_id.y * tile_number.x + tile_id.x;
+
+	// Initialize shared global values for depth and light count
+	if (gl_LocalInvocationIndex == 0) {
+		s_min_depth_int = 0xFFFFFFFF;
+		s_max_depth_int = 0;
+		s_visible_light_count = 0;
+		s_proj_view = u_camera.proj * u_camera.view;
+		s_viewport_size = textureSize(u_depth_map, 0);
+	}
+
+	barrier();
+
+	// Step 1: Calculate the minimum and maximum depth values (from the depth buffer) for this group's tile
+	float max_depth, min_depth;
+	vec2 texcoord = vec2(location) / s_viewport_size;
+	float depth = texture(u_depth_map, texcoord).r;
+	// Linearize the depth value from depth buffer (must do this because we created it using projection)
+	// should we?
+	depth = (0.5 * u_camera.proj[3][2]) / (depth + 0.5 * u_camera.proj[2][2] - 0.5);
+
+	// Convert depth to uint so we can do atomic min and max comparisons between the threads
+	uint depth_int = floatBitsToUint(depth);
+	atomicMin(s_min_depth_int, depth_int);
+	atomicMax(s_max_depth_int, depth_int);
+
+	barrier();
+
+	// Step 2: One thread should calculate the frustum planes to be used for this tile
+	if (gl_LocalInvocationIndex == 0) {
+		// Convert the min and max across the entire tile back to float
+		min_depth = uintBitsToFloat(s_min_depth_int);
+		max_depth = uintBitsToFloat(s_max_depth_int);
+
+		// Steps based on tile sale
+		vec2 negative_step = (2.0 * vec2(tile_id)) / vec2(tile_number);
+		vec2 positive_step = (2.0 * vec2(tile_id + ivec2(1, 1))) / vec2(tile_number);
+
+		// Set up starting values for planes using steps and min and max z values
+		s_frustum_planes[0] = vec4(1.0, 0.0, 0.0, 1.0 - negative_step.x); // Left
+		s_frustum_planes[1] = vec4(-1.0, 0.0, 0.0, -1.0 + positive_step.x); // Right
+		s_frustum_planes[2] = vec4(0.0, 1.0, 0.0, 1.0 - negative_step.y); // Bottom
+		s_frustum_planes[3] = vec4(0.0, -1.0, 0.0, -1.0 + positive_step.y); // Top
+		s_frustum_planes[4] = vec4(0.0, 0.0, -1.0, -min_depth); // Near
+		s_frustum_planes[5] = vec4(0.0, 0.0, 1.0, max_depth); // Far
+
+		// Transform the first four planes
+		for (uint i = 0; i < 4; i++) {
+			s_frustum_planes[i] *= s_proj_view;
+			s_frustum_planes[i] /= length(s_frustum_planes[i].xyz);
+		}
+
+		// Transform the depth planes
+		s_frustum_planes[4] *= u_camera.view;
+		s_frustum_planes[4] /= length(s_frustum_planes[4].xyz);
+		s_frustum_planes[5] *= u_camera.view;
+		s_frustum_planes[5] /= length(s_frustum_planes[5].xyz);
+	}
+
+	barrier();
+
+	// Step 3: Cull lights.
+	// Parallelize the threads against the lights now.
+	// Can handle 256 simultaniously. Anymore lights than that and additional passes are performed
+	uint thread_count = TILE_SIZE * TILE_SIZE;
+	uint passCount = (u_culling_data.light_count + thread_count - 1) / thread_count;
+	for (uint i = 0; i < passCount; i++) {
+		// Get the lightIndex to test for this thread / pass. If the index is >= light count, then this thread can stop testing lights
+		uint light_index = i * thread_count + gl_LocalInvocationIndex;
+		if (light_index >= u_culling_data.light_count) {
+			break;
+		}
+
+		vec4 position = u_light_buffer.data[light_index].position_or_direction;
+		float radius = u_light_buffer.data[light_index].color.w;
+
+		// We check if the light exists in our frustum
+		float distance = 0.0;
+		for (uint j = 0; j < 6; j++) {
+			distance = dot(position, s_frustum_planes[j]) + radius;
+
+			// If one of the tests fails, then there is no intersection
+			if (distance <= 0.0) {
+				break;
+			}
+		}
+
+		// If greater than zero, then it is a visible light
+		if (distance > 0.0) {
+			// Add index to the shared array of visible indices
+			uint offset = atomicAdd(s_visible_light_count, 1);
+			s_visible_light_indices[offset] = int(light_index);
+		}
+	}
+
+	barrier();
+
+	// One thread should fill the global light buffer
+	if (gl_LocalInvocationIndex == 0) {
+		uint offset = index * LIGHT_COUNT_PER_TILE; // Determine bosition in global buffer
+		for (uint i = 0; i < s_visible_light_count; i++) {
+			u_visible_light_indices_buffer.data[offset + i].index = s_visible_light_indices[i];
+		}
+
+		if (s_visible_light_count != LIGHT_COUNT_PER_TILE) {
+			// Unless we have totally filled the entire array, mark it's end with -1
+			// Final shader step will use this to determine where to stop (without having to pass the light count)
+			u_visible_light_indices_buffer.data[offset + s_visible_light_count].index = -1;
+		}
+	}
+}
