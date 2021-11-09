@@ -12,34 +12,6 @@
 
 using namespace rb;
 
-static void save_obj(const span<const vertex>& vertices, const span<const std::uint32_t>& indices, const std::string& filename) {
-    std::ofstream stream{ filename };
-    if (!stream.is_open()) {
-        return;
-    }
-
-    stream << "o " << filename << '\n';
-
-    for (const auto& vertex : vertices) {
-        stream << "v " << vertex.position.x << ' ' << vertex.position.y << ' ' << vertex.position.z << '\n';
-    }
-
-    for (const auto& vertex : vertices) {
-        stream << "vn " << vertex.normal.x << ' ' << vertex.normal.y << ' ' << vertex.normal.z << '\n';
-    }
-
-    for (const auto& vertex : vertices) {
-        stream << "vt " << vertex.texcoord.x << ' ' << vertex.texcoord.y  << '\n';
-    }
-
-    for (auto i = 0u; i < indices.size(); i += 3) {
-        stream << "f ";
-        stream << (indices[i] + 1) << '/' << (indices[i] + 1) << '/' << (indices[i] + 1) << ' ';
-        stream << (indices[i + 1] + 1) << '/' << (indices[i + 1] + 1) << '/' << (indices[i + 1] + 1) << ' ';
-        stream << (indices[i + 2] + 1) << '/' << (indices[i + 2] + 1) << '/' << (indices[i + 2] + 1) << '\n';
-    }
-}
-
 static json parse_node(const json& gltf_meshes,
     const std::vector<std::vector<std::string>>& meshes,
     const json& gltf_materials,
@@ -95,6 +67,11 @@ static json parse_node(const json& gltf_meshes,
             matrix[i] = gltf_matrix[i];
         }
 
+        // 0, 1, 2, 3
+        // 4, 5, 6, 7
+        // 8, 9, 10, 11,
+        // 12, 13, 14, 15
+
         position = { matrix[12], matrix[13], matrix[14] };
         
         scaling.x = length(vec3f{ matrix[0], matrix[1], matrix[2] });
@@ -104,6 +81,37 @@ static json parse_node(const json& gltf_meshes,
         rotation.x = std::atan2(matrix[9], matrix[10]);
         rotation.y = std::atan2(-matrix[8], std::sqrt(matrix[9] * matrix[9] + matrix[10] * matrix[10]));
         rotation.z = std::atan2(matrix[4], matrix[0]);
+
+        rotation.x = std::atan2(matrix[2], matrix[11]);
+        rotation.y = std::atan2(-matrix[2], std::sqrt(matrix[6] * matrix[6] + matrix[10] * matrix[10]));
+        rotation.z = std::atan2(matrix[1], matrix[0]);
+
+        matrix[0] /= scaling.x;
+        matrix[1] /= scaling.x;
+        matrix[2] /= scaling.x;
+
+        matrix[4] /= scaling.y;
+        matrix[5] /= scaling.y;
+        matrix[6] /= scaling.y;
+
+        matrix[8] /= scaling.z;
+        matrix[9] /= scaling.z;
+        matrix[10] /= scaling.z;
+
+        const auto t1 = std::atan2(matrix[9], matrix[10]);
+        const auto c2 = std::sqrt(matrix[0] * matrix[0] + matrix[4] * matrix[4]);
+        const auto t2 = std::atan2(-matrix[8], c2);
+        const auto s1 = std::sin(t1);
+        const auto c1 = std::cos(t1);
+        const auto t3 = std::atan2(s1 * matrix[2] - c1 * matrix[1], c1 * matrix[5] - s1 * matrix[6]);
+
+        rotation.x = -t1;
+        rotation.y = -t2;
+        rotation.z = -t3;
+
+        //rotation.x = std::asin(matrix[1]);
+        //rotation.y = std::atan2(-matrix[2], matrix[0]);
+        //rotation.z = std::atan2(-matrix[9], matrix[5]);
     }
 
     jentity["transform"] = {
@@ -332,8 +340,7 @@ void model::import(ibstream& input, obstream& output, const json& metadata) {
         // TODO: Alpha cutoff support.
         // TODO: Double sided support.
 
-        const std::string material_name = gltf_material.contains("name") ?
-            gltf_material["name"] : format("material{}", material_index);
+        const std::string material_name = format("material{}", material_index);
         const auto material_filename = material_name + ".mat";
         const auto material_metadata_filename = material_filename + ".meta";
 
@@ -447,20 +454,17 @@ void model::import(ibstream& input, obstream& output, const json& metadata) {
                     for (std::size_t index{ 0 }; index < count; ++index) {
                         const auto ptr = data + index * buffer_stride;
                         vertices[index].texcoord = *reinterpret_cast<const vec2f*>(ptr);
-                        vertices[index].texcoord.y = -vertices[index].texcoord.y;
                     }
                 }
             }
 
-            const std::string mesh_name = gltf_mesh.contains("name") ? gltf_mesh["name"] : format("mesh_{}_{}", mesh_index, primitive_index);
-            const auto mesh_filename = mesh_name + ".obj";
+            const std::string mesh_name = format("mesh_{}_{}", mesh_index, primitive_index);
+            const auto mesh_filename = mesh_name + ".msh";
             const auto mesh_metadata_filename = mesh_filename + ".meta";
 
             {
-                save_obj(vertices, indices, (data_path / mesh_filename).string());
-
-                //fobstream mesh_stream{ (data_path / mesh_filename).string() };
-                //mesh::save(mesh_stream, vertices, indices);
+                fobstream stream{ (data_path / mesh_filename).string() };
+                mesh::save(stream, vertices, indices);
             }
 
             json jmesh_metadata;
@@ -478,6 +482,8 @@ void model::import(ibstream& input, obstream& output, const json& metadata) {
             meshes[mesh_index].push_back(jmesh_metadata["uuid"]);
             primitive_index++;
         }
+
+        print("mesh: {}/{}\n", mesh_index, gltf_meshes.size());
         mesh_index++;
     }
 

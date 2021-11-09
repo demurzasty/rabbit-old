@@ -5,6 +5,7 @@
 #include "json.hpp"
 #include "triangle.hpp"
 #include "bsphere.hpp"
+#include "bbox.hpp"
 #include "bstream.hpp"
 #include "fnv1a.hpp"
 
@@ -26,6 +27,7 @@ namespace rb {
 		span<const mesh_lod> lods;
 		span<const trianglef> convex_hull;
 		std::optional<bspheref> bsphere;
+		std::optional<bboxf> bbox;
 	};
 
 	class mesh {
@@ -54,6 +56,8 @@ namespace rb {
 
 		const bspheref& bsphere() const;
 
+		const bboxf& bbox() const;
+
 	protected:
 		mesh(const mesh_desc& desc);
 
@@ -63,5 +67,6 @@ namespace rb {
 		const std::vector<mesh_lod> _lods;
 		const std::vector<trianglef> _convex_hull;
 		const bspheref _bsphere;
+		const bboxf _bbox;
 	};
 }

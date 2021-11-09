@@ -15,6 +15,9 @@ namespace rb {
 		void draw(registry& registry) override;
 
 	private:
+		entity _find_directional_light_with_shadows(registry& registry) const;
+
+	private:
 		std::shared_ptr<viewport> _viewport;
 	};
 }

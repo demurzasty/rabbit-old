@@ -1583,6 +1583,18 @@ void graphics_vulkan::_create_depth() {
         vertex_shader_stage_info
     };
 
+    VkDynamicState dynamic_states[]{
+        VK_DYNAMIC_STATE_VIEWPORT,
+        VK_DYNAMIC_STATE_SCISSOR
+    };
+
+    VkPipelineDynamicStateCreateInfo dynamic_state_info;
+    dynamic_state_info.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+    dynamic_state_info.pNext = nullptr;
+    dynamic_state_info.flags = 0;
+    dynamic_state_info.dynamicStateCount = 2;
+    dynamic_state_info.pDynamicStates = dynamic_states;
+
     VkGraphicsPipelineCreateInfo pipeline_info{};
     pipeline_info.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
     pipeline_info.stageCount = 1;
@@ -1597,7 +1609,7 @@ void graphics_vulkan::_create_depth() {
     pipeline_info.layout = _shadow_pipeline_layout;
     pipeline_info.renderPass = _depth_render_pass;
     pipeline_info.basePipelineHandle = VK_NULL_HANDLE;
-    pipeline_info.pDynamicState = nullptr;
+    pipeline_info.pDynamicState = &dynamic_state_info;
     RB_VK(vkCreateGraphicsPipelines(_device, VK_NULL_HANDLE, 1, &pipeline_info, nullptr, &_depth_pipeline),
         "Failed to create Vulkan graphics pipeline");
 
@@ -5729,7 +5741,7 @@ void graphics_vulkan::_create_shadow_map() {
     rasterizer_state_info.depthClampEnable = VK_FALSE;
     rasterizer_state_info.rasterizerDiscardEnable = VK_FALSE;
     rasterizer_state_info.polygonMode = VK_POLYGON_MODE_FILL;
-    rasterizer_state_info.cullMode = VK_CULL_MODE_FRONT_BIT;
+    rasterizer_state_info.cullMode = VK_CULL_MODE_BACK_BIT;
     rasterizer_state_info.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
     rasterizer_state_info.depthBiasEnable = VK_TRUE;
     rasterizer_state_info.depthBiasConstantFactor = 1.25f;

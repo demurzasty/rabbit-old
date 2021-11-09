@@ -4,6 +4,9 @@
 #include <rabbit/input.hpp>
 #include <rabbit/settings.hpp>
 
+// TODO: Calculate objects world matrices and store it in buffer.
+//       Do not recalculate these matrices every time we want to draw geometry.
+
 using namespace rb;
 
 void renderer::initialize(registry& registry) {
@@ -20,53 +23,75 @@ void renderer::update(registry& registry, float elapsed_time) {
 }
 
 void renderer::draw(registry& registry) {
+    // With no active camera we can't draw scene properly. 
     if (!registry.valid(_viewport->camera)) {
         return;
     }
 
+    // Be sure that camera entity has mandatory components attached.
     if (!registry.all_of<transform, camera>(_viewport->camera)) {
         return;
     }
 
+    // Start drawing. It is basically stariting recording commands into primary frame command buffer.
+    // Every frame command buffer should be swapped with next one.
     graphics::begin();
 
+    // Set main camera information to graphics backend.
     const auto& [camera_transform, camera] = registry.get<transform, rb::camera>(_viewport->camera);
     graphics::set_camera(camera_transform, camera);
 
+    // Begin depth pre pass. Using this pass we achive few goals:
+    // 1. Store depth into depth buffer. We can reuse it later in postprocessing pass.
+    // 2. Minimalize overdraw polygons in forward pass. 
     graphics::begin_depth_pass(_viewport);
 
-    registry.view<transform, geometry>().each([this, &registry](entity entity, transform& transform, geometry& geometry) {
+    // Draw depth for every geometry in scene.
+    // TODO: Entities that is not visible from camera perspective should be culled. 
+    for (const auto& [entity, transform, geometry] : registry.view<transform, geometry>().each()) {
         graphics::draw_depth(_viewport, calculate_world(registry, entity), geometry);
-    });
+    }
 
+    // End depth pass. We can now reuse depth buffer.
     graphics::end_depth_pass(_viewport);
 
-    registry.view<transform, light, directional_light>().each([this, &registry](transform& transform, light& light, directional_light& directional_light) {
-        if (!directional_light.shadow_enabled) {
-            return;
-        }
+    // Before we render scene directly to viewport we need to prepare data for shadow mapping.
+    // Shadows working only for one directional light (for now).
+    // We need to search for directional light with shadows enabled and try to render scene into shadow maps.
+    // TODO: This pass can be parallel with depth pre pass.
+    if (const auto directional_light_shadow = _find_directional_light_with_shadows(registry); registry.valid(directional_light_shadow)) {
+        // Extract components that we need to draw shadows.
+        const auto& [transform, light, directional_light] = registry.get<rb::transform, rb::light, rb::directional_light>(directional_light_shadow);
 
+        // Render scene from every cascade perspective.
+        // TODO: We can build command buffers in parallel.
         for (auto cascade = 0u; cascade < graphics_limits::max_shadow_cascades; ++cascade) {
             graphics::begin_shadow_pass(transform, light, directional_light, cascade);
-        
+
             registry.view<rb::transform, geometry>().each([this, cascade, &registry](entity entity, rb::transform& transform, geometry& geometry) {
                 graphics::draw_shadow(calculate_world(registry, entity), geometry, cascade);
             });
 
             graphics::end_shadow_pass();
         }
-    });
+    }
 
+    // Begin primary geometry drawing. It reuses depth buffer from depth pre pass step.
     graphics::begin_forward_pass(_viewport);
 
+    // Draw every geometry. 
+    // TODO: Entities that is not visible from camera perspective should be culled. 
+    for (const auto& [entity, transform, geometry] : registry.view<transform, geometry>().each()) {
+        graphics::draw_forward(_viewport, calculate_world(registry, entity), geometry);
+    }
+
+    // Draw skybox last. Minimize overdraw using depth testing.
     graphics::draw_skybox(_viewport);
 
-    registry.view<transform, geometry>().each([this, &registry](entity entity, transform& transform, geometry& geometry) {
-        graphics::draw_forward(_viewport, calculate_world(registry, entity), geometry);
-    });
-
+    // End primary geometry drawing.
     graphics::end_forward_pass(_viewport);
 
+    // Begin postprocess pass. It copies color buffer from forward pass.
     graphics::begin_postprocess_pass(_viewport);
 
     //if (_viewport->fxaa_enabled) {
@@ -91,5 +116,16 @@ void renderer::draw(registry& registry) {
 
     graphics::present(_viewport);
 
+    // End drawing. It basically submits primary command buffer to render queue.
     graphics::end();
+}
+
+entity renderer::_find_directional_light_with_shadows(registry& registry) const {
+    for (const auto& [entity, light, directional_light] : registry.view<light, directional_light>().each()) {
+        if (directional_light.shadow_enabled) {
+            return entity;
+        }
+    }
+
+    return null;
 }

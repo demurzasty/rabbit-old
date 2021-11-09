@@ -17,13 +17,13 @@ static bspheref calculate_bsphere(const span<const vertex>& vertices) {
     bspheref bsphere{ vec3f::zero(), 0.0f };
 
     // 1. Calculate center of sphere
-    for (auto& vertex : vertices) {
+    for (const auto& vertex : vertices) {
         bsphere.position = bsphere.position + vertex.position;
     }
     bsphere.position = bsphere.position / static_cast<float>(vertices.size());
 
     // 2. Calculate maximum radius
-    for (auto& vertex : vertices) {
+    for (const auto& vertex : vertices) {
         const auto distance = length(vertex.position - bsphere.position);
         if (distance > bsphere.radius) {
             bsphere.radius = distance;
@@ -31,6 +31,25 @@ static bspheref calculate_bsphere(const span<const vertex>& vertices) {
     }
 
     return bsphere;
+}
+
+static bboxf calculate_bbox(const span<const vertex>& vertices) {
+    constexpr auto fmax = std::numeric_limits<float>::max();
+    constexpr auto fmin = std::numeric_limits<float>::min();
+
+    bboxf bbox{ vec3f{ fmax, fmax, fmax }, vec3f{ fmin, fmin, fmin } };
+
+    for (const auto& vertex : vertices) {
+        bbox.min.x = std::min(bbox.min.x, vertex.position.x);
+        bbox.min.y = std::min(bbox.min.y, vertex.position.y);
+        bbox.min.y = std::min(bbox.min.z, vertex.position.z);
+
+        bbox.max.x = std::max(bbox.max.x, vertex.position.x);
+        bbox.max.y = std::max(bbox.max.y, vertex.position.y);
+        bbox.max.z = std::max(bbox.max.z, vertex.position.z);
+    }
+
+    return bbox;
 }
 
 std::shared_ptr<mesh> mesh::load(ibstream& stream) {
@@ -57,86 +76,38 @@ std::shared_ptr<mesh> mesh::load(ibstream& stream) {
     bspheref bsphere;
     stream.read(bsphere);
 
+    bboxf bbox;
+    stream.read(bbox);
+
     mesh_desc desc;
     desc.vertices = { vertices.get(), vertex_count };
     desc.indices = { indices.get(), total_index_count };
     desc.lods = { lods.get(), lod_count };
     desc.convex_hull = { triangles.get(), triangle_count };
     desc.bsphere = bsphere;
+    desc.bbox = bbox;
     return graphics::make_mesh(desc);
 }
 
 static void load_obj(ibstream& input, std::vector<vertex>& vertices, std::vector<std::uint32_t>& indices, std::vector<vec3f>& positions) {
     vertices.clear();
     positions.clear();
-    std::vector<vertex> temporal_vertices;
-    std::vector<vec2f> texcoords;
-    std::vector<vec3f> normals;
+    indices.clear();
 
-    const auto getline = [](ibstream& stream, std::string& line) -> bool {
-        line.clear();
-
-        char c;
-        while (!stream.eof()) {
-            stream.read(c);
-
-            if (c == '\n') {
-                break;
-            }
-
-            line.push_back(c);
-        }
-
-        return !line.empty();
-    };
-
-    std::string line;
-    while (getline(input, line)) {
-        std::istringstream iss{ line };
-        std::vector<std::string> results{ std::istream_iterator<std::string>{ iss }, std::istream_iterator<std::string>{} };
-
-        if (!results.empty()) {
-            if (results[0] == "v") {
-                positions.push_back({
-                    static_cast<float>(std::atof(results[1].c_str())),
-                    static_cast<float>(std::atof(results[2].c_str())),
-                    static_cast<float>(std::atof(results[3].c_str()))
-                });
-            } else if (results[0] == "vn") {
-                normals.push_back({
-                    static_cast<float>(std::atof(results[1].c_str())),
-                    static_cast<float>(std::atof(results[2].c_str())),
-                    static_cast<float>(std::atof(results[3].c_str()))
-                });
-            } else if (results[0] == "vt") {
-                texcoords.push_back({
-                    static_cast<float>(std::atof(results[1].c_str())),
-                    1.0f - static_cast<float>(std::atof(results[2].c_str())),
-                });
-            } else if (results[0] == "f") {
-                int a, b, c;
-                for (int i = 1; i < 4; ++i) {
-                    sscanf(results[i].c_str(), "%d/%d/%d", &a, &b, &c);
-
-                    temporal_vertices.push_back({
-                        positions[a - 1],
-                        texcoords[b - 1],
-                        normals[c - 1]
-                    });
-                }
-            }
-        }
-    }
-
-    const auto remap = std::make_unique<std::uint32_t[]>(temporal_vertices.size());
-    const auto vertex_count = meshopt_generateVertexRemap(remap.get(), nullptr, temporal_vertices.size(), temporal_vertices.data(), temporal_vertices.size(), sizeof(vertex));
-
-    indices.resize(temporal_vertices.size());
-    meshopt_remapIndexBuffer(indices.data(), nullptr, temporal_vertices.size(), remap.get());
-
+    std::uint32_t vertex_count;
+    input.read(vertex_count);
     vertices.resize(vertex_count);
-    meshopt_remapVertexBuffer(vertices.data(), temporal_vertices.data(), temporal_vertices.size(), sizeof(vertex), remap.get());
+    input.read(&vertices[0], vertex_count * sizeof(vertex));
 
+    std::uint32_t index_count;
+    input.read(index_count);
+    indices.resize(index_count);
+    input.read(&indices[0], index_count * sizeof(std::uint32_t));
+
+    positions.reserve(vertices.size());
+    for (const auto& vertex : vertices) {
+        positions.push_back(vertex.position);
+    }
 }
 
 static void optimize(std::vector<vertex>& vertices, std::vector<std::uint32_t>& indices) {
@@ -194,6 +165,7 @@ void mesh::import(ibstream& input, obstream& output, const json& metadata) {
     }
 
     const auto bsphere = calculate_bsphere(vertices);
+    const auto bbox = calculate_bbox(vertices);
 
     std::size_t total_index_count{ indices.size() };
     for (const auto& lod : lods) {
@@ -224,17 +196,14 @@ void mesh::import(ibstream& input, obstream& output, const json& metadata) {
     output.write<std::uint32_t>(convex_hull.size() / 3); // in triangle count
     output.write(convex_hull.data(), convex_hull.size() * sizeof(vec3f));
     output.write(bsphere);
+    output.write(bbox);
 }
 
 void mesh::save(obstream& stream, const span<const vertex>& vertices, const span<const std::uint32_t>& indices) {
-    stream.write(mesh::magic_number);
     stream.write<std::uint32_t>(vertices.size());
     stream.write(vertices.data(), vertices.size_bytes());
     stream.write<std::uint32_t>(indices.size());
     stream.write(indices.data(), indices.size_bytes());
-    stream.write<std::uint32_t>(0);
-    // stream.write(convex_hull.data(), convex_hull.size() * sizeof(vec3f));
-    stream.write(calculate_bsphere(vertices));
 }
 
 std::shared_ptr<mesh> mesh::make_box(const vec3f& extent, const vec2f& uv_scale) {
@@ -380,12 +349,17 @@ const bspheref& mesh::bsphere() const {
     return _bsphere;
 }
 
+const bboxf& mesh::bbox() const {
+    return _bbox;
+}
+
 mesh::mesh(const mesh_desc& desc)
 	: _vertices(desc.vertices.begin(), desc.vertices.end())
 	, _indices(desc.indices.begin(), desc.indices.end())
     , _lods(desc.lods.begin(), desc.lods.end())
     , _convex_hull(desc.convex_hull.begin(), desc.convex_hull.end())
-    , _bsphere(desc.bsphere.has_value() ? desc.bsphere.value() : calculate_bsphere(desc.vertices)) {
+    , _bsphere(desc.bsphere ? *desc.bsphere : calculate_bsphere(desc.vertices))
+    , _bbox(desc.bbox ? *desc.bbox : calculate_bbox(desc.vertices)) {
     RB_ASSERT(!_vertices.empty(), "No vertices has been provided for mesh.");
     RB_ASSERT(!_indices.empty(), "No indices has been provided for mesh.");
 }

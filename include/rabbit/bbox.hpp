@@ -25,8 +25,7 @@ namespace rb {
 				if (ray.position[i] < box.min[i] || ray.position[i] > box.max[i]) {
 					return std::nullopt;
 				}
-			}
-			else {
+			} else {
 				const auto inverse = 1 / ray.direction[i];
 				auto t1 = (box.min[i] - ray.position[i]) * inverse;
 				auto t2 = (box.max[i] - ray.position[i]) * inverse;

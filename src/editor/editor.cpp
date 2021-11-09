@@ -13,7 +13,7 @@ std::unordered_map<std::string, importer> editor::_importers;
 
 void editor::init() {
 	add_importer<texture>(".png", ".bmp", ".jpg");
-	add_importer<mesh>(".obj");
+	add_importer<mesh>(".msh");
 	add_importer<material>(".mat");
 	add_importer<environment>(".env");
 	add_importer<prefab>(".scn");
@@ -24,6 +24,24 @@ void editor::release() {
 	_importers.clear();
 }
 
+static void retrieve_entries(const std::filesystem::directory_iterator& di, std::vector<std::filesystem::directory_entry>& entries) {
+	for (const auto& entry : di) {
+		if (entry.is_directory()) {
+			const auto last_dot_index = entry.path().filename().string().find_last_of(".");
+			if (last_dot_index != std::string::npos) {
+				const auto extension = entry.path().filename().string().substr(last_dot_index);
+				if (extension == ".data") {
+					continue;
+				}
+			}
+
+			retrieve_entries(std::filesystem::directory_iterator{ entry.path() }, entries);
+		} else if (entry.is_regular_file()) {
+			entries.push_back(entry);
+		}
+	}
+}
+
 void editor::scan() {
 	const auto package_directory = std::filesystem::current_path() / "package";
 	const auto cache_directory = std::filesystem::current_path() / "cache";
@@ -31,12 +49,8 @@ void editor::scan() {
 	std::filesystem::create_directories(package_directory);
 	std::filesystem::create_directories(cache_directory);
 
-	const auto di = std::filesystem::recursive_directory_iterator{ "data" };
-
 	std::vector<std::filesystem::directory_entry> entries;
-	std::transform(std::filesystem::begin(di), std::filesystem::end(di), std::back_inserter(entries), [](auto& entry) {
-		return entry;
-	});
+	retrieve_entries(std::filesystem::directory_iterator{ "data" }, entries);
 
 	std::mutex resources_mutex;
 	auto resources_json = json::object();
@@ -70,7 +84,7 @@ void editor::scan() {
 		}
 	});
 
-	std::for_each(std::execution::seq, entries.begin(), entries.end(), [&](const auto& dir_entry) {
+	std::for_each(std::execution::par_unseq, entries.begin(), entries.end(), [&](const auto& dir_entry) {
 		if (!dir_entry.is_regular_file()) {
 			return;
 		}
