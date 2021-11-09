@@ -76,6 +76,14 @@ void renderer::draw(registry& registry) {
         }
     }
 
+    graphics::begin_light_pass(_viewport);
+
+    for (const auto& [entity, transform, light, point_light] : registry.view<transform, light, point_light>().each()) {
+        graphics::add_point_light(_viewport, transform, light, point_light);
+    }
+
+    graphics::end_light_pass(_viewport);
+
     // Begin primary geometry drawing. It reuses depth buffer from depth pre pass step.
     graphics::begin_forward_pass(_viewport);
 

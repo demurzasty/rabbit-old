@@ -349,6 +349,18 @@ void graphics_vulkan::end_shadow_pass() {
     vkCmdEndRenderPass(_command_buffers[_command_index]);
 }
 
+void graphics_vulkan::begin_light_pass(const std::shared_ptr<viewport>& viewport) {
+
+}
+
+void graphics_vulkan::add_point_light(const std::shared_ptr<viewport>& viewport, const transform& transform, const light& light, const point_light& point_light) {
+
+}
+
+void graphics_vulkan::end_light_pass(const std::shared_ptr<viewport>& viewport) {
+
+}
+
 void graphics_vulkan::begin_forward_pass(const std::shared_ptr<viewport>& viewport) {
     vkCmdUpdateBuffer(_command_buffers[_command_index], _camera_buffer,
         offsetof(camera_data, light_proj_view),

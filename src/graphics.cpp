@@ -74,6 +74,18 @@ void graphics::end_shadow_pass() {
 	_impl->end_shadow_pass();
 }
 
+void graphics::begin_light_pass(const std::shared_ptr<viewport>& viewport) {
+	_impl->begin_light_pass(viewport);
+}
+
+void graphics::add_point_light(const std::shared_ptr<viewport>& viewport, const transform& transform, const light& light, const point_light& point_light) {
+	_impl->add_point_light(viewport, transform, light, point_light);
+}
+
+void graphics::end_light_pass(const std::shared_ptr<viewport>& viewport) {
+	_impl->end_light_pass(viewport);
+}
+
 void graphics::begin_forward_pass(const std::shared_ptr<viewport>& viewport) {
 	_impl->begin_forward_pass(viewport);
 }

@@ -18,7 +18,7 @@ namespace rb {
 	};
 
 	struct graphics_limits {
-		static constexpr std::size_t max_lights{ 16 };
+		static constexpr std::size_t max_lights{ 1024 };
 		static constexpr std::size_t brdf_map_size{ 512 };
 		static constexpr std::size_t irradiance_map_size{ 64 };
 		static constexpr std::size_t prefilter_map_size{ 128 };
@@ -56,6 +56,12 @@ namespace rb {
 		virtual void draw_shadow(const mat4f& world, const geometry& geometry, std::size_t cascade) = 0;
 
 		virtual void end_shadow_pass() = 0;
+
+		virtual void begin_light_pass(const std::shared_ptr<viewport>& viewport) = 0;
+
+		virtual void add_point_light(const std::shared_ptr<viewport>& viewport, const transform& transform, const light& light, const point_light& point_light) = 0;
+
+		virtual void end_light_pass(const std::shared_ptr<viewport>& viewport) = 0;
 
 		virtual void begin_forward_pass(const std::shared_ptr<viewport>& viewport) = 0;
 
@@ -139,6 +145,12 @@ namespace rb {
 		static void draw_shadow(const mat4f& world, const geometry& geometry, std::size_t cascade);
 
 		static void end_shadow_pass();
+
+		static void begin_light_pass(const std::shared_ptr<viewport>& viewport);
+
+		static void add_point_light(const std::shared_ptr<viewport>& viewport, const transform& transform, const light& light, const point_light& point_light);
+
+		static void end_light_pass(const std::shared_ptr<viewport>& viewport);
 
 		static void begin_forward_pass(const std::shared_ptr<viewport>& viewport);
 

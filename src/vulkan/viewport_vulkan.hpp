@@ -1,6 +1,7 @@
 #pragma once 
 
 #include <rabbit/viewport.hpp>
+#include <rabbit/vec4.hpp>
 
 #include <volk.h>
 #include <vk_mem_alloc.h>
@@ -11,6 +12,15 @@ namespace rb {
     // 3. Postprocesses (uber shader)
 
     class viewport_vulkan : public viewport {
+        struct alignas(16) light_data {
+            vec4f position_or_direction;
+            vec4f color_and_radius;
+        };
+
+        struct visible_index {
+            int index;
+        };
+
     public:
         viewport_vulkan(VkDevice device,
             VmaAllocator allocator,
@@ -56,6 +66,8 @@ namespace rb {
 
         void _create_depth(const viewport_desc& desc, VkFormat depth_format);
 
+        void _create_light(const viewport_desc& desc);
+
         void _create_forward(const viewport_desc& desc);
 
         void _create_postprocess(const viewport_desc& desc);
@@ -81,6 +93,11 @@ namespace rb {
         VkImageView _depth_image_view;
 		VkFramebuffer _depth_framebuffer;
         VkDescriptorSet _depth_descriptor_set;
+
+        VkBuffer _light_buffer;
+        VmaAllocation _light_buffer_allocation;
+        VkBuffer _visible_light_indices_buffer;
+        VmaAllocation _visible_light_indices_buffer_allocation;
 
         VkImage _forward_image; // also as composition image as first pass
         VmaAllocation _forward_image_allocation;

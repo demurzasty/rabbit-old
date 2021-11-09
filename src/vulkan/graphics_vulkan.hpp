@@ -114,6 +114,12 @@ namespace rb {
 
 		void end_shadow_pass() override;
 
+		void begin_light_pass(const std::shared_ptr<viewport>& viewport) override;
+
+		void add_point_light(const std::shared_ptr<viewport>& viewport, const transform& transform, const light& light, const point_light& point_light) override;
+
+		void end_light_pass(const std::shared_ptr<viewport>& viewport) override;
+
 		void begin_forward_pass(const std::shared_ptr<viewport>& viewport) override;
 
 		void draw_skybox(const std::shared_ptr<viewport>& viewport) override;

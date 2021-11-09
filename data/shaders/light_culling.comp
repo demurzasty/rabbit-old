@@ -24,11 +24,11 @@ layout (std140, set = 0, binding = 0) uniform camera_data {
 layout (set = 1, binding = 0) uniform sampler2D u_depth_map;
 
 // Shader storage buffer objects
-layout(std140, set = 2, binding = 0) readonly buffer light_buffer {
+layout(std430, set = 2, binding = 0) readonly buffer light_buffer {
 	light data[];
 } u_light_buffer;
 
-layout(std140, set = 2, binding = 1) writeonly buffer visible_light_indices_buffer {
+layout(std430, set = 2, binding = 1) writeonly buffer visible_light_indices_buffer {
 	visible_index data[];
 } u_visible_light_indices_buffer;
 

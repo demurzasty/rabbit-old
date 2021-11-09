@@ -1,6 +1,8 @@
 #include "viewport_vulkan.hpp"
 #include "utils_vulkan.hpp"
 
+#include <rabbit/graphics.hpp>
+
 using namespace rb;
 
 viewport_vulkan::viewport_vulkan(VkDevice device,
@@ -27,6 +29,7 @@ viewport_vulkan::viewport_vulkan(VkDevice device,
     _create_descriptor_pool(desc);
     _create_sampler(desc);
     _create_depth(desc, depth_format);
+    _create_light(desc);
     _create_forward(desc);
     _create_postprocess(desc);
     _create_fill(fill_render_pass, fill_descriptor_set_layout, desc);
@@ -44,6 +47,9 @@ viewport_vulkan::~viewport_vulkan() {
     vkDestroyFramebuffer(_device, _forward_framebuffer, nullptr);
     vkDestroyImageView(_device, _forward_image_view, nullptr);
     vmaDestroyImage(_allocator, _forward_image, _forward_image_allocation);
+
+    vmaDestroyBuffer(_allocator, _visible_light_indices_buffer, _visible_light_indices_buffer_allocation);
+    vmaDestroyBuffer(_allocator, _light_buffer, _light_buffer_allocation);
 
     vkDestroyFramebuffer(_device, _depth_framebuffer, nullptr);
     vkDestroyImageView(_device, _depth_image_view, nullptr);
@@ -288,6 +294,42 @@ void viewport_vulkan::_create_depth(const viewport_desc& desc, VkFormat depth_fo
     };
 
     vkUpdateDescriptorSets(_device, 1, write_infos, 0, nullptr);
+}
+
+void viewport_vulkan::_create_light(const viewport_desc& desc) {
+    VkBufferCreateInfo light_buffer_info;
+    light_buffer_info.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+    light_buffer_info.pNext = nullptr;
+    light_buffer_info.flags = 0;
+    light_buffer_info.size = graphics_limits::max_lights * sizeof(light_data);
+    light_buffer_info.usage = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
+    light_buffer_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+    light_buffer_info.queueFamilyIndexCount = 0;
+    light_buffer_info.pQueueFamilyIndices = nullptr;
+
+    VmaAllocationCreateInfo light_allocation_info{};
+    light_allocation_info.usage = VMA_MEMORY_USAGE_CPU_TO_GPU;
+    RB_VK(vmaCreateBuffer(_allocator, &light_buffer_info, &light_allocation_info, &_light_buffer, &_light_buffer_allocation, nullptr),
+        "Failed to create Vulkan buffer.");
+
+    const auto work_groups_x = (size().x + (size().x % 16)) / 16;
+    const auto work_groups_y = (size().y + (size().y % 16)) / 16;
+    const auto number_of_tiles = work_groups_x * work_groups_y;
+
+    VkBufferCreateInfo visible_light_indices_buffer_info;
+    visible_light_indices_buffer_info.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+    visible_light_indices_buffer_info.pNext = nullptr;
+    visible_light_indices_buffer_info.flags = 0;
+    visible_light_indices_buffer_info.size = number_of_tiles * sizeof(visible_index) * graphics_limits::max_lights;
+    visible_light_indices_buffer_info.usage = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
+    visible_light_indices_buffer_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+    visible_light_indices_buffer_info.queueFamilyIndexCount = 0;
+    visible_light_indices_buffer_info.pQueueFamilyIndices = nullptr;
+
+    VmaAllocationCreateInfo visible_light_indices_allocation_info{};
+    visible_light_indices_allocation_info.usage = VMA_MEMORY_USAGE_CPU_TO_GPU;
+    RB_VK(vmaCreateBuffer(_allocator, &visible_light_indices_buffer_info, &visible_light_indices_allocation_info, &_visible_light_indices_buffer, &_visible_light_indices_buffer_allocation, nullptr),
+        "Failed to create Vulkan buffer.");
 }
 
 void viewport_vulkan::_create_forward(const viewport_desc& desc) {
