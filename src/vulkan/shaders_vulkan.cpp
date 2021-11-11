@@ -28,6 +28,7 @@
 #include <rabbit/generated/shaders/fill.frag.spv.h>
 #include <rabbit/generated/shaders/outline.frag.spv.h>
 #include <rabbit/generated/shaders/present.frag.spv.h>
+#include <rabbit/generated/shaders/light_culling.comp.spv.h>
 
 using namespace rb;
 
@@ -141,4 +142,8 @@ span<const std::uint32_t> shaders_vulkan::outline_frag() {
 
 span<const std::uint32_t> shaders_vulkan::present_frag() {
 	return ::present_frag;
+}
+
+span<const std::uint32_t> shaders_vulkan::light_cull_comp() {
+	return ::light_culling_comp;
 }

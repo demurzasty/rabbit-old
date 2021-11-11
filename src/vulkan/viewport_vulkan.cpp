@@ -10,6 +10,7 @@ viewport_vulkan::viewport_vulkan(VkDevice device,
     VkFormat depth_format,
     VkRenderPass depth_render_pass,
     VkDescriptorSetLayout depth_descriptor_set_layout,
+    VkDescriptorSetLayout light_descriptor_set_layout,
     VkRenderPass forward_render_pass,
     VkDescriptorSetLayout forward_descriptor_set_layout,
     VkRenderPass postprocess_render_pass,
@@ -22,6 +23,7 @@ viewport_vulkan::viewport_vulkan(VkDevice device,
     , _allocator(allocator)
     , _depth_render_pass(depth_render_pass)
     , _depth_descriptor_set_layout(depth_descriptor_set_layout)
+    , _light_descriptor_set_layout(light_descriptor_set_layout)
     , _forward_render_pass(forward_render_pass)
     , _forward_descriptor_set_layout(forward_descriptor_set_layout)
     , _postprocess_render_pass(postprocess_render_pass)
@@ -40,14 +42,17 @@ viewport_vulkan::~viewport_vulkan() {
     vkDestroyImageView(_device, _fill_image_view, nullptr);
     vmaDestroyImage(_allocator, _fill_image, _fill_image_allocation);
 
-    vkDestroyFramebuffer(_device, _postprocess_framebuffer, nullptr);
-    vkDestroyImageView(_device, _postprocess_image_view, nullptr);
-    vmaDestroyImage(_allocator, _postprocess_image, _postprocess_image_allocation);
+    for (auto i = 0u; i < 2u; ++i) {
+        vkDestroyFramebuffer(_device, _postprocess_framebuffers[i], nullptr);
+        vkDestroyImageView(_device, _postprocess_image_views[i], nullptr);
+        vmaDestroyImage(_allocator, _postprocess_images[i], _postprocess_image_allocations[i]);
+    }
 
     vkDestroyFramebuffer(_device, _forward_framebuffer, nullptr);
     vkDestroyImageView(_device, _forward_image_view, nullptr);
     vmaDestroyImage(_allocator, _forward_image, _forward_image_allocation);
 
+    vmaDestroyBuffer(_allocator, _light_info_buffer, _light_info_buffer_allocation);
     vmaDestroyBuffer(_allocator, _visible_light_indices_buffer, _visible_light_indices_buffer_allocation);
     vmaDestroyBuffer(_allocator, _light_buffer, _light_buffer_allocation);
 
@@ -94,6 +99,37 @@ void viewport_vulkan::end_depth_pass(VkCommandBuffer command_buffer) {
     vkCmdEndRenderPass(command_buffer);
 }
 
+void viewport_vulkan::begin_light_pass(VkCommandBuffer command_buffer) {
+    void* mapped_data;
+    RB_VK(vmaMapMemory(_allocator, _light_buffer_allocation, &mapped_data),
+        "Failed to map light buffer");
+
+    _light_data = static_cast<light_data*>(mapped_data);
+    _light_index = 0;
+}
+
+void viewport_vulkan::add_point_light(const vec3f& position, float radius, const vec3f& color) {
+    _light_data[_light_index].position_or_direction = { position.x, position.y, position.z, 0.0f };
+    _light_data[_light_index].color_and_radius = { color.x, color.y, color.z, radius };
+    ++_light_index;
+}
+
+void viewport_vulkan::add_directional_light(const vec3f& direction, const vec3f& color, bool shadow_enabled) {
+    _light_data[_light_index].position_or_direction = { direction.x, direction.y, direction.z, 1.0f };
+    _light_data[_light_index].color_and_radius = { color.x, color.y, color.z, shadow_enabled ? 1.0f : 0.0f };
+    ++_light_index;
+}
+
+void viewport_vulkan::end_light_pass(VkCommandBuffer command_buffer) {
+    vmaUnmapMemory(_allocator, _light_buffer_allocation);
+    //vkCmdUpdateBuffer(command_buffer, _light_buffer, 0, sizeof(light_data) * _light_index, _light_data.get());
+
+    cull_data cull_data;
+    cull_data.light_count = static_cast<unsigned int>(_light_index);
+    cull_data.number_of_tiles_x = (size().x + (size().x % 16)) / 16;
+    vkCmdUpdateBuffer(command_buffer, _light_info_buffer, 0, sizeof(cull_data), &cull_data);
+}
+
 void viewport_vulkan::begin_forward_pass(VkCommandBuffer command_buffer) {
     // Do not clear depth, copy from _depth_image
     VkClearValue clear_values[1];
@@ -137,7 +173,7 @@ void viewport_vulkan::begin_postprocess_pass(VkCommandBuffer command_buffer) {
     render_pass_begin_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
     render_pass_begin_info.pNext = nullptr;
     render_pass_begin_info.renderPass = _postprocess_render_pass;
-    render_pass_begin_info.framebuffer = _postprocess_framebuffer;
+    render_pass_begin_info.framebuffer = _postprocess_framebuffers[_current_postprocess_image_index];
     render_pass_begin_info.renderArea.offset = { 0, 0 };
     render_pass_begin_info.renderArea.extent = { size().x, size().y };
     render_pass_begin_info.clearValueCount = sizeof(clear_values) / sizeof(*clear_values);
@@ -161,10 +197,24 @@ void viewport_vulkan::begin_postprocess_pass(VkCommandBuffer command_buffer) {
 
 void viewport_vulkan::end_postprocess_pass(VkCommandBuffer command_buffer) {
     vkCmdEndRenderPass(command_buffer);
+
+    _current_postprocess_image_index = (_current_postprocess_image_index + 1) % 2;
 }
 
 VkDescriptorSet viewport_vulkan::depth_descriptor_set() const {
     return _depth_descriptor_set;
+}
+
+VkDescriptorSet viewport_vulkan::light_descriptor_set() const {
+    return _light_descriptor_set;
+}
+
+VkBuffer viewport_vulkan::light_buffer() const {
+    return _light_buffer;
+}
+
+VkBuffer viewport_vulkan::visible_light_indices_buffer() const {
+    return _visible_light_indices_buffer;
 }
 
 VkDescriptorSet viewport_vulkan::forward_descriptor_set() const {
@@ -172,7 +222,7 @@ VkDescriptorSet viewport_vulkan::forward_descriptor_set() const {
 }
 
 VkDescriptorSet viewport_vulkan::postprocess_descriptor_set() const {
-    return _postprocess_descriptor_set;
+    return _postprocess_descriptor_sets[_current_postprocess_image_index];
 }
 
 VkDescriptorSet viewport_vulkan::fill_descriptor_set() const {
@@ -184,16 +234,18 @@ VkFramebuffer viewport_vulkan::fill_framebuffer() const {
 }
 
 void viewport_vulkan::_create_descriptor_pool(const viewport_desc& desc) {
-    VkDescriptorPoolSize pool_sizes[1]{
-        { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 9 }
+    VkDescriptorPoolSize pool_sizes[3]{
+        { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 9 },
+        { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1 },
+        { VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 2 }
     };
 
     VkDescriptorPoolCreateInfo descriptor_pool_info;
     descriptor_pool_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
     descriptor_pool_info.pNext = nullptr;
     descriptor_pool_info.flags = 0;
-    descriptor_pool_info.maxSets = 6;
-    descriptor_pool_info.poolSizeCount = 1;
+    descriptor_pool_info.maxSets = 7;
+    descriptor_pool_info.poolSizeCount = 3;
     descriptor_pool_info.pPoolSizes = pool_sizes;
     RB_VK(vkCreateDescriptorPool(_device, &descriptor_pool_info, nullptr, &_descriptor_pool),
         "Failed to create descriptor pool");
@@ -330,6 +382,44 @@ void viewport_vulkan::_create_light(const viewport_desc& desc) {
     visible_light_indices_allocation_info.usage = VMA_MEMORY_USAGE_CPU_TO_GPU;
     RB_VK(vmaCreateBuffer(_allocator, &visible_light_indices_buffer_info, &visible_light_indices_allocation_info, &_visible_light_indices_buffer, &_visible_light_indices_buffer_allocation, nullptr),
         "Failed to create Vulkan buffer.");
+
+    VkBufferCreateInfo light_info_buffer_info;
+    light_info_buffer_info.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+    light_info_buffer_info.pNext = nullptr;
+    light_info_buffer_info.flags = 0;
+    light_info_buffer_info.size = sizeof(cull_data);
+    light_info_buffer_info.usage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
+    light_info_buffer_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+    light_info_buffer_info.queueFamilyIndexCount = 0;
+    light_info_buffer_info.pQueueFamilyIndices = nullptr;
+
+    VmaAllocationCreateInfo light_info_allocation_info{};
+    light_info_allocation_info.usage = VMA_MEMORY_USAGE_CPU_TO_GPU;
+    RB_VK(vmaCreateBuffer(_allocator, &light_info_buffer_info, &light_info_allocation_info, &_light_info_buffer, &_light_info_buffer_allocation, nullptr),
+        "Failed to create Vulkan buffer.");
+
+    VkDescriptorSetAllocateInfo descriptor_set_allocate_info;
+    descriptor_set_allocate_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+    descriptor_set_allocate_info.pNext = nullptr;
+    descriptor_set_allocate_info.descriptorPool = _descriptor_pool;
+    descriptor_set_allocate_info.descriptorSetCount = 1;
+    descriptor_set_allocate_info.pSetLayouts = &_light_descriptor_set_layout;
+    RB_VK(vkAllocateDescriptorSets(_device, &descriptor_set_allocate_info, &_light_descriptor_set),
+        "Failed to allocatore desctiptor set");
+
+    VkDescriptorBufferInfo buffer_infos[3]{
+        { _light_buffer, 0, light_buffer_info.size },
+        { _visible_light_indices_buffer, 0, visible_light_indices_buffer_info.size },
+        { _light_info_buffer, 0, light_info_buffer_info.size },
+    };
+
+    VkWriteDescriptorSet write_infos[3] {
+        { VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET, nullptr, _light_descriptor_set, 0, 0, 1, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, nullptr, &buffer_infos[0], nullptr },
+        { VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET, nullptr, _light_descriptor_set, 1, 0, 1, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, nullptr, &buffer_infos[1], nullptr },
+        { VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET, nullptr, _light_descriptor_set, 2, 0, 1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, nullptr, &buffer_infos[2], nullptr },
+    };
+
+    vkUpdateDescriptorSets(_device, 3, write_infos, 0, nullptr);
 }
 
 void viewport_vulkan::_create_forward(const viewport_desc& desc) {
@@ -414,65 +504,68 @@ void viewport_vulkan::_create_forward(const viewport_desc& desc) {
 }
 
 void viewport_vulkan::_create_postprocess(const viewport_desc& desc) {
-    VkImageCreateInfo image_info;
-    image_info.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-    image_info.pNext = nullptr;
-    image_info.flags = 0;
-    image_info.imageType = VK_IMAGE_TYPE_2D;
-    image_info.format = VK_FORMAT_R8G8B8A8_UNORM;
-    image_info.extent = { desc.size.x, desc.size.y, 1 };
-    image_info.mipLevels = 1;
-    image_info.arrayLayers = 1;
-    image_info.samples = VK_SAMPLE_COUNT_1_BIT;
-    image_info.tiling = VK_IMAGE_TILING_OPTIMAL;
-    image_info.usage = VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT
-        | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
-    image_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-    image_info.queueFamilyIndexCount = 0;
-    image_info.pQueueFamilyIndices = 0;
-    image_info.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    for (auto i = 0u; i < 2u; ++i) {
+        VkImageCreateInfo image_info;
+        image_info.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+        image_info.pNext = nullptr;
+        image_info.flags = 0;
+        image_info.imageType = VK_IMAGE_TYPE_2D;
+        image_info.format = VK_FORMAT_R8G8B8A8_UNORM;
+        image_info.extent = { desc.size.x, desc.size.y, 1 };
+        image_info.mipLevels = 1;
+        image_info.arrayLayers = 1;
+        image_info.samples = VK_SAMPLE_COUNT_1_BIT;
+        image_info.tiling = VK_IMAGE_TILING_OPTIMAL;
+        image_info.usage = VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT
+            | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+        image_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+        image_info.queueFamilyIndexCount = 0;
+        image_info.pQueueFamilyIndices = 0;
+        image_info.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 
-    VmaAllocationCreateInfo allocation_info{};
-    allocation_info.usage = VMA_MEMORY_USAGE_GPU_ONLY;
-    RB_VK(vmaCreateImage(_allocator, &image_info, &allocation_info, &_postprocess_image, &_postprocess_image_allocation, nullptr),
-        "Failed to create Vulkan image");
+        VmaAllocationCreateInfo allocation_info{};
+        allocation_info.usage = VMA_MEMORY_USAGE_GPU_ONLY;
+        RB_VK(vmaCreateImage(_allocator, &image_info, &allocation_info, &_postprocess_images[i], &_postprocess_image_allocations[i], nullptr),
+            "Failed to create Vulkan image");
 
-    VkImageViewCreateInfo image_view_info;
-    image_view_info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-    image_view_info.pNext = nullptr;
-    image_view_info.flags = 0;
-    image_view_info.image = _postprocess_image;
-    image_view_info.viewType = VK_IMAGE_VIEW_TYPE_2D;
-    image_view_info.format = VK_FORMAT_R8G8B8A8_UNORM;
-    image_view_info.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
-    image_view_info.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
-    image_view_info.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
-    image_view_info.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
-    image_view_info.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-    image_view_info.subresourceRange.baseMipLevel = 0;
-    image_view_info.subresourceRange.levelCount = 1;
-    image_view_info.subresourceRange.baseArrayLayer = 0;
-    image_view_info.subresourceRange.layerCount = 1;
-    RB_VK(vkCreateImageView(_device, &image_view_info, nullptr, &_postprocess_image_view), "Failed to create image view");
+        VkImageViewCreateInfo image_view_info;
+        image_view_info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+        image_view_info.pNext = nullptr;
+        image_view_info.flags = 0;
+        image_view_info.image = _postprocess_images[i];
+        image_view_info.viewType = VK_IMAGE_VIEW_TYPE_2D;
+        image_view_info.format = VK_FORMAT_R8G8B8A8_UNORM;
+        image_view_info.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
+        image_view_info.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
+        image_view_info.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
+        image_view_info.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
+        image_view_info.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+        image_view_info.subresourceRange.baseMipLevel = 0;
+        image_view_info.subresourceRange.levelCount = 1;
+        image_view_info.subresourceRange.baseArrayLayer = 0;
+        image_view_info.subresourceRange.layerCount = 1;
+        RB_VK(vkCreateImageView(_device, &image_view_info, nullptr, &_postprocess_image_views[i]), "Failed to create image view");
 
-    VkFramebufferCreateInfo framebuffer_info;
-    framebuffer_info.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-    framebuffer_info.pNext = nullptr;
-    framebuffer_info.flags = 0;
-    framebuffer_info.renderPass = _postprocess_render_pass;
-    framebuffer_info.attachmentCount = 1;
-    framebuffer_info.pAttachments = &_postprocess_image_view;
-    framebuffer_info.width = desc.size.x;
-    framebuffer_info.height = desc.size.y;
-    framebuffer_info.layers = 1;
-    RB_VK(vkCreateFramebuffer(_device, &framebuffer_info, nullptr, &_postprocess_framebuffer),
-        "Failed to create Vulkan framebuffer");
+        VkFramebufferCreateInfo framebuffer_info;
+        framebuffer_info.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+        framebuffer_info.pNext = nullptr;
+        framebuffer_info.flags = 0;
+        framebuffer_info.renderPass = _postprocess_render_pass;
+        framebuffer_info.attachmentCount = 1;
+        framebuffer_info.pAttachments = &_postprocess_image_views[i];
+        framebuffer_info.width = desc.size.x;
+        framebuffer_info.height = desc.size.y;
+        framebuffer_info.layers = 1;
+        RB_VK(vkCreateFramebuffer(_device, &framebuffer_info, nullptr, &_postprocess_framebuffers[i]),
+            "Failed to create Vulkan framebuffer");
+    }
 
     VkDescriptorSetLayoutBinding bindings[1]{
         { 0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr },
     };
 
     VkDescriptorSetLayout layouts[]{
+        _postprocess_descriptor_set_layout,
         _postprocess_descriptor_set_layout
     };
 
@@ -480,20 +573,22 @@ void viewport_vulkan::_create_postprocess(const viewport_desc& desc) {
     descriptor_set_allocate_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
     descriptor_set_allocate_info.pNext = nullptr;
     descriptor_set_allocate_info.descriptorPool = _descriptor_pool;
-    descriptor_set_allocate_info.descriptorSetCount = 1;
+    descriptor_set_allocate_info.descriptorSetCount = 2;
     descriptor_set_allocate_info.pSetLayouts = layouts;
-    RB_VK(vkAllocateDescriptorSets(_device, &descriptor_set_allocate_info, &_postprocess_descriptor_set),
+    RB_VK(vkAllocateDescriptorSets(_device, &descriptor_set_allocate_info, _postprocess_descriptor_sets),
         "Failed to allocatore desctiptor set");
 
-    VkDescriptorImageInfo image_infos[1]{
-        { _sampler, _postprocess_image_view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL },
+    VkDescriptorImageInfo image_infos[2]{
+        { _sampler, _postprocess_image_views[1], VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL },
+        { _sampler, _postprocess_image_views[0], VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL }
     };
 
-    VkWriteDescriptorSet write_infos[1]{
-        { VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET, nullptr, _postprocess_descriptor_set, 0, 0, 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, &image_infos[0], nullptr, nullptr },
+    VkWriteDescriptorSet write_infos[2]{
+        { VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET, nullptr, _postprocess_descriptor_sets[0], 0, 0, 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, &image_infos[0], nullptr, nullptr },
+        { VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET, nullptr, _postprocess_descriptor_sets[1], 0, 0, 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, &image_infos[1], nullptr, nullptr },
     };
 
-    vkUpdateDescriptorSets(_device, 1, write_infos, 0, nullptr);
+    vkUpdateDescriptorSets(_device, 2, write_infos, 0, nullptr);
 }
 
 void viewport_vulkan::_create_fill(VkRenderPass fill_render_pass, VkDescriptorSetLayout fill_descriptor_set_layout, const viewport_desc& desc) {

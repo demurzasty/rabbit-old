@@ -33,5 +33,6 @@ namespace rb {
 		static span<const std::uint32_t> fill_frag();
 		static span<const std::uint32_t> outline_frag();
 		static span<const std::uint32_t> present_frag();
+		static span<const std::uint32_t> light_cull_comp();
 	};
 }

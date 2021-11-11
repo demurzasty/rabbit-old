@@ -58,15 +58,16 @@ graphics_vulkan::graphics_vulkan() {
     _create_material();
     _create_environment();
     _create_depth();
+    _create_light();
     _create_forward();
     _create_postprocess();
     //_create_ssao_pipeline();
-    //_create_fxaa_pipeline();
-    //_create_blur_pipeline();
-    //_create_sharpen_pipeline();
-    //_create_motion_blur_pipeline();
+    _create_fxaa_pipeline();
+    _create_blur_pipeline();
+    _create_sharpen_pipeline();
+    _create_motion_blur_pipeline();
     _create_fill_pipeline();
-    //_create_outline_pipeline();
+    _create_outline_pipeline();
     _create_skybox_pipeline();
     _create_present_pipeline();
     _create_command_buffers();
@@ -82,25 +83,25 @@ graphics_vulkan::~graphics_vulkan() {
     vkDestroyPipeline(_device, _present_pipeline, nullptr);
     vkDestroyPipelineLayout(_device, _present_pipeline_layout, nullptr);
 
-    //vkDestroyPipeline(_device, _outline_pipeline, nullptr);
-    //vkDestroyPipelineLayout(_device, _outline_pipeline_layout, nullptr);
+    vkDestroyPipeline(_device, _outline_pipeline, nullptr);
+    vkDestroyPipelineLayout(_device, _outline_pipeline_layout, nullptr);
 
     vkDestroyPipeline(_device, _fill_pipeline, nullptr);
     vkDestroyPipelineLayout(_device, _fill_pipeline_layout, nullptr);
     vkDestroyDescriptorSetLayout(_device, _fill_descriptor_set_layout, nullptr);
     vkDestroyRenderPass(_device, _fill_render_pass, nullptr);
 
-    //vkDestroyPipeline(_device, _motion_blur_pipeline, nullptr);
-    //vkDestroyPipelineLayout(_device, _motion_blur_pipeline_layout, nullptr);
+    vkDestroyPipeline(_device, _motion_blur_pipeline, nullptr);
+    vkDestroyPipelineLayout(_device, _motion_blur_pipeline_layout, nullptr);
 
-    //vkDestroyPipeline(_device, _sharpen_pipeline, nullptr);
-    //vkDestroyPipelineLayout(_device, _sharpen_pipeline_layout, nullptr);
+    vkDestroyPipeline(_device, _sharpen_pipeline, nullptr);
+    vkDestroyPipelineLayout(_device, _sharpen_pipeline_layout, nullptr);
 
-    //vkDestroyPipeline(_device, _blur_pipeline, nullptr);
-    //vkDestroyPipelineLayout(_device, _blur_pipeline_layout, nullptr);
+    vkDestroyPipeline(_device, _blur_pipeline, nullptr);
+    vkDestroyPipelineLayout(_device, _blur_pipeline_layout, nullptr);
 
-    //vkDestroyPipeline(_device, _fxaa_pipeline, nullptr);
-    //vkDestroyPipelineLayout(_device, _fxaa_pipeline_layout, nullptr);
+    vkDestroyPipeline(_device, _fxaa_pipeline, nullptr);
+    vkDestroyPipelineLayout(_device, _fxaa_pipeline_layout, nullptr);
 
     //vkDestroyPipeline(_device, _ssao_blur_pipeline, nullptr);
     //vkDestroyPipelineLayout(_device, _ssao_blur_pipeline_layout, nullptr);
@@ -132,6 +133,10 @@ graphics_vulkan::~graphics_vulkan() {
     }
     vkDestroyDescriptorSetLayout(_device, _forward_descriptor_set_layout, nullptr);
     vkDestroyRenderPass(_device, _forward_render_pass, nullptr);
+
+    vkDestroyDescriptorSetLayout(_device, _light_descriptor_set_layout, nullptr);
+    vkDestroyPipelineLayout(_device, _light_pipeline_layout, nullptr);
+    vkDestroyPipeline(_device, _light_pipeline, nullptr);
 
     vkDestroyDescriptorSetLayout(_device, _depth_descriptor_set_layout, nullptr);
     vkDestroyRenderPass(_device, _depth_render_pass, nullptr);
@@ -217,6 +222,7 @@ std::shared_ptr<rb::viewport> graphics_vulkan::make_viewport(const viewport_desc
         _get_supported_depth_format(),
         _depth_render_pass,
         _depth_descriptor_set_layout,
+        _light_descriptor_set_layout,
         _forward_render_pass,
         _forward_descriptor_set_layout,
         _postprocess_render_pass,
@@ -350,15 +356,72 @@ void graphics_vulkan::end_shadow_pass() {
 }
 
 void graphics_vulkan::begin_light_pass(const std::shared_ptr<viewport>& viewport) {
-
+    const auto native_viewport = std::static_pointer_cast<viewport_vulkan>(viewport);
+    native_viewport->begin_light_pass(_command_buffers[_command_index]);
 }
 
 void graphics_vulkan::add_point_light(const std::shared_ptr<viewport>& viewport, const transform& transform, const light& light, const point_light& point_light) {
+    const auto native_viewport = std::static_pointer_cast<viewport_vulkan>(viewport);
+    native_viewport->add_point_light(transform.position, point_light.radius, 
+        vec3f{ light.color.r / 255.0f, light.color.g / 255.0f, light.color.b / 255.0f } * light.intensity);
+}
 
+void graphics_vulkan::add_directional_light(const std::shared_ptr<viewport>& viewport, const transform& transform, const light& light, const directional_light& directional_light, bool use_shadow) {
+    const auto native_viewport = std::static_pointer_cast<viewport_vulkan>(viewport);
+    const auto dir = normalize(transform_normal(mat4f::rotation(transform.rotation), vec3f::z_axis()));
+    native_viewport->add_directional_light(dir,
+        vec3f{ light.color.r / 255.0f, light.color.g / 255.0f, light.color.b / 255.0f } * light.intensity,
+        directional_light.shadow_enabled && use_shadow);
 }
 
 void graphics_vulkan::end_light_pass(const std::shared_ptr<viewport>& viewport) {
+    const auto native_viewport = std::static_pointer_cast<viewport_vulkan>(viewport);
+    native_viewport->end_light_pass(_command_buffers[_command_index]);
 
+    VkDescriptorSet descriptor_sets[]{
+        _main_descriptor_set,
+        native_viewport->depth_descriptor_set(),
+        native_viewport->light_descriptor_set()
+    };
+
+    vkCmdBindDescriptorSets(_command_buffers[_command_index],
+        VK_PIPELINE_BIND_POINT_COMPUTE, _light_pipeline_layout, 0, 3, descriptor_sets,
+        0, nullptr);
+
+    const auto work_groups_x = (viewport->size().x + (viewport->size().x % 16)) / 16;
+    const auto work_groups_y = (viewport->size().y + (viewport->size().y % 16)) / 16;
+    const auto number_of_tiles = work_groups_x * work_groups_y;
+
+    vkCmdBindPipeline(_command_buffers[_command_index], VK_PIPELINE_BIND_POINT_COMPUTE, _light_pipeline);
+
+    VkBufferMemoryBarrier barrier;
+    barrier.sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
+    barrier.pNext = nullptr;
+    barrier.srcAccessMask = VK_ACCESS_SHADER_READ_BIT;
+    barrier.dstAccessMask = VK_ACCESS_SHADER_WRITE_BIT;
+    barrier.srcQueueFamilyIndex = _graphics_family;
+    barrier.dstQueueFamilyIndex = _graphics_family;
+    barrier.buffer = native_viewport->visible_light_indices_buffer();
+    barrier.offset = 0;
+    barrier.size = number_of_tiles * sizeof(int) * graphics_limits::max_lights;
+    vkCmdPipelineBarrier(_command_buffers[_command_index],
+        VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+        0, 0, nullptr, 1, &barrier, 0, nullptr);
+
+    vkCmdDispatch(_command_buffers[_command_index], work_groups_x, work_groups_y, 1);
+
+    barrier.sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
+    barrier.pNext = nullptr;
+    barrier.srcAccessMask = VK_ACCESS_SHADER_WRITE_BIT;
+    barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
+    barrier.srcQueueFamilyIndex = _graphics_family;
+    barrier.dstQueueFamilyIndex = _graphics_family;
+    barrier.buffer = native_viewport->visible_light_indices_buffer();
+    barrier.offset = 0;
+    barrier.size = number_of_tiles * sizeof(int) * graphics_limits::max_lights;
+    vkCmdPipelineBarrier(_command_buffers[_command_index],
+        VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+        0, 0, nullptr, 1, &barrier, 0, nullptr);
 }
 
 void graphics_vulkan::begin_forward_pass(const std::shared_ptr<viewport>& viewport) {
@@ -402,14 +465,15 @@ void graphics_vulkan::draw_forward(const std::shared_ptr<viewport>& viewport, co
     VkDescriptorSet descriptor_sets[]{
         _main_descriptor_set,
         native_material->descriptor_set(),
-        _environment->descriptor_set()
+        _environment->descriptor_set(),
+        native_viewport->light_descriptor_set()
     };
 
     const auto pipeline_layout = _get_forward_pipeline_layout(native_material);
     const auto pipeline = _get_forward_pipeline(native_material);
 
     vkCmdBindDescriptorSets(_command_buffers[_command_index],
-        VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 3, descriptor_sets,
+        VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 4, descriptor_sets,
         0, nullptr);
 
     VkDeviceSize offset{ 0 };
@@ -1310,7 +1374,7 @@ void graphics_vulkan::_create_camera() {
 
 void graphics_vulkan::_create_main() {
     VkDescriptorSetLayoutBinding bindings[3]{
-        { 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, nullptr },
+        { 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT | VK_SHADER_STAGE_COMPUTE_BIT, nullptr },
         { 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr },
         { 2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr },
     };
@@ -1628,7 +1692,7 @@ void graphics_vulkan::_create_depth() {
     vkDestroyShaderModule(_device, depth_shader_module, nullptr);
 
     VkDescriptorSetLayoutBinding depth_bindings[1]{
-        { 0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr },
+        { 0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT | VK_SHADER_STAGE_COMPUTE_BIT, nullptr },
     };
 
     VkDescriptorSetLayoutCreateInfo depth_descriptor_set_layout_info;
@@ -1641,6 +1705,72 @@ void graphics_vulkan::_create_depth() {
         "Failed to create Vulkan descriptor set layout");
 }
 
+void graphics_vulkan::_create_light() {
+    VkDescriptorSetLayoutBinding light_bindings[3]{
+        { 0, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1, VK_SHADER_STAGE_FRAGMENT_BIT | VK_SHADER_STAGE_COMPUTE_BIT, nullptr },
+        { 1, VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1, VK_SHADER_STAGE_FRAGMENT_BIT | VK_SHADER_STAGE_COMPUTE_BIT, nullptr },
+        { 2, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_FRAGMENT_BIT | VK_SHADER_STAGE_COMPUTE_BIT, nullptr },
+    };
+
+    VkDescriptorSetLayoutCreateInfo light_descriptor_set_layout_info;
+    light_descriptor_set_layout_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+    light_descriptor_set_layout_info.pNext = nullptr;
+    light_descriptor_set_layout_info.flags = 0;
+    light_descriptor_set_layout_info.bindingCount = 3;
+    light_descriptor_set_layout_info.pBindings = light_bindings;
+    RB_VK(vkCreateDescriptorSetLayout(_device, &light_descriptor_set_layout_info, nullptr, &_light_descriptor_set_layout),
+        "Failed to create Vulkan descriptor set layout");
+
+    VkDescriptorSetLayout layouts[3]{
+        _main_descriptor_set_layout,
+        _depth_descriptor_set_layout,
+        _light_descriptor_set_layout
+    };
+
+    VkPipelineLayoutCreateInfo pipeline_layout_info;
+    pipeline_layout_info.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+    pipeline_layout_info.pNext = nullptr;
+    pipeline_layout_info.flags = 0;
+    pipeline_layout_info.setLayoutCount = 3;
+    pipeline_layout_info.pSetLayouts = layouts;
+    pipeline_layout_info.pushConstantRangeCount = 0;
+    pipeline_layout_info.pPushConstantRanges = nullptr;
+
+    VkPipelineLayout pipeline_layout;
+    RB_VK(vkCreatePipelineLayout(_device, &pipeline_layout_info, nullptr, &_light_pipeline_layout),
+        "Failed to create Vulkan pipeline layout");
+
+    VkShaderModuleCreateInfo shader_module_create_info;
+    shader_module_create_info.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+    shader_module_create_info.flags = 0;
+    shader_module_create_info.pNext = nullptr;
+    shader_module_create_info.pCode = shaders_vulkan::light_cull_comp().data();
+    shader_module_create_info.codeSize = shaders_vulkan::light_cull_comp().size_bytes();
+
+    VkShaderModule shader_module;
+    RB_VK(vkCreateShaderModule(_device, &shader_module_create_info, nullptr, &shader_module),
+        "Failed to create Vulkan shader module");
+
+    VkComputePipelineCreateInfo compute_pipeline_create_info;
+    compute_pipeline_create_info.sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO;
+    compute_pipeline_create_info.pNext = nullptr;
+    compute_pipeline_create_info.flags = 0;
+    compute_pipeline_create_info.stage.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+    compute_pipeline_create_info.stage.pNext = nullptr;
+    compute_pipeline_create_info.stage.flags = 0;
+    compute_pipeline_create_info.stage.stage = VK_SHADER_STAGE_COMPUTE_BIT;
+    compute_pipeline_create_info.stage.module = shader_module;
+    compute_pipeline_create_info.stage.pName = "main";
+    compute_pipeline_create_info.stage.pSpecializationInfo = nullptr;
+    compute_pipeline_create_info.layout = _light_pipeline_layout;
+    compute_pipeline_create_info.basePipelineHandle = VK_NULL_HANDLE;
+    compute_pipeline_create_info.basePipelineIndex = 0;
+    RB_VK(vkCreateComputePipelines(_device, nullptr, 1, &compute_pipeline_create_info, nullptr, &_light_pipeline),
+        "Failed to create Vulkan compute pipeline");
+
+    vkDestroyShaderModule(_device, shader_module, nullptr);
+}
+
 VkPipelineLayout graphics_vulkan::_create_forward_pipeline_layout(const std::shared_ptr<material>& material) {
     const auto native_material = std::static_pointer_cast<material_vulkan>(material);
 
@@ -1649,17 +1779,18 @@ VkPipelineLayout graphics_vulkan::_create_forward_pipeline_layout(const std::sha
     push_constant_range.size = sizeof(local_data);
     push_constant_range.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
 
-    VkDescriptorSetLayout layouts[3]{
+    VkDescriptorSetLayout layouts[4]{
         _main_descriptor_set_layout, // main
         native_material->descriptor_set_layout(), // material
-        _environment_descriptor_set_layout
+        _environment_descriptor_set_layout,
+        _light_descriptor_set_layout
     };
 
     VkPipelineLayoutCreateInfo pipeline_layout_info;
     pipeline_layout_info.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
     pipeline_layout_info.pNext = nullptr;
     pipeline_layout_info.flags = 0;
-    pipeline_layout_info.setLayoutCount = 3;
+    pipeline_layout_info.setLayoutCount = 4;
     pipeline_layout_info.pSetLayouts = layouts;
     pipeline_layout_info.pushConstantRangeCount = 1;
     pipeline_layout_info.pPushConstantRanges = &push_constant_range;

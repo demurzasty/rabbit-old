@@ -82,6 +82,10 @@ void graphics::add_point_light(const std::shared_ptr<viewport>& viewport, const 
 	_impl->add_point_light(viewport, transform, light, point_light);
 }
 
+void graphics::add_directional_light(const std::shared_ptr<viewport>& viewport, const transform& transform, const light& light, const directional_light& directional_light, bool use_shadow) {
+	_impl->add_directional_light(viewport, transform, light, directional_light, use_shadow);
+}
+
 void graphics::end_light_pass(const std::shared_ptr<viewport>& viewport) {
 	_impl->end_light_pass(viewport);
 }
@@ -122,6 +126,38 @@ void graphics::end_fill_pass(const std::shared_ptr<viewport>& viewport) {
 
 void graphics::begin_postprocess_pass(const std::shared_ptr<viewport>& viewport) {
 	_impl->begin_postprocess_pass(viewport);
+}
+
+void graphics::next_postprocess_pass(const std::shared_ptr<viewport>& viewport) {
+	_impl->next_postprocess_pass(viewport);
+}
+
+void graphics::draw_ssao(const std::shared_ptr<viewport>& viewport) {
+	_impl->draw_ssao(viewport);
+}
+
+void graphics::draw_fxaa(const std::shared_ptr<viewport>& viewport) {
+	_impl->draw_fxaa(viewport);
+}
+
+void graphics::draw_blur(const std::shared_ptr<viewport>& viewport, int strength) {
+	if (strength > 0) {
+		_impl->draw_blur(viewport, strength);
+	}
+}
+
+void graphics::draw_sharpen(const std::shared_ptr<viewport>& viewport, float strength) {
+	if (strength > std::numeric_limits<float>::epsilon()) {
+		_impl->draw_sharpen(viewport, strength);
+	}
+}
+
+void graphics::draw_motion_blur(const std::shared_ptr<viewport>& viewport) {
+	_impl->draw_motion_blur(viewport);
+}
+
+void graphics::draw_outline(const std::shared_ptr<viewport>& viewport) {
+	_impl->draw_outline(viewport);
 }
 
 void graphics::end_postprocess_pass(const std::shared_ptr<viewport>& viewport) {

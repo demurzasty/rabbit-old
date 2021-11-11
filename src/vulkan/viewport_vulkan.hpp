@@ -1,6 +1,7 @@
 #pragma once 
 
 #include <rabbit/viewport.hpp>
+#include <rabbit/vec3.hpp>
 #include <rabbit/vec4.hpp>
 
 #include <volk.h>
@@ -21,12 +22,18 @@ namespace rb {
             int index;
         };
 
+        struct cull_data {
+            unsigned int light_count;
+            unsigned int number_of_tiles_x;
+        };
+
     public:
         viewport_vulkan(VkDevice device,
             VmaAllocator allocator,
             VkFormat depth_format,
             VkRenderPass depth_render_pass,
             VkDescriptorSetLayout depth_descriptor_set_layout,
+            VkDescriptorSetLayout light_descriptor_set_layout,
             VkRenderPass forward_render_pass,
             VkDescriptorSetLayout forward_descriptor_set_layout,
             VkRenderPass postprocess_render_pass,
@@ -41,6 +48,14 @@ namespace rb {
 
         void end_depth_pass(VkCommandBuffer command_buffer);
 
+        void begin_light_pass(VkCommandBuffer command_buffer);
+
+        void add_point_light(const vec3f& position, float radius, const vec3f& color);
+
+        void add_directional_light(const vec3f& direction, const vec3f& color, bool shadow_enabled);
+
+        void end_light_pass(VkCommandBuffer command_buffer);
+
         void begin_forward_pass(VkCommandBuffer command_buffer);
 
         void end_forward_pass(VkCommandBuffer command_buffer);
@@ -50,6 +65,12 @@ namespace rb {
         void end_postprocess_pass(VkCommandBuffer command_buffer);
 
         VkDescriptorSet depth_descriptor_set() const;
+
+        VkDescriptorSet light_descriptor_set() const;
+
+        VkBuffer light_buffer() const;
+
+        VkBuffer visible_light_indices_buffer() const;
 
         VkDescriptorSet forward_descriptor_set() const;
 
@@ -79,6 +100,7 @@ namespace rb {
         VmaAllocator _allocator;
         VkRenderPass _depth_render_pass;
         VkDescriptorSetLayout _depth_descriptor_set_layout;
+        VkDescriptorSetLayout _light_descriptor_set_layout;
         VkRenderPass _forward_render_pass;
         VkDescriptorSetLayout _forward_descriptor_set_layout;
         VkRenderPass _postprocess_render_pass;
@@ -94,10 +116,16 @@ namespace rb {
 		VkFramebuffer _depth_framebuffer;
         VkDescriptorSet _depth_descriptor_set;
 
+        VkDescriptorSet _light_descriptor_set;
         VkBuffer _light_buffer;
         VmaAllocation _light_buffer_allocation;
         VkBuffer _visible_light_indices_buffer;
         VmaAllocation _visible_light_indices_buffer_allocation;
+        VkBuffer _light_info_buffer;
+        VmaAllocation _light_info_buffer_allocation;
+
+        light_data* _light_data;
+        std::size_t _light_index{ 0 };
 
         VkImage _forward_image; // also as composition image as first pass
         VmaAllocation _forward_image_allocation;
@@ -105,11 +133,12 @@ namespace rb {
         VkFramebuffer _forward_framebuffer;
         VkDescriptorSet _forward_descriptor_set; // contains composition image
 
-        VkImage _postprocess_image;
-        VmaAllocation _postprocess_image_allocation;
-        VkImageView _postprocess_image_view;
-        VkFramebuffer _postprocess_framebuffer;
-        VkDescriptorSet _postprocess_descriptor_set;
+        VkImage _postprocess_images[2];
+        VmaAllocation _postprocess_image_allocations[2];
+        VkImageView _postprocess_image_views[2];
+        VkFramebuffer _postprocess_framebuffers[2];
+        VkDescriptorSet _postprocess_descriptor_sets[2];
+        std::size_t _current_postprocess_image_index{ 0 };
 
         VkImage _fill_image;
         VmaAllocation _fill_image_allocation;

@@ -59,9 +59,10 @@ void renderer::draw(registry& registry) {
     // Shadows working only for one directional light (for now).
     // We need to search for directional light with shadows enabled and try to render scene into shadow maps.
     // TODO: This pass can be parallel with depth pre pass.
-    if (const auto directional_light_shadow = _find_directional_light_with_shadows(registry); registry.valid(directional_light_shadow)) {
+    const auto directional_light_with_shadow = _find_directional_light_with_shadows(registry);
+    if (registry.valid(directional_light_with_shadow)) {
         // Extract components that we need to draw shadows.
-        const auto& [transform, light, directional_light] = registry.get<rb::transform, rb::light, rb::directional_light>(directional_light_shadow);
+        const auto& [transform, light, directional_light] = registry.get<rb::transform, rb::light, rb::directional_light>(directional_light_with_shadow);
 
         // Render scene from every cascade perspective.
         // TODO: We can build command buffers in parallel.
@@ -80,6 +81,10 @@ void renderer::draw(registry& registry) {
 
     for (const auto& [entity, transform, light, point_light] : registry.view<transform, light, point_light>().each()) {
         graphics::add_point_light(_viewport, transform, light, point_light);
+    }
+
+    for (const auto& [entity, transform, light, directional_light] : registry.view<transform, light, directional_light>().each()) {
+        graphics::add_directional_light(_viewport, transform, light, directional_light, entity == directional_light_with_shadow);
     }
 
     graphics::end_light_pass(_viewport);
@@ -102,23 +107,23 @@ void renderer::draw(registry& registry) {
     // Begin postprocess pass. It copies color buffer from forward pass.
     graphics::begin_postprocess_pass(_viewport);
 
-    //if (_viewport->fxaa_enabled) {
-    //    graphics::next_postprocess_pass(_viewport);
+    if (_viewport->fxaa_enabled) {
+        graphics::next_postprocess_pass(_viewport);
 
-    //    graphics::draw_fxaa(_viewport);
-    //}
+        graphics::draw_fxaa(_viewport);
+    }
 
-    //if (_viewport->sharpen_enabled) {
-    //    graphics::next_postprocess_pass(_viewport);
+    if (_viewport->sharpen_enabled) {
+        graphics::next_postprocess_pass(_viewport);
 
-    //    graphics::draw_sharpen(_viewport, _viewport->sharpen_factor);
-    //}
+        graphics::draw_sharpen(_viewport, _viewport->sharpen_factor);
+    }
 
-    //if (_viewport->motion_blur_enabled) {
-    //    graphics::next_postprocess_pass(_viewport);
+    if (_viewport->motion_blur_enabled) {
+        graphics::next_postprocess_pass(_viewport);
 
-    //    graphics::draw_motion_blur(_viewport);
-    //}
+        graphics::draw_motion_blur(_viewport);
+    }
 
     graphics::end_postprocess_pass(_viewport);
 

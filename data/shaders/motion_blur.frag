@@ -15,10 +15,7 @@ layout (std140, set = 0, binding = 0) uniform camera_data {
     mat4 u_last_proj_view;
 };
 
-layout (set = 1, binding = 0) uniform sampler2D u_albedo_map;
-layout (set = 1, binding = 1) uniform sampler2D u_normal_map;
-layout (set = 1, binding = 2) uniform sampler2D u_emissive_map;
-layout (set = 1, binding = 3) uniform sampler2D u_depth_map;
+layout (set = 1, binding = 0) uniform sampler2D u_depth_map;
 
 layout (set = 2, binding = 0) uniform sampler2D u_postprocess_map;
 

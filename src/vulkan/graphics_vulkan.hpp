@@ -117,6 +117,8 @@ namespace rb {
 		void begin_light_pass(const std::shared_ptr<viewport>& viewport) override;
 
 		void add_point_light(const std::shared_ptr<viewport>& viewport, const transform& transform, const light& light, const point_light& point_light) override;
+		
+		void add_directional_light(const std::shared_ptr<viewport>& viewport, const transform& transform, const light& light, const directional_light& directional_light, bool use_shadow) override;
 
 		void end_light_pass(const std::shared_ptr<viewport>& viewport) override;
 
@@ -216,6 +218,8 @@ namespace rb {
 		void _create_environment();
 
 		void _create_depth();
+
+		void _create_light();
 
 		void _create_forward();
 
@@ -356,6 +360,10 @@ namespace rb {
 		VkRenderPass _depth_render_pass;
 		VkPipelineLayout _depth_pipeline_layout;
 		VkPipeline _depth_pipeline;
+
+		VkDescriptorSetLayout _light_descriptor_set_layout;
+		VkPipelineLayout _light_pipeline_layout;
+		VkPipeline _light_pipeline;
 
 		VkDescriptorSetLayout _forward_descriptor_set_layout;
 		VkRenderPass _forward_render_pass;

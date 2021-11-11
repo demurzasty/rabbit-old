@@ -14,36 +14,26 @@ layout (constant_id = 4) const int EMISSIVE_MAP = 4;
 layout (constant_id = 5) const int AMBIENT_MAP = 5;
 layout (constant_id = 6) const int MAX_MAPS = 6;
 
-struct Light {
-	vec3 dir_or_pos;
-	float radius;
-	vec3 color;
-	int type;
+struct light {
+	vec4 position_or_direction; // .a < 0.5 ? point_light : directional_light
+	vec4 color; // .a = radius 
 };
 
-const int light_count = 1;
-
-const Light lights[1] = {
-    { normalize(vec3(-1, -1, -1)), 0.0, vec3(1.0, 1.0, 1.0), 0 }
+struct visible_index {
+	int index;
 };
 
 layout (location = 0) in vec3 v_position;
 layout (location = 1) in vec2 v_texcoord;
 layout (location = 2) in vec3 v_normal;
 
-layout (std140, set = 0, binding = 0) uniform CameraData {
+layout (std140, set = 0, binding = 0) uniform camera_data {
     mat4 proj;
     mat4 view;
-    mat4 u_inv_proj_view;
-    vec3 u_camera_position;
-	mat4 u_light_proj_views[4];
-};
-
-//layout (std140, set = 0, binding = 2) uniform LightListData {
-//    Light lights[16];
-//    mat4 light_proj_view;
-//    int light_count;
-//};
+    mat4 inv_proj_view;
+    vec3 position;
+	mat4 light_proj_views[4];
+} u_camera;
 
 layout(set = 0, binding = 1) uniform sampler2D u_brdf_map;
 layout(set = 0, binding = 2) uniform sampler2DArray u_shadow_map;
@@ -59,8 +49,21 @@ layout(set = 2, binding = 0) uniform samplerCube u_radiance_map;
 layout(set = 2, binding = 1) uniform samplerCube u_irradiance_map;
 layout(set = 2, binding = 2) uniform samplerCube u_prefilter_map;
 
-layout (location = 0) out vec4 out_color;
+// Shader storage buffer objects
+layout(std430, set = 3, binding = 0) readonly buffer light_buffer {
+	light data[];
+} u_light_buffer;
 
+layout(std430, set = 3, binding = 1) readonly buffer visible_light_indices_buffer {
+	visible_index data[];
+} u_visible_light_indices_buffer;
+
+layout(std140, set = 3, binding = 2) uniform culling_data {
+	uint light_count;
+    uint number_of_tiles_x;
+} u_culling_data;
+
+layout (location = 0) out vec4 out_color;
 
 const vec2 poisson_disk[64] = {
 	vec2( -0.04117257, -0.1597612 ),
@@ -140,7 +143,7 @@ float rand(vec4 co) {
 
 // parallel plane estimation
 float penumbra_size(float z_receiver, float z_blocker) {
-	return (z_receiver - z_blocker) / z_blocker * 12.0;
+	return max((z_receiver - z_blocker) / z_blocker * 12.0, 0.0);
 }
 
 vec2 find_blocker(vec2 texcoord, float z_receiver, float cascade) {
@@ -248,7 +251,7 @@ vec3 perturb(vec3 map, vec3 n, vec3 v, vec2 texcoord) {
 
 float compute_shadow() {
 	for (int i = 0; i < 4; ++i) {
-		vec4 shadow_position = u_light_proj_views[i] * vec4(v_position, 1.0);
+		vec4 shadow_position = u_camera.light_proj_views[i] * vec4(v_position, 1.0);
 		shadow_position.xyz = shadow_position.xyz / shadow_position.w;
 		shadow_position.y = -shadow_position.y;
 
@@ -263,6 +266,10 @@ float compute_shadow() {
 }
 
 void main() {
+	ivec2 location = ivec2(gl_FragCoord.xy);
+	ivec2 tile_id = location / ivec2(16, 16);
+	uint index = tile_id.y * u_culling_data.number_of_tiles_x + tile_id.x;
+
     vec4 albedo = vec4(u_base_color, 1.0);
     if (ALBEDO_MAP > -1) {
         albedo *= texture(u_maps[ALBEDO_MAP], v_texcoord);
@@ -273,7 +280,7 @@ void main() {
 
     vec3 normal = v_normal;
     if (NORMAL_MAP > -1) {
-        normal = perturb(texture(u_maps[NORMAL_MAP], v_texcoord).rgb * 2.0 - 1.0, normalize(normal), normalize(u_camera_position - v_position), v_texcoord);
+        normal = perturb(texture(u_maps[NORMAL_MAP], v_texcoord).rgb * 2.0 - 1.0, normalize(normal), normalize(u_camera.position - v_position), v_texcoord);
     }
 
     float roughness = u_roughness;
@@ -296,7 +303,7 @@ void main() {
         ao = texture(u_maps[AMBIENT_MAP], v_texcoord).r;
     }
 
-    vec3 v = normalize(u_camera_position - v_position);
+    vec3 v = normalize(u_camera.position - v_position);
     vec3 n = normalize(normal);
 
     float n_dot_v = abs(dot(n, v)) + 1e-5;
@@ -307,21 +314,27 @@ void main() {
 
     float shadow = compute_shadow(); // texture_proj(v_shadow_coord / v_shadow_coord.w, vec2(0.0));
 
-   //  TODO: Iterate through nearest lights.
-    for (int i = 0; i < light_count; ++i)
-    {
-        // TODO: Light color and intensity.
-        vec3 radiance = lights[i].color.xyz;
-        float intensity = 1.0;
+	uint offset = index * 1024;
+	for (uint i = 0; i < 1024 && u_visible_light_indices_buffer.data[offset + i].index != -1; ++i) {
+		uint light_index = u_visible_light_indices_buffer.data[offset + i].index;
+		light light = u_light_buffer.data[light_index];
+
+        vec3 radiance = light.color.xyz;
 
         vec3 l = vec3(0.0);
-        
-        if (lights[i].type == 0) {
-            l = -normalize(lights[i].dir_or_pos.xyz);
-        } else if (lights[i].type == 1) {
-            l = normalize(lights[i].dir_or_pos.xyz - v_position);
-            float distance = length(lights[i].dir_or_pos.xyz - v_position);
-            float attenuation = pow(clamp(1.0 - pow(distance / lights[i].radius, 4.0), 0.0, 1.0), 2.0) / (distance * distance + 1.0);
+        float shadow = 0.0;
+
+        if (light.position_or_direction.w > 0.5) {
+            l = -normalize(light.position_or_direction.xyz);
+			if (light.color.w > 0.5) {
+				shadow = compute_shadow();
+			}
+        } else {
+			vec3 diff = light.position_or_direction.xyz - v_position;
+            float dist = length(diff);
+            l = diff / dist;
+			float radius = light.color.w;
+            float attenuation = pow(clamp(1.0 - pow(dist / radius, 4.0), 0.0, 1.0), 2.0) / (dist * dist + 1.0);
             radiance *= attenuation;
         }
 
@@ -340,8 +353,8 @@ void main() {
         float denominator = 4.0 * n_dot_v * n_dot_l + 0.001;
         vec3 specular = nominator / denominator;
 
-        lo += (kd * albedo.rgb / PI + specular) * radiance * intensity * n_dot_l * shadow;
-    }
+        lo += (kd * albedo.rgb / PI + specular) * radiance * n_dot_l * shadow;
+	}
 
     vec3 ks = fresnel_schlick_roughness(max(dot(n, v), 0.0), f0, roughness);
     vec3 kd = (1.0 - ks) * (1.0 - metallic);
@@ -355,7 +368,7 @@ void main() {
     vec2 brdf = texture(u_brdf_map, vec2(n_dot_v, roughness)).rg;
     vec3 spec = prefilter_color * (ks * brdf.x + brdf.y);
 
-    vec3 ambient = kd * diff + spec + emissive;
+    vec3 ambient = (kd * diff + spec) * ao;
 
-    out_color = vec4(ambient + lo, 1.0);
+    out_color = vec4(ambient + lo + emissive, 1.0);
 }
