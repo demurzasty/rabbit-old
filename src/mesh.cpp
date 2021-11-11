@@ -89,7 +89,7 @@ std::shared_ptr<mesh> mesh::load(ibstream& stream) {
     return graphics::make_mesh(desc);
 }
 
-static void load_obj(ibstream& input, std::vector<vertex>& vertices, std::vector<std::uint32_t>& indices, std::vector<vec3f>& positions) {
+static void load_mesh(ibstream& input, std::vector<vertex>& vertices, std::vector<std::uint32_t>& indices, std::vector<vec3f>& positions) {
     vertices.clear();
     positions.clear();
     indices.clear();
@@ -136,18 +136,17 @@ void mesh::import(ibstream& input, obstream& output, const json& metadata) {
     std::vector<vertex> vertices;
     std::vector<std::uint32_t> indices;
     std::vector<vec3f> positions;
-    load_obj(input, vertices, indices, positions);
+    load_mesh(input, vertices, indices, positions);
 
     optimize(vertices, indices);
     optimize_vertices(vertices, indices);
 
     // level of details indices (excluding base indices)
-    std::array<std::vector<std::uint32_t>, 5> lods{
+    std::array<std::vector<std::uint32_t>, 4> lods{
         simplify(vertices, indices, 0.8f, 0.05f),
-        simplify(vertices, indices, 0.4f, 0.1f),
-        simplify(vertices, indices, 0.2f, 0.2f),
-        simplify(vertices, indices, 0.075f, 0.3f),
-        simplify(vertices, indices, 0.025f, 0.5f),
+        simplify(vertices, indices, 0.4f, 0.05f),
+        simplify(vertices, indices, 0.2f, 0.05f),
+        simplify(vertices, indices, 0.075f, 0.05f),
     };
 
     quickhull::QuickHull<float> quickhull;
