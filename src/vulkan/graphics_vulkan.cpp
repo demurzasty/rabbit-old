@@ -618,17 +618,6 @@ void graphics_vulkan::next_postprocess_pass(const std::shared_ptr<viewport>& vie
     VkDescriptorSet descriptor_sets[]{
         native_viewport->postprocess_descriptor_set()
     };
-
-    vkCmdBindDescriptorSets(_command_buffers[_command_index],
-        VK_PIPELINE_BIND_POINT_GRAPHICS, _present_pipeline_layout, 0, 1, descriptor_sets,
-        0, nullptr);
-
-    VkDeviceSize offset{ 0 };
-    vkCmdBindVertexBuffers(_command_buffers[_command_index], 0, 1, &_quad_vertex_buffer, &offset);
-    vkCmdBindIndexBuffer(_command_buffers[_command_index], _quad_index_buffer, 0, VK_INDEX_TYPE_UINT16);
-
-    vkCmdBindPipeline(_command_buffers[_command_index], VK_PIPELINE_BIND_POINT_GRAPHICS, _forward_copy_pipeline);
-    vkCmdDrawIndexed(_command_buffers[_command_index], 6, 1, 0, 0, 0);
 }
 
 void graphics_vulkan::draw_ssao(const std::shared_ptr<viewport>& viewport) {
@@ -2098,7 +2087,7 @@ void graphics_vulkan::_create_forward() {
     VkAttachmentDescription depth_attachment{};
     depth_attachment.format = depth_format;
     depth_attachment.samples = VK_SAMPLE_COUNT_1_BIT;
-    depth_attachment.loadOp = VK_ATTACHMENT_LOAD_OP_LOAD; // VK_ATTACHMENT_LOAD_OP_CLEAR;
+    depth_attachment.loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
     depth_attachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
     depth_attachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
     depth_attachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
@@ -2191,7 +2180,7 @@ void graphics_vulkan::_create_postprocess() {
     VkAttachmentDescription color_attachment;
     color_attachment.flags = 0;
     color_attachment.format = VK_FORMAT_R8G8B8A8_UNORM;
-    color_attachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+    color_attachment.loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
     color_attachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
     color_attachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
     color_attachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;

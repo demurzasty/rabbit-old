@@ -176,7 +176,7 @@ void viewport_vulkan::begin_postprocess_pass(VkCommandBuffer command_buffer) {
     render_pass_begin_info.framebuffer = _postprocess_framebuffers[_current_postprocess_image_index];
     render_pass_begin_info.renderArea.offset = { 0, 0 };
     render_pass_begin_info.renderArea.extent = { size().x, size().y };
-    render_pass_begin_info.clearValueCount = sizeof(clear_values) / sizeof(*clear_values);
+    render_pass_begin_info.clearValueCount = 0; // sizeof(clear_values) / sizeof(*clear_values);
     render_pass_begin_info.pClearValues = clear_values;
 
     vkCmdBeginRenderPass(command_buffer, &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
