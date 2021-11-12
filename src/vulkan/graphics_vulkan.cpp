@@ -1356,7 +1356,7 @@ void graphics_vulkan::_create_camera() {
     camera_buffer_info.pQueueFamilyIndices = nullptr;
 
     VmaAllocationCreateInfo camera_allocation_info{};
-    camera_allocation_info.usage = VMA_MEMORY_USAGE_CPU_ONLY;
+    camera_allocation_info.usage = VMA_MEMORY_USAGE_GPU_ONLY;
     RB_VK(vmaCreateBuffer(_allocator, &camera_buffer_info, &camera_allocation_info, &_camera_buffer, &_camera_allocation, nullptr),
         "Failed to create Vulkan buffer.");
 }
