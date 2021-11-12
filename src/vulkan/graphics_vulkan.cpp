@@ -4230,7 +4230,7 @@ void graphics_vulkan::_create_quad() {
     vertex_buffer_info.pQueueFamilyIndices = nullptr;
 
     VmaAllocationCreateInfo vertex_allocation_info{};
-    vertex_allocation_info.usage = VMA_MEMORY_USAGE_CPU_ONLY;
+    vertex_allocation_info.usage = VMA_MEMORY_USAGE_CPU_TO_GPU;
     RB_VK(vmaCreateBuffer(_allocator, &vertex_buffer_info, &vertex_allocation_info, &_quad_vertex_buffer, &_quad_vertex_allocation, nullptr),
         "Failed to create Vulkan buffer.");
 
@@ -4250,7 +4250,7 @@ void graphics_vulkan::_create_quad() {
     index_buffer_info.pQueueFamilyIndices = nullptr;
 
     VmaAllocationCreateInfo index_allocation_info{};
-    index_allocation_info.usage = VMA_MEMORY_USAGE_CPU_ONLY;
+    index_allocation_info.usage = VMA_MEMORY_USAGE_CPU_TO_GPU;
     RB_VK(vmaCreateBuffer(_allocator, &index_buffer_info, &index_allocation_info, &_quad_index_buffer, &_quad_index_allocation, nullptr),
         "Failed to create Vulkan buffer.");
 
