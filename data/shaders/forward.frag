@@ -251,17 +251,18 @@ vec3 perturb(vec3 map, vec3 n, vec3 v, vec2 texcoord) {
 
 float compute_shadow() {
 	for (int i = 0; i < 4; ++i) {
-		vec4 shadow_position = u_camera.light_proj_views[i] * vec4(v_position, 1.0);
-		shadow_position.xyz = shadow_position.xyz / shadow_position.w;
-		shadow_position.y = -shadow_position.y;
+		vec4 shadow_coord = u_camera.light_proj_views[i] * vec4(v_position, 1.0);
+		shadow_coord.xyz = shadow_coord.xyz / shadow_coord.w;
+		shadow_coord.y = -shadow_coord.y;
+		shadow_coord.xy = shadow_coord.xy * 0.5 + 0.5;
 
-		vec2 shadow_coord = vec2(shadow_position.x, shadow_position.y) * 0.5 + 0.5;
 		if (shadow_coord.x >= 0.0 && shadow_coord.x <= 1.0 &&
 			shadow_coord.y >= 0.0 && shadow_coord.y <= 1.0 &&
-			shadow_position.z >= 0.0 && shadow_position.z <= 1.0) {
-			return pcf(shadow_coord.xy, shadow_position.z - 0.002, 3.0, i);
+			shadow_coord.z >= 0.0 && shadow_coord.z <= 1.0) {
+			return pcf(shadow_coord.xy, shadow_coord.z - 0.002, 3.0, i);
 		} 
 	}
+
 	return 1.0;
 }
 
