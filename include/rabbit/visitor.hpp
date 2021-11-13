@@ -6,6 +6,7 @@
 #include "vec4.hpp"
 #include "color.hpp"
 #include "json.hpp"
+#include "member.hpp"
 
 #include <type_traits>
 
@@ -75,6 +76,13 @@ namespace rb {
 				const auto& array = json[name];
 				data = { array[0], array[1], array[2], array[3] };
 			}
+		}
+
+		template<typename Owner, typename Data>
+		void operator()(const char* name, member<Owner, Data>& member) {
+			Data data;
+			operator()(name, data);
+			member = data;
 		}
 
 		void operator()(const char* name, color& data) {

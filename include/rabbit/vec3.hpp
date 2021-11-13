@@ -61,6 +61,16 @@ namespace rb {
 	}
 
 	template<typename T>
+	constexpr bool operator==(const vec3<T>& a, const vec3<T>& b) {
+		return a.x == b.x && a.y == b.y && a.z == b.z;
+	}
+
+	template<typename T>
+	constexpr bool operator!=(const vec3<T>& a, const vec3<T>& b) {
+		return a.x != b.x || a.y != b.y || a.z != b.z;
+	}
+
+	template<typename T>
 	constexpr T dot(const vec3<T>& a, const vec3<T>& b) {
 		return a.x * b.x + a.y * b.y + a.z * b.z;
 	}

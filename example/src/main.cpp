@@ -18,33 +18,35 @@ struct camera_controller : public rb::system {
                 const auto diff = _last_mouse_position - mouse_position;
                 _last_mouse_position = mouse_position;
 
-                transform.rotation.y += diff.x * 0.005f;
-                transform.rotation.x += diff.y * 0.005f;
+                vec3f rotation = transform.rotation;
+                rotation.y += diff.x * 0.005f;
+                rotation.x += diff.y * 0.005f;
 
+                vec3f position = transform.position;
                 if (input::is_key_down(keycode::e)) {
-                    transform.position.y += elapsed_time * speed;
-                }
-                else if (input::is_key_down(keycode::q)) {
-                    transform.position.y -= elapsed_time * speed;
+                    position.y += elapsed_time * speed;
+                } else if (input::is_key_down(keycode::q)) {
+                    position.y -= elapsed_time * speed;
                 }
 
                 if (input::is_key_down(keycode::w)) {
-                    transform.position.x -= std::sin(transform.rotation.y) * elapsed_time * speed;
-                    transform.position.z -= std::cos(transform.rotation.y) * elapsed_time * speed;
-                }
-                else if (input::is_key_down(keycode::s)) {
-                    transform.position.x += std::sin(transform.rotation.y) * elapsed_time * speed;
-                    transform.position.z += std::cos(transform.rotation.y) * elapsed_time * speed;
+                    position.x -= std::sin(rotation.y) * elapsed_time * speed;
+                    position.z -= std::cos(rotation.y) * elapsed_time * speed;
+                } else if (input::is_key_down(keycode::s)) {
+                    position.x += std::sin(rotation.y) * elapsed_time * speed;
+                    position.z += std::cos(rotation.y) * elapsed_time * speed;
                 }
 
                 if (input::is_key_down(keycode::d)) {
-                    transform.position.x -= std::sin(transform.rotation.y - pi<float>() * 0.5f) * elapsed_time * speed;
-                    transform.position.z -= std::cos(transform.rotation.y - pi<float>() * 0.5f) * elapsed_time * speed;
+                    position.x -= std::sin(rotation.y - pi<float>() * 0.5f) * elapsed_time * speed;
+                    position.z -= std::cos(rotation.y - pi<float>() * 0.5f) * elapsed_time * speed;
+                } else if (input::is_key_down(keycode::a)) {
+                    position.x -= std::sin(rotation.y + pi<float>() * 0.5f) * elapsed_time * speed;
+                    position.z -= std::cos(rotation.y + pi<float>() * 0.5f) * elapsed_time * speed;
                 }
-                else if (input::is_key_down(keycode::a)) {
-                    transform.position.x -= std::sin(transform.rotation.y + pi<float>() * 0.5f) * elapsed_time * speed;
-                    transform.position.z -= std::cos(transform.rotation.y + pi<float>() * 0.5f) * elapsed_time * speed;
-                }
+
+                transform.position = position;
+                transform.rotation = rotation;
             }
         });
     }

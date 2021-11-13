@@ -23,6 +23,8 @@ namespace rb {
 
 		void _on_transform_constructed(registry& registry, entity entity);
 
+		mat4f _calculate_world(registry& registry, entity entity);
+
 	private:
 		std::shared_ptr<viewport> _viewport;
 	};

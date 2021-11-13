@@ -25,9 +25,9 @@ void renderer::update(registry& registry, float elapsed_time) {
     }
     
     for (const auto& [entity, transform, cache] : registry.view<transform, cache>().each()) {
-        if (transform.dirty) {
-            cache.world = calculate_world(registry, entity);
-            transform.dirty = false;
+        if (transform.dirty()) {
+            cache.world = _calculate_world(registry, entity);
+            transform.mark_dirty(false);
         }
     }
 }
@@ -155,4 +155,23 @@ entity renderer::_find_directional_light_with_shadows(registry& registry) const 
 
 void renderer::_on_transform_constructed(registry& registry, entity entity) {
     registry.emplace_or_replace<cache>(entity);
+}
+
+mat4f renderer::_calculate_world(rb::registry& registry, entity entity) {
+    if (registry.valid(entity) && registry.all_of<transform, cache>(entity)) {
+        const auto& transform = registry.get<rb::transform>(entity);
+        const auto& cache = registry.get<renderer::cache>(entity);
+
+        if (transform.dirty()) {
+            const auto world = mat4f::translation(transform.position) *
+                mat4f::rotation(transform.rotation) *
+                mat4f::scaling(transform.scaling);
+
+            return _calculate_world(registry, transform.parent) * world;
+        } else {
+            return _calculate_world(registry, transform.parent) * cache.world;
+        }
+    } else {
+        return mat4f::identity();
+    }
 }

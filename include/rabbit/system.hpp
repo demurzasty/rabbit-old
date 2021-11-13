@@ -14,7 +14,5 @@ namespace rb {
 
 	protected:
 		entity find_by_name(registry& registry, const std::string& name);
-		
-		mat4f calculate_world(registry& registry, entity entity);
 	};
 }
