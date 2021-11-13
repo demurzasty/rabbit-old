@@ -1815,7 +1815,7 @@ VkPipeline graphics_vulkan::_create_forward_pipeline(const std::shared_ptr<mater
     fragment_shader_module_info.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
     fragment_shader_module_info.pNext = nullptr;
     fragment_shader_module_info.flags = 0;
-    if (material->flags()) {
+    if (material->flags() & material_flags::all_maps_bits) {
         fragment_shader_module_info.codeSize = shaders_vulkan::forward_frag().size_bytes();
         fragment_shader_module_info.pCode = shaders_vulkan::forward_frag().data();
     } else {
@@ -1920,10 +1920,10 @@ VkPipeline graphics_vulkan::_create_forward_pipeline(const std::shared_ptr<mater
         VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
     if (material->translucent()) {
         color_blend_attachment_state_info.blendEnable = VK_TRUE;
-        color_blend_attachment_state_info.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_COLOR;
-        color_blend_attachment_state_info.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_COLOR;
+        color_blend_attachment_state_info.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
+        color_blend_attachment_state_info.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
         color_blend_attachment_state_info.colorBlendOp = VK_BLEND_OP_ADD;
-        color_blend_attachment_state_info.srcAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
+        color_blend_attachment_state_info.srcAlphaBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
         color_blend_attachment_state_info.dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
         color_blend_attachment_state_info.alphaBlendOp = VK_BLEND_OP_ADD;
     } else {

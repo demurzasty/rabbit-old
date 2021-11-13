@@ -92,7 +92,7 @@ void material::import(ibstream& input, obstream& output, const json& metadata) {
     json json;
     input.read(json);
 
-    vec3f base_color{ 1.0f, 1.0f, 1.0f };
+    vec4f base_color{ 1.0f, 1.0f, 1.0f, 1.0f };
     float roughness{ 0.8f };
     float metallic{ 0.0f };
     bool translucent{ false };
@@ -100,7 +100,11 @@ void material::import(ibstream& input, obstream& output, const json& metadata) {
 
     if (json.contains("base_color")) {
         auto& color = json["base_color"];
-        base_color = { color[0], color[1], color[2] };
+        if (color.size() > 3) {
+            base_color = { color[0], color[1], color[2], color[3] };
+        } else {
+            base_color = { color[0], color[1], color[2] };
+        }
     }
 
     if (json.contains("roughness")) {
@@ -163,7 +167,7 @@ void material::import(ibstream& input, obstream& output, const json& metadata) {
     }
 }
 
-const vec3f& material::base_color() const {
+const vec4f& material::base_color() const {
     return _base_color;
 }
 

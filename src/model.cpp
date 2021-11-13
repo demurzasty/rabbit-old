@@ -5,6 +5,7 @@
 #include <rabbit/editor/editor.hpp>
 #include <rabbit/prefab.hpp>
 #include <rabbit/math.hpp>
+#include <rabbit/quat.hpp>
 
 #include <vector>
 #include <filesystem>
@@ -67,51 +68,32 @@ static json parse_node(const json& gltf_meshes,
             matrix[i] = gltf_matrix[i];
         }
 
-        // 0, 1, 2, 3
-        // 4, 5, 6, 7
-        // 8, 9, 10, 11,
-        // 12, 13, 14, 15
-
         position = { matrix[12], matrix[13], matrix[14] };
-        
+
         scaling.x = length(vec3f{ matrix[0], matrix[1], matrix[2] });
         scaling.y = length(vec3f{ matrix[4], matrix[5], matrix[6] });
         scaling.z = length(vec3f{ matrix[8], matrix[9], matrix[10] });
 
-        rotation.x = std::atan2(matrix[9], matrix[10]);
-        rotation.y = std::atan2(-matrix[8], std::sqrt(matrix[9] * matrix[9] + matrix[10] * matrix[10]));
-        rotation.z = std::atan2(matrix[4], matrix[0]);
+        if (determinant(matrix) <= 0.0f) {
+            scaling.y *= -1.0f;
+        }
 
-        rotation.x = std::atan2(matrix[2], matrix[11]);
-        rotation.y = std::atan2(-matrix[2], std::sqrt(matrix[6] * matrix[6] + matrix[10] * matrix[10]));
-        rotation.z = std::atan2(matrix[1], matrix[0]);
+        if (scaling.x == 0 || scaling.y == 0 || scaling.z == 0) {
+            rotation = { 0.0f, 0.0f, 0.0f };
+        } else {
+            const auto sx = 1.0f / scaling.x;
+            const auto sy = 1.0f / scaling.y;
+            const auto sz = 1.0f / scaling.z;
 
-        matrix[0] /= scaling.x;
-        matrix[1] /= scaling.x;
-        matrix[2] /= scaling.x;
+            mat4f temp{ {
+                matrix[0] * sx, matrix[1] * sx, matrix[2] * sx, 0,
+                matrix[4] * sy, matrix[5] * sy, matrix[6] * sy, 0,
+                matrix[8] * sz, matrix[9] * sz, matrix[10] * sz, 0,
+                0, 0, 0, 1,
+            } };
 
-        matrix[4] /= scaling.y;
-        matrix[5] /= scaling.y;
-        matrix[6] /= scaling.y;
-
-        matrix[8] /= scaling.z;
-        matrix[9] /= scaling.z;
-        matrix[10] /= scaling.z;
-
-        const auto t1 = std::atan2(matrix[9], matrix[10]);
-        const auto c2 = std::sqrt(matrix[0] * matrix[0] + matrix[4] * matrix[4]);
-        const auto t2 = std::atan2(-matrix[8], c2);
-        const auto s1 = std::sin(t1);
-        const auto c1 = std::cos(t1);
-        const auto t3 = std::atan2(s1 * matrix[2] - c1 * matrix[1], c1 * matrix[5] - s1 * matrix[6]);
-
-        rotation.x = -t1;
-        rotation.y = -t2;
-        rotation.z = -t3;
-
-        //rotation.x = std::asin(matrix[1]);
-        //rotation.y = std::atan2(-matrix[2], matrix[0]);
-        //rotation.z = std::atan2(-matrix[9], matrix[5]);
+            rotation = euler_angles(quatf::from_rotation_matrix(temp));
+        }
     }
 
     jentity["transform"] = {

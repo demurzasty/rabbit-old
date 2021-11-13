@@ -1,6 +1,6 @@
 #pragma once 
 
-#include "vec3.hpp"
+#include "vec4.hpp"
 #include "texture.hpp"
 #include "json.hpp"
 #include "bstream.hpp"
@@ -24,7 +24,7 @@ namespace rb {
 	};
 
 	struct material_desc {
-		vec3f base_color{ 1.0f, 1.0f, 1.0f }; // TODO: Use color structure instead.
+		vec4f base_color{ 1.0f, 1.0f, 1.0f, 1.0f }; // TODO: Use color structure instead.
 		float roughness{ 0.8f };
 		float metallic{ 0.0f };
 		bool translucent{ false };
@@ -47,7 +47,7 @@ namespace rb {
 
 		virtual ~material() = default;
 
-		const vec3f& base_color() const;
+		const vec4f& base_color() const;
 
 		float roughness() const;
 
@@ -75,7 +75,7 @@ namespace rb {
 		material(const material_desc& desc);
 
 	private:
-		const vec3f _base_color;
+		const vec4f _base_color;
 		const float _roughness;
 		const float _metallic;
 		const bool _translucent;

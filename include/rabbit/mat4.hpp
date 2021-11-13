@@ -260,6 +260,45 @@ namespace rb {
     }
 
     template<typename T>
+    bool operator==(const mat4<T>& a, const mat4<T>& b) {
+        for (auto i = 0u; i < 16u; ++i) {
+            if (std::abs(a[i] - b[i]) > std::numeric_limits<T>::epsilon()) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    template<typename T>
+    bool operator!=(const mat4<T>& a, const mat4<T>& b) {
+        return !(a == b);
+    }
+
+    template<typename T>
+    constexpr T determinant(const mat4<T>& mat) {
+        if (mat == mat4f::identity()) {
+            return 1;
+        }
+
+        const T m00 = mat[0], m01 = mat[1], m02 = mat[2], m03 = mat[3];
+        const T m10 = mat[4], m11 = mat[5], m12 = mat[6], m13 = mat[7];
+        const T m20 = mat[8], m21 = mat[9], m22 = mat[10], m23 = mat[11];
+        const T m30 = mat[12], m31 = mat[13], m32 = mat[14], m33 = mat[15];
+
+        const T det_22_33 = m22 * m33 - m32 * m23;
+        const T det_21_33 = m21 * m33 - m31 * m23;
+        const T det_21_32 = m21 * m32 - m31 * m22;
+        const T det_20_33 = m20 * m33 - m30 * m23;
+        const T det_20_32 = m20 * m32 - m22 * m30;
+        const T det_20_31 = m20 * m31 - m30 * m21;
+        const T cofact_00 = +(m11 * det_22_33 - m12 * det_21_33 + m13 * det_21_32);
+        const T cofact_01 = -(m10 * det_22_33 - m12 * det_20_33 + m13 * det_20_32);
+        const T cofact_02 = +(m10 * det_21_33 - m11 * det_20_33 + m13 * det_20_31);
+        const T cofact_03 = -(m10 * det_21_32 - m11 * det_20_32 + m12 * det_20_31);
+        return m00 * cofact_00 + m01 * cofact_01 + m02 * cofact_02 + m03 * cofact_03;
+    }
+
+    template<typename T>
     constexpr vec3<T> transform_normal(const mat4<T>& a, const vec3<T>& b) {
         return {
             b.x * a[0] + b.y * a[4] + b.z * a[8],
@@ -311,21 +350,6 @@ namespace rb {
             a[2] * b[12] + a[6] * b[13] + a[10] * b[14] + a[14] * b[15],
             a[3] * b[12] + a[7] * b[13] + a[11] * b[14] + a[15] * b[15]
         };
-    }
-
-    template<typename T>
-    bool operator==(const mat4<T>& a, const mat4<T>& b) {
-        for (auto i = 0u; i < 16u; ++i) {
-            if (std::abs(a[i] - b[i]) > std::numeric_limits<T>::epsilon()) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    template<typename T>
-    bool operator!=(const mat4<T>& a, const mat4<T>& b) {
-        return !(a == b);
     }
 
     template<typename T>

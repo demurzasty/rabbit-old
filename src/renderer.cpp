@@ -112,14 +112,14 @@ void renderer::draw(registry& registry) {
         }
     }
 
+    // Draw skybox between. Minimize overdraw using depth testing.
+    graphics::draw_skybox(_viewport);
+
     for (const auto& [entity, transform, geometry, cache] : registry.view<transform, geometry, cache>().each()) {
         if (geometry.material && geometry.material->translucent()) {
             graphics::draw_forward(_viewport, cache.world, geometry.mesh, geometry.material, 0);
         }
     }
-
-    // Draw skybox last. Minimize overdraw using depth testing.
-    graphics::draw_skybox(_viewport);
 
     // End primary geometry drawing.
     graphics::end_forward_pass(_viewport);

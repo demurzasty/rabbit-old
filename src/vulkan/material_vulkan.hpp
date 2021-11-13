@@ -8,7 +8,7 @@
 namespace rb {
 	class material_vulkan : public material {
 		struct data {
-			vec3f base_color;
+			vec4f base_color;
 			float roughness;
 			float metallic;
 		};

@@ -41,7 +41,7 @@ layout(set = 0, binding = 1) uniform sampler2D u_brdf_map;
 layout(set = 0, binding = 2) uniform sampler2DArray u_shadow_map;
 
 layout (std140, set = 1, binding = 0) uniform MaterialData {
-    vec3 u_base_color;
+    vec4 u_base_color;
     float u_roughness;
     float u_metallic;
 };
@@ -273,7 +273,7 @@ void main() {
 	ivec2 tile_id = location / ivec2(16, 16);
 	uint index = tile_id.y * u_culling_data.number_of_tiles_x + tile_id.x;
 
-    vec4 albedo = vec4(u_base_color, 1.0);
+    vec4 albedo = u_base_color;
     if (ALBEDO_MAP > -1) {
         albedo *= texture(u_maps[ALBEDO_MAP], v_texcoord);
 		if (TRANSLUCENT == 0) {
@@ -283,7 +283,6 @@ void main() {
 			}
 		}
     }
-
 
     vec3 normal = v_normal;
     if (NORMAL_MAP > -1) {
@@ -377,5 +376,5 @@ void main() {
 
     vec3 ambient = (kd * diff + spec) * ao;
 
-    out_color = vec4(ambient + lo + emissive, 1.0);
+    out_color = vec4(ambient + lo + emissive, albedo.a);
 }
