@@ -19,4 +19,8 @@ layout (std140, push_constant) uniform local {
 void main() {
     // TODO: Should be culled. 
 	gl_Position =  u_camera.proj * u_camera.view * u_local.world * vec4(in_position, 1.0);
+    
+#ifdef VULKAN
+    gl_Position.y = -gl_Position.y;
+#endif
 }

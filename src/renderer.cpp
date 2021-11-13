@@ -95,7 +95,7 @@ void renderer::draw(registry& registry) {
     // Draw every geometry. 
     // TODO: Entities that is not visible from camera perspective should be culled. 
     for (const auto& [entity, transform, geometry] : registry.view<transform, geometry>().each()) {
-        graphics::draw_forward(_viewport, calculate_world(registry, entity), geometry);
+        graphics::draw_forward(_viewport, calculate_world(registry, entity), geometry.mesh, geometry.material, 0);
     }
 
     // Draw skybox last. Minimize overdraw using depth testing.

@@ -126,7 +126,7 @@ namespace rb {
 
 		void draw_skybox(const std::shared_ptr<viewport>& viewport) override;
 
-		void draw_forward(const std::shared_ptr<viewport>& viewport, const mat4f& world, const geometry& geometry) override;
+		void draw_forward(const std::shared_ptr<viewport>& viewport, const mat4f& world, const std::shared_ptr<mesh>& mesh, const std::shared_ptr<material>& material, std::size_t mesh_lod_index) override;
 
 		void end_forward_pass(const std::shared_ptr<viewport>& viewport) override;
 

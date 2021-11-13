@@ -98,9 +98,9 @@ void graphics::draw_skybox(const std::shared_ptr<viewport>& viewport) {
 	_impl->draw_skybox(viewport);
 }
 
-void graphics::draw_forward(const std::shared_ptr<viewport>& viewport, const mat4f& world, const geometry& geometry) {
-	if (geometry.mesh && geometry.material) {
-		_impl->draw_forward(viewport, world, geometry);
+void graphics::draw_forward(const std::shared_ptr<viewport>& viewport, const mat4f& world, const std::shared_ptr<mesh>& mesh, const std::shared_ptr<material>& material, std::size_t mesh_lod_index) {
+	if (mesh && material && mesh_lod_index < mesh->lods().size()) {
+		_impl->draw_forward(viewport, world, mesh, material, mesh_lod_index);
 	}
 }
 

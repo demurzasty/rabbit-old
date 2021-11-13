@@ -69,7 +69,7 @@ namespace rb {
 
 		virtual void draw_skybox(const std::shared_ptr<viewport>& viewport) = 0;
 
-		virtual void draw_forward(const std::shared_ptr<viewport>& viewport, const mat4f& world, const geometry& geometry) = 0;
+		virtual void draw_forward(const std::shared_ptr<viewport>& viewport, const mat4f& world, const std::shared_ptr<mesh>& mesh, const std::shared_ptr<material>& material, std::size_t mesh_lod_index) = 0;
 
 		virtual void end_forward_pass(const std::shared_ptr<viewport>& viewport) = 0;
 
@@ -160,7 +160,7 @@ namespace rb {
 
 		static void draw_skybox(const std::shared_ptr<viewport>& viewport);
 
-		static void draw_forward(const std::shared_ptr<viewport>& viewport, const mat4f& world, const geometry& geometry);
+		static void draw_forward(const std::shared_ptr<viewport>& viewport, const mat4f& world, const std::shared_ptr<mesh>& mesh, const std::shared_ptr<material>& material, std::size_t mesh_lod_index);
 
 		static void end_forward_pass(const std::shared_ptr<viewport>& viewport);
 

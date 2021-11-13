@@ -456,10 +456,10 @@ void graphics_vulkan::draw_skybox(const std::shared_ptr<viewport>& viewport) {
     vkCmdDrawIndexed(_command_buffers[_command_index], 36, 1, 0, 0, 0);
 }
 
-void graphics_vulkan::draw_forward(const std::shared_ptr<viewport>& viewport, const mat4f& world, const geometry& geometry) {
+void graphics_vulkan::draw_forward(const std::shared_ptr<viewport>& viewport, const mat4f& world, const std::shared_ptr<mesh>& mesh, const std::shared_ptr<material>& material, std::size_t mesh_lod_index) {
     const auto native_viewport = std::static_pointer_cast<viewport_vulkan>(viewport);
-    const auto native_material = std::static_pointer_cast<material_vulkan>(geometry.material);
-    const auto native_mesh = std::static_pointer_cast<mesh_vulkan>(geometry.mesh);
+    const auto native_material = std::static_pointer_cast<material_vulkan>(material);
+    const auto native_mesh = std::static_pointer_cast<mesh_vulkan>(mesh);
 
     VkDescriptorSet descriptor_sets[]{
         _main_descriptor_set,
@@ -480,19 +480,11 @@ void graphics_vulkan::draw_forward(const std::shared_ptr<viewport>& viewport, co
     vkCmdBindVertexBuffers(_command_buffers[_command_index], 0, 1, &buffer, &offset);
     vkCmdBindIndexBuffer(_command_buffers[_command_index], native_mesh->index_buffer(), 0, VK_INDEX_TYPE_UINT32);
 
-    local_data local_data;
-    local_data.world = world;
-    vkCmdPushConstants(_command_buffers[_command_index], pipeline_layout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(local_data), &local_data);
+    vkCmdPushConstants(_command_buffers[_command_index], pipeline_layout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(mat4f), &world);
 
     vkCmdBindPipeline(_command_buffers[_command_index], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
 
-    const vec3f position{ world[12], world[13], world[14] };
-    const auto distance = length(_camera_data.camera_position - position);
-    const auto factor = std::min(distance, 100.0f) / 100.0f;
-    const auto lod_count = static_cast<std::uint32_t>(native_mesh->lods().size());
-    const auto lod_index = std::min(static_cast<std::uint32_t>(std::ceil(lod_count * (factor))), lod_count - 1);
-
-    const auto& lod = native_mesh->lods()[lod_index];
+    const auto& lod = native_mesh->lods()[mesh_lod_index];
     vkCmdDrawIndexed(_command_buffers[_command_index], lod.size, 1, lod.offset, 0, 0);
 }
 
@@ -1534,8 +1526,8 @@ void graphics_vulkan::_create_depth() {
     vertex_shader_module_info.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
     vertex_shader_module_info.pNext = nullptr;
     vertex_shader_module_info.flags = 0;
-    vertex_shader_module_info.codeSize = shaders_vulkan::shadowmap_vert().size_bytes();
-    vertex_shader_module_info.pCode = shaders_vulkan::shadowmap_vert().data();
+    vertex_shader_module_info.codeSize = shaders_vulkan::depth_vert().size_bytes();
+    vertex_shader_module_info.pCode = shaders_vulkan::depth_vert().data();
     RB_VK(vkCreateShaderModule(_device, &vertex_shader_module_info, nullptr, &depth_shader_module),
         "Failed to create shader module");
 
@@ -1674,7 +1666,7 @@ void graphics_vulkan::_create_depth() {
     pipeline_info.pMultisampleState = &multisampling_state_info;
     pipeline_info.pColorBlendState = &color_blend_state_info;
     pipeline_info.pDepthStencilState = &depth_stencil_state_info;
-    pipeline_info.layout = _shadow_pipeline_layout;
+    pipeline_info.layout = _depth_pipeline_layout;
     pipeline_info.renderPass = _depth_render_pass;
     pipeline_info.basePipelineHandle = VK_NULL_HANDLE;
     pipeline_info.pDynamicState = &dynamic_state_info;
