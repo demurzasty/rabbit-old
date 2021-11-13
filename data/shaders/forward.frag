@@ -258,7 +258,7 @@ float compute_shadow() {
 
 		if (shadow_coord.x >= 0.0 && shadow_coord.x <= 1.0 &&
 			shadow_coord.y >= 0.0 && shadow_coord.y <= 1.0 &&
-			shadow_coord.z >= 0.0 && shadow_coord.z <= 1.0) {
+			shadow_coord.z >= -1.0 && shadow_coord.z <= 1.0) {
 			return pcf(shadow_coord.xy, shadow_coord.z - 0.002, 3.0, i);
 		} 
 	}
