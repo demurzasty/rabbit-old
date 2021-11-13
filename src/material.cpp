@@ -16,6 +16,10 @@ inline std::uint32_t calculate_material_flags(const material_desc& desc) {
         flags |= material_flags::translucent_bit;
     }
 
+    if (desc.double_sided) {
+        flags |= material_flags::double_sided_bit;
+    }
+
     if (desc.albedo_map) {
         flags |= material_flags::albedo_map_bit;
     }
@@ -49,6 +53,7 @@ std::shared_ptr<material> material::load(ibstream& stream) {
     stream.read(desc.roughness);
     stream.read(desc.metallic);
     stream.read(desc.translucent);
+    stream.read(desc.double_sided);
 
     const auto read_uuid = [](ibstream& stream) -> uuid {
         uuid uuid;
@@ -91,6 +96,7 @@ void material::import(ibstream& input, obstream& output, const json& metadata) {
     float roughness{ 0.8f };
     float metallic{ 0.0f };
     bool translucent{ false };
+    bool double_sided{ false };
 
     if (json.contains("base_color")) {
         auto& color = json["base_color"];
@@ -109,11 +115,16 @@ void material::import(ibstream& input, obstream& output, const json& metadata) {
         translucent = json["translucent"];
     }
 
+    if (json.contains("double_sided")) {
+        double_sided = json["double_sided"];
+    }
+
     output.write(material::magic_number);
     output.write(base_color);
     output.write(roughness);
     output.write(metallic);
     output.write(translucent);
+    output.write(double_sided);
     
     if (json.contains("albedo_map")) {
         output.write(uuid::from_string(json["albedo_map"]).value());
@@ -168,6 +179,10 @@ bool material::translucent() const {
     return _translucent;
 }
 
+bool material::double_sided() const {
+    return _double_sided;
+}
+
 const std::shared_ptr<texture>& material::albedo_map() const {
     return _albedo_map;
 }
@@ -201,6 +216,7 @@ material::material(const material_desc& desc)
     , _roughness(desc.roughness)
     , _metallic(desc.metallic)
     , _translucent(desc.translucent)
+    , _double_sided(desc.double_sided)
     , _albedo_map(desc.albedo_map)
     , _normal_map(desc.normal_map)
     , _roughness_map(desc.roughness_map)

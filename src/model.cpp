@@ -345,6 +345,10 @@ void model::import(ibstream& input, obstream& output, const json& metadata) {
             jmaterial["translucent"] = true;
         }
 
+        if (gltf_material.contains("doubleSided") && gltf_material["doubleSided"]) {
+            jmaterial["double_sided"] = true;
+        }
+
         // TODO: Emissive factor support.
         // TODO: Alpha cutoff support.
         // TODO: Double sided support.

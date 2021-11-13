@@ -276,15 +276,14 @@ void main() {
     vec4 albedo = vec4(u_base_color, 1.0);
     if (ALBEDO_MAP > -1) {
         albedo *= texture(u_maps[ALBEDO_MAP], v_texcoord);
+		if (TRANSLUCENT == 0) {
+			// TODO: Customizable cutoff.
+			if (albedo.a < 0.5) {
+				discard;
+			}
+		}
     }
 
-	if (TRANSLUCENT != 0) {
-	} else {
-		// TODO: Customizable cutoff.
-		if (albedo.a < 0.5) {
-			discard;
-		}
-	}
 
     vec3 normal = v_normal;
     if (NORMAL_MAP > -1) {

@@ -63,7 +63,7 @@ void texture::import(ibstream& input, obstream& output, const json& metadata) {
 
 	// Decide which format to use.
 	texture_format format;
-	if (metadata["translucent"]) {
+	if (metadata.contains("translucent") && metadata["translucent"]) {
 		format = texture_format::rgba8;
 	} else {
 		format = texture_format::bc1;
@@ -77,7 +77,7 @@ void texture::import(ibstream& input, obstream& output, const json& metadata) {
 
 	mobstream stream;
 	for (auto i = 0u; i < mipmap_count; ++i) {
-		if (metadata["translucent"]) {
+		if (metadata.contains("translucent") && metadata["translucent"]) {
 			stream.write(image.pixels());
 		} else {
 			// Compress mipmaps pixels to lossy, gpu friendly BC1

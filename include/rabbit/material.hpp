@@ -20,11 +20,7 @@ namespace rb {
 		static constexpr std::uint32_t all_maps_bits = albedo_map_bit | normal_map_bit |
 			roughness_map_bit | metallic_map_bit | emissive_map_bit | ambient_map_bit;
 		static constexpr std::uint32_t translucent_bit = (1 << 6);
-	};
-
-	enum class material_alpha_mode {
-		opaque,
-		translucent,
+		static constexpr std::uint32_t double_sided_bit = (1 << 7);
 	};
 
 	struct material_desc {
@@ -32,6 +28,7 @@ namespace rb {
 		float roughness{ 0.8f };
 		float metallic{ 0.0f };
 		bool translucent{ false };
+		bool double_sided{ false };
 		std::shared_ptr<texture> albedo_map;
 		std::shared_ptr<texture> normal_map;
 		std::shared_ptr<texture> roughness_map;
@@ -58,6 +55,8 @@ namespace rb {
 
 		bool translucent() const;
 
+		bool double_sided() const;
+
 		const std::shared_ptr<texture>& albedo_map() const;
 
 		const std::shared_ptr<texture>& normal_map() const;
@@ -80,6 +79,7 @@ namespace rb {
 		const float _roughness;
 		const float _metallic;
 		const bool _translucent;
+		const bool _double_sided;
 		const std::shared_ptr<texture> _albedo_map;
 		const std::shared_ptr<texture> _normal_map;
 		const std::shared_ptr<texture> _roughness_map;
