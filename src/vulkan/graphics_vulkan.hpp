@@ -336,11 +336,11 @@ namespace rb {
 
 		VkImage _shadow_image;
 		VkImageView _shadow_image_view;
-		VkImageView _shadow_image_views[4];
+		VkImageView _shadow_image_views[graphics_limits::max_shadow_cascades];
 		VmaAllocation _shadow_allocation;
 		VkSampler _shadow_sampler;
 		VkRenderPass _shadow_render_pass;
-		VkFramebuffer _shadow_framebuffers[4];
+		VkFramebuffer _shadow_framebuffers[graphics_limits::max_shadow_cascades];
 		VkPipelineLayout _shadow_pipeline_layout;
 		VkShaderModule _shadow_shader_module;
 		VkPipeline _shadow_pipeline;

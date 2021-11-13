@@ -13,6 +13,7 @@ layout (constant_id = 3) const int METALLIC_MAP = 3;
 layout (constant_id = 4) const int EMISSIVE_MAP = 4;
 layout (constant_id = 5) const int AMBIENT_MAP = 5;
 layout (constant_id = 6) const int MAX_MAPS = 6;
+layout (constant_id = 7) const int MAX_SHADOW_MAP_CASCADES = 4;
 
 struct light {
 	vec4 position_or_direction; // .a < 0.5 ? point_light : directional_light
@@ -250,7 +251,7 @@ vec3 perturb(vec3 map, vec3 n, vec3 v, vec2 texcoord) {
 }
 
 float compute_shadow() {
-	for (int i = 0; i < 4; ++i) {
+	for (int i = 0; i < MAX_SHADOW_MAP_CASCADES; ++i) {
 		vec4 shadow_coord = u_camera.light_proj_views[i] * vec4(v_position, 1.0);
 		shadow_coord.xyz = shadow_coord.xyz / shadow_coord.w;
 		shadow_coord.y = -shadow_coord.y;

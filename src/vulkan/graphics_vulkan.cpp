@@ -1949,6 +1949,7 @@ VkPipeline graphics_vulkan::_create_forward_pipeline(const std::shared_ptr<mater
         int emissive_map{ -1 };
         int ambient_map{ -1 };
         int max_maps{ -1 };
+        int max_shadow_map_cascades{ graphics_limits::max_shadow_cascades };
     } specialization_data;
 
     const auto flags = material->flags();
@@ -1974,19 +1975,20 @@ VkPipeline graphics_vulkan::_create_forward_pipeline(const std::shared_ptr<mater
     }
     specialization_data.max_maps = index;
 
-    VkSpecializationMapEntry specializtion_map_entries[7]{
+    VkSpecializationMapEntry specializtion_map_entries[8]{
         { 0, offsetof(specialization_data_t, albedo_map), sizeof(int) },
         { 1, offsetof(specialization_data_t, normal_map), sizeof(int) },
         { 2, offsetof(specialization_data_t, roughness_map), sizeof(int) },
         { 3, offsetof(specialization_data_t, metallic_map), sizeof(int) },
         { 4, offsetof(specialization_data_t, emissive_map), sizeof(int) },
         { 5, offsetof(specialization_data_t, ambient_map), sizeof(int) },
-        { 6, offsetof(specialization_data_t, max_maps), sizeof(int) }
+        { 6, offsetof(specialization_data_t, max_maps), sizeof(int) },
+        { 7, offsetof(specialization_data_t, max_shadow_map_cascades), sizeof(int) }
     };
 
     VkSpecializationInfo specialization_info;
     specialization_info.dataSize = sizeof(specialization_data);
-    specialization_info.mapEntryCount = 7;
+    specialization_info.mapEntryCount = 8;
     specialization_info.pMapEntries = specializtion_map_entries;
     specialization_info.pData = &specialization_data;
 
@@ -5643,7 +5645,7 @@ void graphics_vulkan::_create_shadow_map() {
     image_info.format = depth_format;
     image_info.extent = { graphics_limits::shadow_map_size, graphics_limits::shadow_map_size, 1 };
     image_info.mipLevels = 1;
-    image_info.arrayLayers = 4;
+    image_info.arrayLayers = graphics_limits::max_shadow_cascades;
     image_info.samples = VK_SAMPLE_COUNT_1_BIT;
     image_info.tiling = VK_IMAGE_TILING_OPTIMAL;
     image_info.usage = VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
@@ -5672,7 +5674,7 @@ void graphics_vulkan::_create_shadow_map() {
     image_view_info.subresourceRange.baseMipLevel = 0;
     image_view_info.subresourceRange.levelCount = 1;
     image_view_info.subresourceRange.baseArrayLayer = 0;
-    image_view_info.subresourceRange.layerCount = 4;
+    image_view_info.subresourceRange.layerCount = graphics_limits::max_shadow_cascades;
     RB_VK(vkCreateImageView(_device, &image_view_info, nullptr, &_shadow_image_view),
         "Failed to create Vulkan image view");
 
@@ -6393,7 +6395,7 @@ void graphics_vulkan::_command_end() {
 VkFormat graphics_vulkan::_get_supported_depth_format() {
     VkFormat depth_formats[]{
         VK_FORMAT_D24_UNORM_S8_UINT,
-        //VK_FORMAT_D32_SFLOAT,
+        VK_FORMAT_D32_SFLOAT,
         VK_FORMAT_D16_UNORM_S8_UINT,
         VK_FORMAT_D16_UNORM
     };
