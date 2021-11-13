@@ -1484,7 +1484,7 @@ void graphics_vulkan::_create_depth() {
     dependencies[1].srcSubpass = 0;
     dependencies[1].dstSubpass = VK_SUBPASS_EXTERNAL;
     dependencies[1].srcStageMask = VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT;
-    dependencies[1].dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+    dependencies[1].dstStageMask = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
     dependencies[1].srcAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT;
     dependencies[1].dstAccessMask = VK_ACCESS_SHADER_READ_BIT;
     dependencies[1].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
@@ -1888,10 +1888,10 @@ VkPipeline graphics_vulkan::_create_forward_pipeline(const std::shared_ptr<mater
     rasterizer_state_info.polygonMode = VK_POLYGON_MODE_FILL;
     rasterizer_state_info.cullMode = VK_CULL_MODE_BACK_BIT;
     rasterizer_state_info.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
-    rasterizer_state_info.depthBiasEnable = VK_TRUE;
-    rasterizer_state_info.depthBiasConstantFactor = -1.75f;
+    rasterizer_state_info.depthBiasEnable = VK_FALSE;
+    rasterizer_state_info.depthBiasConstantFactor = -4.75f;
     rasterizer_state_info.depthBiasClamp = 0.0f;
-    rasterizer_state_info.depthBiasSlopeFactor = -1.25f;
+    rasterizer_state_info.depthBiasSlopeFactor = 0.0f;
     rasterizer_state_info.lineWidth = 1.0f;
 
     VkPipelineMultisampleStateCreateInfo multisampling_state_info;
@@ -1911,7 +1911,7 @@ VkPipeline graphics_vulkan::_create_forward_pipeline(const std::shared_ptr<mater
     depth_stencil_state_info.flags = 0;
     depth_stencil_state_info.depthTestEnable = VK_TRUE;
     depth_stencil_state_info.depthWriteEnable = VK_TRUE;
-    depth_stencil_state_info.depthCompareOp = VK_COMPARE_OP_LESS_OR_EQUAL;
+    depth_stencil_state_info.depthCompareOp = VK_COMPARE_OP_EQUAL;
     depth_stencil_state_info.depthBoundsTestEnable = VK_FALSE;
     depth_stencil_state_info.stencilTestEnable = VK_FALSE;
 
@@ -6393,7 +6393,7 @@ void graphics_vulkan::_command_end() {
 VkFormat graphics_vulkan::_get_supported_depth_format() {
     VkFormat depth_formats[]{
         VK_FORMAT_D24_UNORM_S8_UINT,
-        VK_FORMAT_D32_SFLOAT,
+        //VK_FORMAT_D32_SFLOAT,
         VK_FORMAT_D16_UNORM_S8_UINT,
         VK_FORMAT_D16_UNORM
     };

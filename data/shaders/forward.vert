@@ -43,12 +43,14 @@ const mat4 bias_mat = mat4(
 	0.0, 0.0, 1.0, 0.0,
 	0.5, 0.5, 0.0, 1.0 );
 
+invariant gl_Position;
+
 void main() {
     v_position = (world * vec4(in_position, 1.0)).xyz;
     v_texcoord = in_texcoord;
     v_normal = (world * vec4(normalize(in_normal), 0.0)).xyz;
     // v_shadow_coord = (light_proj_view * world) * vec4(in_position, 1.0);	
-    gl_Position = proj * view * vec4(v_position, 1.0);
+    gl_Position = proj * view * world * vec4(in_position, 1.0);
 
 #ifdef VULKAN
     gl_Position.y = -gl_Position.y;
