@@ -3,6 +3,7 @@
 #include <rabbit/light.hpp>
 #include <rabbit/input.hpp>
 #include <rabbit/settings.hpp>
+#include <rabbit/format.hpp>
 
 // TODO: Calculate objects world matrices and store it in buffer.
 //       Do not recalculate these matrices every time we want to draw geometry.
@@ -11,6 +12,8 @@ using namespace rb;
 
 void renderer::initialize(registry& registry) {
     _viewport = graphics::make_viewport({ settings::window_size });
+
+    registry.on_construct<transform>().connect<&renderer::_on_transform_constructed>(this);
 }
 
 void renderer::update(registry& registry, float elapsed_time) {
@@ -18,6 +21,13 @@ void renderer::update(registry& registry, float elapsed_time) {
         for (auto entity : registry.view<camera>()) {
             _viewport->camera = entity;
             break;
+        }
+    }
+    
+    for (const auto& [entity, transform, cache] : registry.view<transform, cache>().each()) {
+        if (transform.dirty) {
+            cache.world = calculate_world(registry, entity);
+            transform.dirty = false;
         }
     }
 }
@@ -48,8 +58,8 @@ void renderer::draw(registry& registry) {
 
     // Draw depth for every geometry in scene.
     // TODO: Entities that is not visible from camera perspective should be culled. 
-    for (const auto& [entity, transform, geometry] : registry.view<transform, geometry>().each()) {
-        graphics::draw_depth(_viewport, calculate_world(registry, entity), geometry.mesh, 0);
+    for (const auto& [entity, transform, geometry, cache] : registry.view<transform, geometry, cache>().each()) {
+        graphics::draw_depth(_viewport, cache.world, geometry.mesh, 0);
     }
 
     // End depth pass. We can now reuse depth buffer.
@@ -69,8 +79,8 @@ void renderer::draw(registry& registry) {
         for (auto cascade = 0u; cascade < graphics_limits::max_shadow_cascades; ++cascade) {
             graphics::begin_shadow_pass(transform, light, directional_light, cascade);
 
-            registry.view<rb::transform, geometry>().each([this, cascade, &registry](entity entity, rb::transform& transform, geometry& geometry) {
-                graphics::draw_shadow(calculate_world(registry, entity), geometry, cascade);
+            registry.view<rb::transform, geometry, cache>().each([this, cascade, &registry](entity entity, rb::transform& transform, geometry& geometry, cache& cache) {
+                graphics::draw_shadow(cache.world, geometry, cascade);
             });
 
             graphics::end_shadow_pass();
@@ -94,8 +104,8 @@ void renderer::draw(registry& registry) {
 
     // Draw every geometry. 
     // TODO: Entities that is not visible from camera perspective should be culled. 
-    for (const auto& [entity, transform, geometry] : registry.view<transform, geometry>().each()) {
-        graphics::draw_forward(_viewport, calculate_world(registry, entity), geometry.mesh, geometry.material, 0);
+    for (const auto& [entity, transform, geometry, cache] : registry.view<transform, geometry, cache>().each()) {
+        graphics::draw_forward(_viewport, cache.world, geometry.mesh, geometry.material, 0);
     }
 
     // Draw skybox last. Minimize overdraw using depth testing.
@@ -141,4 +151,8 @@ entity renderer::_find_directional_light_with_shadows(registry& registry) const 
     }
 
     return null;
+}
+
+void renderer::_on_transform_constructed(registry& registry, entity entity) {
+    registry.emplace_or_replace<cache>(entity);
 }

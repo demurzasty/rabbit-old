@@ -9,6 +9,7 @@ namespace rb {
 		vec3f position{ 0.0f, 0.0f, 0.0f };
 		vec3f rotation{ 0.0f, 0.0f, 0.0f };
 		vec3f scaling{ 1.0f, 1.0f, 1.0f };
+		bool dirty{ true };
 
 		template<typename Visitor>
 		static void visit(Visitor& visitor, transform& transform) {

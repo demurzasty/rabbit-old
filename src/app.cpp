@@ -69,13 +69,13 @@ void app::_main_loop(const std::string& initial_scene) {
 	});
 
 	registry registry;
+	for (auto& system : systems) {
+		system->initialize(registry);
+	}
+
 	if (!initial_scene.empty()) {
 		auto scene = assets::load<prefab>(initial_scene);
 		scene->apply(registry, null);
-	}
-
-	for (auto& system : systems) {
-		system->initialize(registry);
 	}
 
 	auto last_time = std::chrono::steady_clock::now();
