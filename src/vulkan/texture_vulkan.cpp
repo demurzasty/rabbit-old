@@ -11,6 +11,7 @@ static std::map<texture_format, VkFormat> formats = {
     { texture_format::rg8, VK_FORMAT_R8G8_UNORM },
     { texture_format::rgba8, VK_FORMAT_R8G8B8A8_UNORM },
     { texture_format::bc1, VK_FORMAT_BC1_RGBA_UNORM_BLOCK },
+    { texture_format::bc3, VK_FORMAT_BC3_UNORM_BLOCK },
 };
 
 static std::map<texture_filter, VkFilter> filters = {

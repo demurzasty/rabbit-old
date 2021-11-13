@@ -23,6 +23,7 @@ inline std::size_t calculate_bits_per_pixel(texture_format format) {
 		case texture_format::rg8: return 16;
 		case texture_format::rgba8: return 32;
 		case texture_format::bc1: return 4;
+		case texture_format::bc3: return 8;
 	}
 
 	return 0;
@@ -64,7 +65,7 @@ void texture::import(ibstream& input, obstream& output, const json& metadata) {
 	// Decide which format to use.
 	texture_format format;
 	if (metadata.contains("translucent") && metadata["translucent"]) {
-		format = texture_format::rgba8;
+		format = texture_format::bc3;
 	} else {
 		format = texture_format::bc1;
 	}
@@ -78,7 +79,10 @@ void texture::import(ibstream& input, obstream& output, const json& metadata) {
 	mobstream stream;
 	for (auto i = 0u; i < mipmap_count; ++i) {
 		if (metadata.contains("translucent") && metadata["translucent"]) {
-			stream.write(image.pixels());
+			// Compress mipmaps pixels to lossy, gpu friendly BC3
+			const auto bc3_pixels = s3tc::bc3(image);
+			RB_ASSERT(!bc3_pixels.empty(), "Cannot compress image.");
+			stream.write(bc3_pixels.data(), bc3_pixels.size());
 		} else {
 			// Compress mipmaps pixels to lossy, gpu friendly BC1
 			const auto bc1_pixels = s3tc::bc1(image);
