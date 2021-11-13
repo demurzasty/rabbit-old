@@ -1891,7 +1891,7 @@ VkPipeline graphics_vulkan::_create_forward_pipeline(const std::shared_ptr<mater
     rasterizer_state_info.depthBiasEnable = VK_TRUE;
     rasterizer_state_info.depthBiasConstantFactor = -1.75f;
     rasterizer_state_info.depthBiasClamp = 0.0f;
-    rasterizer_state_info.depthBiasSlopeFactor = -0.25f;
+    rasterizer_state_info.depthBiasSlopeFactor = -1.25f;
     rasterizer_state_info.lineWidth = 1.0f;
 
     VkPipelineMultisampleStateCreateInfo multisampling_state_info;
