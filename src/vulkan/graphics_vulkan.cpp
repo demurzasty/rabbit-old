@@ -1909,16 +1909,26 @@ VkPipeline graphics_vulkan::_create_forward_pipeline(const std::shared_ptr<mater
     depth_stencil_state_info.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
     depth_stencil_state_info.pNext = nullptr;
     depth_stencil_state_info.flags = 0;
-    depth_stencil_state_info.depthTestEnable = VK_TRUE;
-    depth_stencil_state_info.depthWriteEnable = VK_TRUE;
-    depth_stencil_state_info.depthCompareOp = VK_COMPARE_OP_EQUAL;
+    depth_stencil_state_info.depthTestEnable = material->translucent() ? VK_TRUE : VK_TRUE;
+    depth_stencil_state_info.depthWriteEnable = material->translucent() ? VK_FALSE : VK_TRUE;
+    depth_stencil_state_info.depthCompareOp = material->translucent() ? VK_COMPARE_OP_LESS : VK_COMPARE_OP_EQUAL;
     depth_stencil_state_info.depthBoundsTestEnable = VK_FALSE;
     depth_stencil_state_info.stencilTestEnable = VK_FALSE;
 
     VkPipelineColorBlendAttachmentState color_blend_attachment_state_info{};
     color_blend_attachment_state_info.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT |
         VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
-    color_blend_attachment_state_info.blendEnable = VK_FALSE;
+    if (material->translucent()) {
+        color_blend_attachment_state_info.blendEnable = VK_TRUE;
+        color_blend_attachment_state_info.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_COLOR;
+        color_blend_attachment_state_info.dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_COLOR;
+        color_blend_attachment_state_info.colorBlendOp = VK_BLEND_OP_ADD;
+        color_blend_attachment_state_info.srcAlphaBlendFactor = VK_BLEND_FACTOR_ZERO;
+        color_blend_attachment_state_info.dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA;
+        color_blend_attachment_state_info.alphaBlendOp = VK_BLEND_OP_ADD;
+    } else {
+        color_blend_attachment_state_info.blendEnable = VK_FALSE;
+    }
 
     VkPipelineColorBlendAttachmentState color_blend_attachment_state_infos[]{
         color_blend_attachment_state_info,
@@ -1950,6 +1960,7 @@ VkPipeline graphics_vulkan::_create_forward_pipeline(const std::shared_ptr<mater
         int ambient_map{ -1 };
         int max_maps{ -1 };
         int max_shadow_map_cascades{ graphics_limits::max_shadow_cascades };
+        int translucent{ 0 };
     } specialization_data;
 
     const auto flags = material->flags();
@@ -1975,7 +1986,11 @@ VkPipeline graphics_vulkan::_create_forward_pipeline(const std::shared_ptr<mater
     }
     specialization_data.max_maps = index;
 
-    VkSpecializationMapEntry specializtion_map_entries[8]{
+    if (flags & material_flags::translucent_bit) {
+        specialization_data.translucent = 1;
+    }
+
+    VkSpecializationMapEntry specializtion_map_entries[9]{
         { 0, offsetof(specialization_data_t, albedo_map), sizeof(int) },
         { 1, offsetof(specialization_data_t, normal_map), sizeof(int) },
         { 2, offsetof(specialization_data_t, roughness_map), sizeof(int) },
@@ -1983,12 +1998,13 @@ VkPipeline graphics_vulkan::_create_forward_pipeline(const std::shared_ptr<mater
         { 4, offsetof(specialization_data_t, emissive_map), sizeof(int) },
         { 5, offsetof(specialization_data_t, ambient_map), sizeof(int) },
         { 6, offsetof(specialization_data_t, max_maps), sizeof(int) },
-        { 7, offsetof(specialization_data_t, max_shadow_map_cascades), sizeof(int) }
+        { 7, offsetof(specialization_data_t, max_shadow_map_cascades), sizeof(int) },
+        { 8, offsetof(specialization_data_t, translucent), sizeof(int) }
     };
 
     VkSpecializationInfo specialization_info;
     specialization_info.dataSize = sizeof(specialization_data);
-    specialization_info.mapEntryCount = 8;
+    specialization_info.mapEntryCount = 9;
     specialization_info.pMapEntries = specializtion_map_entries;
     specialization_info.pData = &specialization_data;
 

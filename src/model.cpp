@@ -234,6 +234,12 @@ void model::import(ibstream& input, obstream& output, const json& metadata) {
                         json image_metadata;
                         std::ifstream{ image_metadata_path } >> image_metadata;
                         jmaterial["albedo_map"] = image_metadata["uuid"];
+
+                        if (gltf_material.contains("alphaMode") &&
+                            gltf_material["alphaMode"] == "BLEND") {
+                            image_metadata["translucent"] = true;
+                            std::ofstream{ image_metadata_path } << image_metadata;
+                        }
                     }
                 }
             }
@@ -335,8 +341,11 @@ void model::import(ibstream& input, obstream& output, const json& metadata) {
             }
         }
 
+        if (gltf_material.contains("alphaMode") && gltf_material["alphaMode"] == "BLEND") {
+            jmaterial["translucent"] = true;
+        }
+
         // TODO: Emissive factor support.
-        // TODO: Alpha mode support.
         // TODO: Alpha cutoff support.
         // TODO: Double sided support.
 

@@ -59,7 +59,9 @@ void renderer::draw(registry& registry) {
     // Draw depth for every geometry in scene.
     // TODO: Entities that is not visible from camera perspective should be culled. 
     for (const auto& [entity, transform, geometry, cache] : registry.view<transform, geometry, cache>().each()) {
-        graphics::draw_depth(_viewport, cache.world, geometry.mesh, 0);
+        if (!geometry.material || !geometry.material->translucent()) {
+            graphics::draw_depth(_viewport, cache.world, geometry.mesh, 0);
+        }
     }
 
     // End depth pass. We can now reuse depth buffer.
@@ -105,7 +107,15 @@ void renderer::draw(registry& registry) {
     // Draw every geometry. 
     // TODO: Entities that is not visible from camera perspective should be culled. 
     for (const auto& [entity, transform, geometry, cache] : registry.view<transform, geometry, cache>().each()) {
-        graphics::draw_forward(_viewport, cache.world, geometry.mesh, geometry.material, 0);
+        if (geometry.material && !geometry.material->translucent()) {
+            graphics::draw_forward(_viewport, cache.world, geometry.mesh, geometry.material, 0);
+        }
+    }
+
+    for (const auto& [entity, transform, geometry, cache] : registry.view<transform, geometry, cache>().each()) {
+        if (geometry.material && geometry.material->translucent()) {
+            graphics::draw_forward(_viewport, cache.world, geometry.mesh, geometry.material, 0);
+        }
     }
 
     // Draw skybox last. Minimize overdraw using depth testing.

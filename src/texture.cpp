@@ -61,6 +61,14 @@ void texture::import(ibstream& input, obstream& output, const json& metadata) {
 	RB_ASSERT(image, "Cannot load image.");
 	RB_ASSERT(image.size().x % 4 == 0 && image.size().y % 4 == 0, "Incorrect texture size of image.");
 
+	// Decide which format to use.
+	texture_format format;
+	if (metadata["translucent"]) {
+		format = texture_format::rgba8;
+	} else {
+		format = texture_format::bc1;
+	}
+
 	// Save base image size
 	const auto base_size = image.size();
 
@@ -69,10 +77,14 @@ void texture::import(ibstream& input, obstream& output, const json& metadata) {
 
 	mobstream stream;
 	for (auto i = 0u; i < mipmap_count; ++i) {
-		// Compress mipmaps pixels to lossy, gpu friendly BC1
-		const auto bc1_pixels = s3tc::bc1(image);
-		RB_ASSERT(!bc1_pixels.empty(), "Cannot compress image.");
-		stream.write(bc1_pixels.data(), bc1_pixels.size());
+		if (metadata["translucent"]) {
+			stream.write(image.pixels());
+		} else {
+			// Compress mipmaps pixels to lossy, gpu friendly BC1
+			const auto bc1_pixels = s3tc::bc1(image);
+			RB_ASSERT(!bc1_pixels.empty(), "Cannot compress image.");
+			stream.write(bc1_pixels.data(), bc1_pixels.size());
+		}
 
 		image = image::resize(image, image.size() / 2u);
 	}
@@ -85,7 +97,7 @@ void texture::import(ibstream& input, obstream& output, const json& metadata) {
 
 	output.write(texture::magic_number);
 	output.write(base_size);
-	output.write(texture_format::bc1);
+	output.write(format);
 	output.write(texture_filter::linear);
 	output.write(texture_wrap::repeat);
 	output.write<std::uint32_t>(mipmap_count);

@@ -12,6 +12,10 @@ using namespace rb;
 inline std::uint32_t calculate_material_flags(const material_desc& desc) {
     std::uint32_t flags{ 0 };
 
+    if (desc.translucent) {
+        flags |= material_flags::translucent_bit;
+    }
+
     if (desc.albedo_map) {
         flags |= material_flags::albedo_map_bit;
     }
@@ -44,6 +48,7 @@ std::shared_ptr<material> material::load(ibstream& stream) {
     stream.read(desc.base_color);
     stream.read(desc.roughness);
     stream.read(desc.metallic);
+    stream.read(desc.translucent);
 
     const auto read_uuid = [](ibstream& stream) -> uuid {
         uuid uuid;
@@ -85,6 +90,7 @@ void material::import(ibstream& input, obstream& output, const json& metadata) {
     vec3f base_color{ 1.0f, 1.0f, 1.0f };
     float roughness{ 0.8f };
     float metallic{ 0.0f };
+    bool translucent{ false };
 
     if (json.contains("base_color")) {
         auto& color = json["base_color"];
@@ -99,10 +105,15 @@ void material::import(ibstream& input, obstream& output, const json& metadata) {
         metallic = json["metallic"];
     }
 
+    if (json.contains("translucent")) {
+        translucent = json["translucent"];
+    }
+
     output.write(material::magic_number);
     output.write(base_color);
     output.write(roughness);
     output.write(metallic);
+    output.write(translucent);
     
     if (json.contains("albedo_map")) {
         output.write(uuid::from_string(json["albedo_map"]).value());
@@ -153,6 +164,10 @@ float material::metallic() const {
     return _metallic;
 }
 
+bool material::translucent() const {
+    return _translucent;
+}
+
 const std::shared_ptr<texture>& material::albedo_map() const {
     return _albedo_map;
 }
@@ -185,6 +200,7 @@ material::material(const material_desc& desc)
     : _base_color(desc.base_color)
     , _roughness(desc.roughness)
     , _metallic(desc.metallic)
+    , _translucent(desc.translucent)
     , _albedo_map(desc.albedo_map)
     , _normal_map(desc.normal_map)
     , _roughness_map(desc.roughness_map)

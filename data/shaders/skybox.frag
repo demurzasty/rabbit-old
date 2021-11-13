@@ -11,5 +11,5 @@ layout(set = 1, binding = 2) uniform samplerCube u_prefilter_map;
 layout (location = 0) out vec4 out_color;
 
 void main() {
-	out_color = texture(u_radiance_map, var_texcoord);
+	out_color = vec4(texture(u_radiance_map, var_texcoord).rgb, 1.0);
 }

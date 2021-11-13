@@ -14,6 +14,7 @@ layout (constant_id = 4) const int EMISSIVE_MAP = 4;
 layout (constant_id = 5) const int AMBIENT_MAP = 5;
 layout (constant_id = 6) const int MAX_MAPS = 6;
 layout (constant_id = 7) const int MAX_SHADOW_MAP_CASCADES = 4;
+layout (constant_id = 8) const int TRANSLUCENT = 0;
 
 struct light {
 	vec4 position_or_direction; // .a < 0.5 ? point_light : directional_light
@@ -275,10 +276,15 @@ void main() {
     vec4 albedo = vec4(u_base_color, 1.0);
     if (ALBEDO_MAP > -1) {
         albedo *= texture(u_maps[ALBEDO_MAP], v_texcoord);
-        if (albedo.a < 0.5) {
-            discard;
-        }
     }
+
+	if (TRANSLUCENT != 0) {
+	} else {
+		// TODO: Customizable cutoff.
+		if (albedo.a < 0.5) {
+			discard;
+		}
+	}
 
     vec3 normal = v_normal;
     if (NORMAL_MAP > -1) {
