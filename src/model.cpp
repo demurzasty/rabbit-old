@@ -351,7 +351,6 @@ void model::import(ibstream& input, obstream& output, const json& metadata) {
 
         // TODO: Emissive factor support.
         // TODO: Alpha cutoff support.
-        // TODO: Double sided support.
 
         const std::string material_name = format("material{}", material_index);
         const auto material_filename = material_name + ".mat";
