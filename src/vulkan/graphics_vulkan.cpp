@@ -5588,7 +5588,7 @@ void graphics_vulkan::_bake_prefilter(const std::shared_ptr<environment>& enviro
                 0, 1, &_prefilter_descriptor_set, 0, nullptr);
 
             data.cube_face = j;
-            data.roughness = i / 6.0f;
+            data.roughness = i / 5.0f;
             vkCmdUpdateBuffer(command_buffer, prefilter_buffer, 0, sizeof(prefilter_data), &data);
 
             VkClearValue clear_values[1]{
