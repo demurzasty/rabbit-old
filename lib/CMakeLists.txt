@@ -2,7 +2,7 @@ cmake_minimum_required (VERSION 3.8.2)
 
 set (BUILD_SHARED_LIBS OFF)
 
-add_subdirectory ("entt-3.7.1")
+add_subdirectory ("entt-3.8.1")
 
 add_subdirectory ("fmt-7.1.3")
 
