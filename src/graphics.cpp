@@ -52,9 +52,9 @@ void graphics::begin_depth_pass(const std::shared_ptr<viewport>& viewport) {
 	_impl->begin_depth_pass(viewport);
 }
 
-void graphics::draw_depth(const std::shared_ptr<viewport>& viewport, const mat4f& world, const geometry& geometry) {
-	if (geometry.mesh && geometry.material) {
-		_impl->draw_depth(viewport, world, geometry);
+void graphics::draw_depth(const std::shared_ptr<viewport>& viewport, const mat4f& world, const std::shared_ptr<mesh>& mesh, std::size_t mesh_lod_index) {
+	if (mesh) {
+		_impl->draw_depth(viewport, world, mesh, mesh_lod_index);
 	}
 }
 

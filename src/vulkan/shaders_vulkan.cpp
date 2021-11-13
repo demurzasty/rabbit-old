@@ -10,6 +10,7 @@
 #include <rabbit/generated/shaders/geometry.vert.spv.h>
 #include <rabbit/generated/shaders/geometry.frag.spv.h>
 #include <rabbit/generated/shaders/geometry_nomaps.frag.spv.h>
+#include <rabbit/generated/shaders/depth.vert.spv.h>
 #include <rabbit/generated/shaders/forward.vert.spv.h>
 #include <rabbit/generated/shaders/forward.frag.spv.h>
 #include <rabbit/generated/shaders/forward_nomaps.frag.spv.h>
@@ -66,6 +67,10 @@ span<const std::uint32_t> shaders_vulkan::geometry_frag() {
 
 span<const std::uint32_t> shaders_vulkan::geometry_nomaps_frag() {
 	return ::geometry_nomaps_frag;
+}
+
+span<const std::uint32_t> shaders_vulkan::depth_vert() {
+	return ::depth_vert;
 }
 
 span<const std::uint32_t> shaders_vulkan::forward_vert() {

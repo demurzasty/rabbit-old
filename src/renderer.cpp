@@ -49,7 +49,7 @@ void renderer::draw(registry& registry) {
     // Draw depth for every geometry in scene.
     // TODO: Entities that is not visible from camera perspective should be culled. 
     for (const auto& [entity, transform, geometry] : registry.view<transform, geometry>().each()) {
-        graphics::draw_depth(_viewport, calculate_world(registry, entity), geometry);
+        graphics::draw_depth(_viewport, calculate_world(registry, entity), geometry.mesh, 0);
     }
 
     // End depth pass. We can now reuse depth buffer.

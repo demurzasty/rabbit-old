@@ -104,7 +104,7 @@ namespace rb {
 
 		void begin_depth_pass(const std::shared_ptr<viewport>& viewport) override;
 
-		void draw_depth(const std::shared_ptr<viewport>& viewport, const mat4f& world, const geometry& geometry) override;
+		void draw_depth(const std::shared_ptr<viewport>& viewport, const mat4f& world, const std::shared_ptr<mesh>& mesh, std::size_t mesh_lod_index) override;
 
 		void end_depth_pass(const std::shared_ptr<viewport>& viewport) override;
 

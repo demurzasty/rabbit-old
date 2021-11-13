@@ -47,7 +47,7 @@ namespace rb {
 
 		virtual void begin_depth_pass(const std::shared_ptr<viewport>& viewport) = 0;
 
-		virtual void draw_depth(const std::shared_ptr<viewport>& viewport, const mat4f& world, const geometry& geometry) = 0;
+		virtual void draw_depth(const std::shared_ptr<viewport>& viewport, const mat4f& world, const std::shared_ptr<mesh>& mesh, std::size_t mesh_lod_index) = 0;
 
 		virtual void end_depth_pass(const std::shared_ptr<viewport>& viewport) = 0;
 
@@ -138,7 +138,7 @@ namespace rb {
 
 		static void begin_depth_pass(const std::shared_ptr<viewport>& viewport);
 
-		static void draw_depth(const std::shared_ptr<viewport>& viewport, const mat4f& world, const geometry& geometry);
+		static void draw_depth(const std::shared_ptr<viewport>& viewport, const mat4f& world, const std::shared_ptr<mesh>& mesh, std::size_t mesh_lod_index);
 
 		static void end_depth_pass(const std::shared_ptr<viewport>& viewport);
 

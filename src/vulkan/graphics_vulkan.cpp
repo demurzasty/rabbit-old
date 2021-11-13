@@ -277,30 +277,29 @@ void graphics_vulkan::begin_depth_pass(const std::shared_ptr<viewport>& viewport
     const auto native_viewport = std::static_pointer_cast<viewport_vulkan>(viewport);
 
     native_viewport->begin_depth_pass(_command_buffers[_command_index]);
+
+    VkDescriptorSet descriptor_sets[]{
+        _main_descriptor_set
+    };
+
+    vkCmdBindDescriptorSets(_command_buffers[_command_index],
+        VK_PIPELINE_BIND_POINT_GRAPHICS, _depth_pipeline_layout, 0, 1, descriptor_sets,
+        0, nullptr);
+
+    vkCmdBindPipeline(_command_buffers[_command_index], VK_PIPELINE_BIND_POINT_GRAPHICS, _depth_pipeline);
 }
 
-void graphics_vulkan::draw_depth(const std::shared_ptr<viewport>& viewport, const mat4f& world, const geometry& geometry) {
-    const auto native_mesh = std::static_pointer_cast<mesh_vulkan>(geometry.mesh);
+void graphics_vulkan::draw_depth(const std::shared_ptr<viewport>& viewport, const mat4f& world, const std::shared_ptr<mesh>& mesh, std::size_t mesh_lod_index) {
+    const auto native_mesh = std::static_pointer_cast<mesh_vulkan>(mesh);
 
     VkDeviceSize offset{ 0 };
     VkBuffer buffer{ native_mesh->vertex_buffer() };
     vkCmdBindVertexBuffers(_command_buffers[_command_index], 0, 1, &buffer, &offset);
     vkCmdBindIndexBuffer(_command_buffers[_command_index], native_mesh->index_buffer(), 0, VK_INDEX_TYPE_UINT32);
 
-    local_data local_data;
-    local_data.world = _camera_data.projection * _camera_data.view * world;
-
-    vkCmdPushConstants(_command_buffers[_command_index], _depth_pipeline_layout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(local_data), &local_data);
+    vkCmdPushConstants(_command_buffers[_command_index], _depth_pipeline_layout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(mat4f), &world);
     
-    vkCmdBindPipeline(_command_buffers[_command_index], VK_PIPELINE_BIND_POINT_GRAPHICS, _depth_pipeline);
-
-    const vec3f position{ world[12], world[13], world[14] };
-    const auto distance = length(_camera_data.camera_position - position);
-    const auto factor = std::min(distance, 100.0f) / 100.0f;
-    const auto lod_count = static_cast<std::uint32_t>(native_mesh->lods().size());
-    const auto lod_index = std::min(static_cast<std::uint32_t>(std::ceil(lod_count * (factor))), lod_count - 1);
-
-    const auto& lod = native_mesh->lods()[lod_index];
+    const auto& lod = native_mesh->lods()[mesh_lod_index];
     vkCmdDrawIndexed(_command_buffers[_command_index], lod.size, 1, lod.offset, 0, 0);
 }
 
@@ -1509,17 +1508,21 @@ void graphics_vulkan::_create_depth() {
     RB_VK(vkCreateRenderPass(_device, &render_pass_info, nullptr, &_depth_render_pass),
         "Failed to create render pass.");
 
+    VkDescriptorSetLayout layouts[]{
+        _main_descriptor_set_layout
+    };
+
     VkPushConstantRange push_constant_range;
     push_constant_range.offset = 0;
-    push_constant_range.size = sizeof(shadow_data);
+    push_constant_range.size = sizeof(local_data);
     push_constant_range.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
 
     VkPipelineLayoutCreateInfo pipeline_layout_info;
     pipeline_layout_info.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
     pipeline_layout_info.pNext = nullptr;
     pipeline_layout_info.flags = 0;
-    pipeline_layout_info.setLayoutCount = 0;
-    pipeline_layout_info.pSetLayouts = nullptr;
+    pipeline_layout_info.setLayoutCount = 1;
+    pipeline_layout_info.pSetLayouts = layouts;
     pipeline_layout_info.pushConstantRangeCount = 1;
     pipeline_layout_info.pPushConstantRanges = &push_constant_range;
     RB_VK(vkCreatePipelineLayout(_device, &pipeline_layout_info, nullptr, &_depth_pipeline_layout),
