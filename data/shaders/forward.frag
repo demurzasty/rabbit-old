@@ -3,7 +3,7 @@
 #extension GL_ARB_shading_language_420pack : enable
 
 #define PI 3.14159265359
-#define PCSS_BLOCKER_SEARCH_NUM_SAMPLES 8
+#define PCSS_BLOCKER_SEARCH_NUM_SAMPLES 4
 #define PCF_NUM_SAMPLES 64
 
 layout (constant_id = 0) const int ALBEDO_MAP = 0;
@@ -259,7 +259,7 @@ float compute_shadow() {
 		if (shadow_coord.x >= 0.0 && shadow_coord.x <= 1.0 &&
 			shadow_coord.y >= 0.0 && shadow_coord.y <= 1.0 &&
 			shadow_position.z >= 0.0 && shadow_position.z <= 1.0) {
-			return sin(pcss(vec3(shadow_coord.xy, shadow_position.z - 0.001 * i), i) * PI * 0.5);
+			return pcf(shadow_coord.xy, shadow_position.z - 0.002, 3.0, i);
 		} 
 	}
 	return 1.0;
