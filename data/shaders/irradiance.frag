@@ -52,10 +52,8 @@ void main() {
 
 	vec3 sampledColour = vec3(0,0,0);
     float index = 0.0;
-    for(float phi = 0.0; phi < PI * 2.0; phi += 0.25)
-    {
-        for(float theta = 0.0; theta < PI * 0.5; theta += 0.025)
-        {
+    for (float phi = 0.0; phi < PI * 2.0; phi += 0.025) {
+        for(float theta = 0.0; theta < PI * 0.5; theta += 0.025) {
 			vec3 tangentSample = vec3(sin(theta) * cos(phi), sin(theta) * sin(phi), cos(theta));
             vec3 sampleVector = tangentSample.x * right + tangentSample.y * up + tangentSample.z * N;
 
