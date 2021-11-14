@@ -100,7 +100,7 @@ namespace rb {
 
 		void begin() override;
 
-		void set_camera(const transform& transform, const camera& camera) override;
+		void set_camera(const mat4f& projection, const mat4f& view, const mat4f& world, const std::shared_ptr<environment>& environment) override;
 
 		void begin_depth_pass(const std::shared_ptr<viewport>& viewport) override;
 

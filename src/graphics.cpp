@@ -44,8 +44,8 @@ void graphics::begin() {
 	_impl->begin();
 }
 
-void graphics::set_camera(const transform& transform, const camera& camera) {
-	_impl->set_camera(transform, camera);
+void graphics::set_camera(const mat4f& projection, const mat4f& view, const mat4f& world, const std::shared_ptr<environment>& environment) {
+	_impl->set_camera(projection, view, world, environment);
 }
 
 void graphics::begin_depth_pass(const std::shared_ptr<viewport>& viewport) {

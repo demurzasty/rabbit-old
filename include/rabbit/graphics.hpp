@@ -43,7 +43,7 @@ namespace rb {
 
 		virtual void begin() = 0;
 
-		virtual void set_camera(const transform& transform, const camera& camera) = 0;
+		virtual void set_camera(const mat4f& projection, const mat4f& view, const mat4f& world, const std::shared_ptr<environment>& environment) = 0;
 
 		virtual void begin_depth_pass(const std::shared_ptr<viewport>& viewport) = 0;
 
@@ -134,7 +134,7 @@ namespace rb {
 
 		static void begin();
 
-		static void set_camera(const transform& transform, const camera& camera);
+		static void set_camera(const mat4f& projection, const mat4f& view, const mat4f& world, const std::shared_ptr<environment>& environment);
 
 		static void begin_depth_pass(const std::shared_ptr<viewport>& viewport);
 

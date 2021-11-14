@@ -4,9 +4,9 @@
 #include <rabbit/input.hpp>
 #include <rabbit/settings.hpp>
 #include <rabbit/format.hpp>
+#include <rabbit/math.hpp>
 
 // TODO: Calculate objects world matrices and store it in buffer.
-//       Do not recalculate these matrices every time we want to draw geometry.
 
 using namespace rb;
 
@@ -40,7 +40,11 @@ void renderer::draw(registry& registry) {
 
     // Set main camera information to graphics backend.
     const auto& [camera_transform, camera] = registry.get<transform, rb::camera>(_viewport->camera);
-    graphics::set_camera(camera_transform, camera);
+    {
+        const auto projection = mat4f::perspective(deg2rad(camera.field_of_view), _viewport->aspect(), camera.z_near, camera.z_far);
+        const auto& world = get_world(registry, _viewport->camera, camera_transform);
+        graphics::set_camera(projection, invert(world), world, camera.environment);
+    }
 
     // Begin depth pre pass. Using this pass we achive few goals:
     // 1. Store depth into depth buffer. We can reuse it later in postprocessing pass.

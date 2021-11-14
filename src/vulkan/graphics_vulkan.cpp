@@ -255,20 +255,20 @@ void graphics_vulkan::begin() {
     _command_begin();
 }
 
-void graphics_vulkan::set_camera(const transform& transform, const camera& camera) {
-    _environment = std::static_pointer_cast<environment_vulkan>(camera.environment);
+void graphics_vulkan::set_camera(const mat4f& projection, const mat4f& view, const mat4f& world, const std::shared_ptr<environment>& environment) {
+    _environment = std::static_pointer_cast<environment_vulkan>(environment);
 
     const auto aspect = static_cast<float>(_swapchain_extent.width) / _swapchain_extent.height;
     if (_camera_data.last_proj_view != mat4f::identity()) {
         _camera_data.last_proj_view = _camera_data.projection * _camera_data.view;
     }
-    _camera_data.projection = mat4f::perspective(deg2rad(camera.field_of_view), aspect, camera.z_near, camera.z_far);
-    _camera_data.view = invert(mat4f::translation(transform.position) * mat4f::rotation(transform.rotation));
+    _camera_data.projection = projection;
+    _camera_data.view = view;
     if (_camera_data.last_proj_view == mat4f::identity()) {
         _camera_data.last_proj_view = _camera_data.projection * _camera_data.view;
     }
     _camera_data.inv_proj_view = invert(_camera_data.projection * _camera_data.view);
-    _camera_data.camera_position = transform.position;
+    _camera_data.camera_position = { world[12], world[13], world[14] };
 
     vkCmdUpdateBuffer(_command_buffers[_command_index], _camera_buffer, 0, sizeof(camera_data), &_camera_data);
 }

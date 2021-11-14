@@ -14,6 +14,8 @@ namespace rb {
 
         const vec2u& size() const;
 
+        float aspect() const;
+
     protected:
         viewport(const viewport_desc& desc);
 
