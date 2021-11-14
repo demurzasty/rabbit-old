@@ -64,7 +64,7 @@ void texture::import(ibstream& input, obstream& output, const json& metadata) {
 
 	// Decide which format to use.
 	texture_format format;
-	if (metadata.contains("translucent") && metadata["translucent"]) {
+	if (metadata.contains("alpha") && metadata["alpha"]) {
 		format = texture_format::bc3;
 	} else {
 		format = texture_format::bc1;
@@ -78,7 +78,7 @@ void texture::import(ibstream& input, obstream& output, const json& metadata) {
 
 	mobstream stream;
 	for (auto i = 0u; i < mipmap_count; ++i) {
-		if (metadata.contains("translucent") && metadata["translucent"]) {
+		if (metadata.contains("alpha") && metadata["alpha"]) {
 			// Compress mipmaps pixels to lossy, gpu friendly BC3
 			const auto bc3_pixels = s3tc::bc3(image);
 			RB_ASSERT(!bc3_pixels.empty(), "Cannot compress image.");

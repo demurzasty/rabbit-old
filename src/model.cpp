@@ -219,7 +219,7 @@ void model::import(ibstream& input, obstream& output, const json& metadata) {
 
                         if (gltf_material.contains("alphaMode") &&
                             gltf_material["alphaMode"] == "BLEND") {
-                            image_metadata["translucent"] = true;
+                            image_metadata["alpha"] = true;
                             std::ofstream{ image_metadata_path } << image_metadata;
                         }
                     }
