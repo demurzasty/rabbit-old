@@ -2,33 +2,32 @@
 
 #include "entity.hpp"
 #include "vec3.hpp"
+#include "mat4.hpp"
 #include "member.hpp"
 
 namespace rb {
-	class transform {
-	public:
+	/**
+	 * @brief Due to performance reason you should commit changes using registry.patch(...) method.
+	 */
+	struct transform {
+		entity parent{ null };
+		vec3f position{ 0.0f, 0.0f, 0.0f };
+		vec3f rotation{ 0.0f, 0.0f, 0.0f };
+		vec3f scaling{ 1.0f, 1.0f, 1.0f };
+
 		template<typename Visitor>
 		static void visit(Visitor& visitor, transform& transform) {
 			visitor("position", transform.position);
 			visitor("rotation", transform.rotation);
 			visitor("scaling", transform.scaling);
 		}
+	};
 
-		void mark_dirty(bool dirty = true) {
-			_dirty = dirty;
-		}
-
-		bool dirty() const {
-			return _dirty;
-		}
-
-	public:
-		entity parent{ null };
-		member<transform, vec3f> position{ this, { 0.0f, 0.0f, 0.0f } };
-		member<transform, vec3f> rotation{ this, { 0.0f, 0.0f, 0.0f } };
-		member<transform, vec3f> scaling{ this, { 1.0f, 1.0f, 1.0f } };
-
-	private:
-		bool _dirty{ true };
+	/**
+	 * @brief Do not use this component directly.
+	 */
+	struct cached_transform {
+		bool dirty{ true };
+		mat4f world{ mat4f::identity() };
 	};
 }

@@ -21,6 +21,9 @@
       ]
     },
     {
+      "identity": {
+        "name": "Flight Helmet"
+      },
       "transform": {
         "position": [ 2.5, 0.0, 0.0 ],
         "rotation": [ 0.0, 0.0, 0.0 ],

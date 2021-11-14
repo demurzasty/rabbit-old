@@ -43,6 +43,7 @@ void app::setup() {
 		assets::add_loader<prefab>(&prefab::load);
 	});
 
+	app::system<hierarchy>();
 	app::system<renderer>();
 }
 

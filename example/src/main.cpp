@@ -10,7 +10,7 @@ struct camera_controller : public rb::system {
             _last_mouse_position = input::mouse_position();
         }
 
-        registry.view<transform, camera>().each([this, elapsed_time](transform& transform, camera& camera) {
+        for (const auto& [entity, transform, camera] : registry.view<transform, camera>().each()) {
             if (input::is_mouse_button_down(mouse_button::right)) {
                 const auto speed = input::is_key_down(keycode::space) ? 10.0f : 1.0f;
 
@@ -48,7 +48,7 @@ struct camera_controller : public rb::system {
                 transform.position = position;
                 transform.rotation = rotation;
             }
-        });
+        }
     }
 private:
     vec2i _last_mouse_position;

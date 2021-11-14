@@ -2,6 +2,7 @@
 
 #include "entity.hpp"
 #include "mat4.hpp"
+#include "transform.hpp"
 
 namespace rb {
 	class system {
@@ -14,5 +15,7 @@ namespace rb {
 
 	protected:
 		entity find_by_name(registry& registry, const std::string& name);
+
+		const mat4f& get_world(registry& registry, entity entity, transform& transform);
 	};
 }

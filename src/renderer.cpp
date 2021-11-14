@@ -12,8 +12,6 @@ using namespace rb;
 
 void renderer::initialize(registry& registry) {
     _viewport = graphics::make_viewport({ settings::window_size });
-
-    registry.on_construct<transform>().connect<&renderer::_on_transform_constructed>(this);
 }
 
 void renderer::update(registry& registry, float elapsed_time) {
@@ -21,13 +19,6 @@ void renderer::update(registry& registry, float elapsed_time) {
         for (auto entity : registry.view<camera>()) {
             _viewport->camera = entity;
             break;
-        }
-    }
-    
-    for (const auto& [entity, transform, cache] : registry.view<transform, cache>().each()) {
-        if (transform.dirty()) {
-            cache.world = _calculate_world(registry, entity);
-            transform.mark_dirty(false);
         }
     }
 }
@@ -58,9 +49,9 @@ void renderer::draw(registry& registry) {
 
     // Draw depth for every geometry in scene.
     // TODO: Entities that is not visible from camera perspective should be culled. 
-    for (const auto& [entity, transform, geometry, cache] : registry.view<transform, geometry, cache>().each()) {
+    for (const auto& [entity, transform, geometry] : registry.view<transform, geometry>().each()) {
         if (!geometry.material || !geometry.material->translucent()) {
-            graphics::draw_depth(_viewport, cache.world, geometry.mesh, 0);
+            graphics::draw_depth(_viewport, get_world(registry, entity, transform), geometry.mesh, 0);
         }
     }
 
@@ -81,8 +72,8 @@ void renderer::draw(registry& registry) {
         for (auto cascade = 0u; cascade < graphics_limits::max_shadow_cascades; ++cascade) {
             graphics::begin_shadow_pass(transform, light, directional_light, cascade);
 
-            registry.view<rb::transform, geometry, cache>().each([this, cascade, &registry](entity entity, rb::transform& transform, geometry& geometry, cache& cache) {
-                graphics::draw_shadow(cache.world, geometry, cascade);
+            registry.view<rb::transform, geometry>().each([this, cascade, &registry](entity entity, rb::transform& transform, geometry& geometry) {
+                graphics::draw_shadow(get_world(registry, entity, transform), geometry, cascade);
             });
 
             graphics::end_shadow_pass();
@@ -106,18 +97,18 @@ void renderer::draw(registry& registry) {
 
     // Draw every geometry. 
     // TODO: Entities that is not visible from camera perspective should be culled. 
-    for (const auto& [entity, transform, geometry, cache] : registry.view<transform, geometry, cache>().each()) {
+    for (const auto& [entity, transform, geometry] : registry.view<transform, geometry>().each()) {
         if (geometry.material && !geometry.material->translucent()) {
-            graphics::draw_forward(_viewport, cache.world, geometry.mesh, geometry.material, 0);
+            graphics::draw_forward(_viewport, get_world(registry, entity, transform), geometry.mesh, geometry.material, 0);
         }
     }
 
     // Draw skybox between. Minimize overdraw using depth testing.
     graphics::draw_skybox(_viewport);
 
-    for (const auto& [entity, transform, geometry, cache] : registry.view<transform, geometry, cache>().each()) {
+    for (const auto& [entity, transform, geometry] : registry.view<transform, geometry>().each()) {
         if (geometry.material && geometry.material->translucent()) {
-            graphics::draw_forward(_viewport, cache.world, geometry.mesh, geometry.material, 0);
+            graphics::draw_forward(_viewport, get_world(registry, entity, transform), geometry.mesh, geometry.material, 0);
         }
     }
 
@@ -161,27 +152,4 @@ entity renderer::_find_directional_light_with_shadows(registry& registry) const 
     }
 
     return null;
-}
-
-void renderer::_on_transform_constructed(registry& registry, entity entity) {
-    registry.emplace_or_replace<cache>(entity);
-}
-
-mat4f renderer::_calculate_world(rb::registry& registry, entity entity) {
-    if (registry.valid(entity) && registry.all_of<transform, cache>(entity)) {
-        const auto& transform = registry.get<rb::transform>(entity);
-        const auto& cache = registry.get<renderer::cache>(entity);
-
-        if (transform.dirty()) {
-            const auto world = mat4f::translation(transform.position) *
-                mat4f::rotation(transform.rotation) *
-                mat4f::scaling(transform.scaling);
-
-            return _calculate_world(registry, transform.parent) * world;
-        } else {
-            return _calculate_world(registry, transform.parent) * cache.world;
-        }
-    } else {
-        return mat4f::identity();
-    }
 }

@@ -49,6 +49,7 @@ set (SRC
 	"src/compression.cpp"
 	"src/environment.cpp"
 	"src/graphics.cpp"
+	"src/hierarchy.cpp"
 	"src/image.cpp"
 	"src/input.cpp"
 	"src/material.cpp"

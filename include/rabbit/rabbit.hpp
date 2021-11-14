@@ -14,6 +14,7 @@
 #include "format.hpp"
 #include "geometry.hpp"
 #include "graphics.hpp"
+#include "hierarchy.hpp"
 #include "identity.hpp"
 #include "input.hpp"
 #include "json.hpp"
