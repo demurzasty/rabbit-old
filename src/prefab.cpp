@@ -62,7 +62,6 @@ void prefab::_apply_entities(registry& registry, const json& jentities, entity p
                         const auto prefab = assets::load<rb::prefab>(uuid.value());
                         if (prefab && prefab->_json.contains("entities")) {
                             prefab->apply(registry, entity);
-                            // _apply_entities(registry, prefab->_json["entities"], entity);
                         }
                     }
                 }
