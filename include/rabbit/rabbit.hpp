@@ -13,6 +13,7 @@
 #include "fnv1a.hpp"
 #include "format.hpp"
 #include "geometry.hpp"
+#include "glsl.hpp"
 #include "graphics.hpp"
 #include "hierarchy.hpp"
 #include "identity.hpp"

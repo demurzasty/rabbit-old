@@ -48,6 +48,7 @@ set (SRC
 	"src/bstream.cpp"
 	"src/compression.cpp"
 	"src/environment.cpp"
+	"src/glsl.cpp"
 	"src/graphics.cpp"
 	"src/hierarchy.cpp"
 	"src/image.cpp"
@@ -95,7 +96,9 @@ endif ()
 add_library (rabbit STATIC ${SRC})
 target_compile_features (rabbit PUBLIC cxx_std_17)
 target_include_directories (rabbit PUBLIC "include" PRIVATE "generated/include")
-target_link_libraries (rabbit PUBLIC rgbcx miniz quickhull meshoptimizer stb fmt gsl json entt)
+target_link_libraries (rabbit PUBLIC fmt gsl json entt)
+target_link_libraries (rabbit PRIVATE glslang OSDependent OGLCompiler glslang SPIRV glslang-default-resource-limits)
+target_link_libraries (rabbit PRIVATE rgbcx miniz quickhull meshoptimizer stb)
 add_dependencies (rabbit shaders)
 
 if (MSVC)
@@ -103,7 +106,7 @@ if (MSVC)
 endif ()
 
 if (RB_VULKAN)
-	target_link_libraries (rabbit PUBLIC vma volk)
+	target_link_libraries (rabbit PRIVATE vma volk)
 	target_compile_definitions (rabbit PRIVATE VMA_STATIC_VULKAN_FUNCTIONS VK_USE_PLATFORM_WIN32_KHR)
 endif ()
 

@@ -29,3 +29,5 @@ endif()
 add_subdirectory ("volk-1.2.170")
 
 add_subdirectory ("vma-2.3.0")
+
+add_subdirectory ("glslang-11.7.0")
