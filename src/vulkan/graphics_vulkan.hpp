@@ -428,8 +428,6 @@ namespace rb {
 		VkFence _fences[max_command_buffers];
 		std::size_t _command_index{ 0 };
 
-		bool _first_render_pass{ false };
-
 		std::shared_ptr<environment_vulkan> _environment;
 	};
 }

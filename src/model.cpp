@@ -92,7 +92,7 @@ static json parse_node(const json& gltf_meshes,
                 0, 0, 0, 1,
             } };
 
-            rotation = euler_angles(quatf::from_rotation_matrix(temp));
+            rotation = euler_angles(mat4f::to_quat(temp));
         }
     }
 

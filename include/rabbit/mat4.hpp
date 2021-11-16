@@ -2,6 +2,7 @@
 
 #include "vec3.hpp"
 #include "vec4.hpp"
+#include "quat.hpp"
 
 #include <cmath>
 #include <limits>
@@ -121,12 +122,87 @@ namespace rb {
             return rotation_y(radians.y) * rotation_x(radians.x) * rotation_z(radians.z);
         }
 
+        static constexpr mat4<T> rotation(const quat<T>& quat) {
+            const auto xx = quat.x * quat.x;
+            const auto xy = quat.x * quat.y;
+            const auto xz = quat.x * quat.z;
+            const auto xw = quat.x * quat.w;
+
+            const auto yy = quat.y * quat.y;
+            const auto yz = quat.y * quat.z;
+            const auto yw = quat.y * quat.w;
+
+            const auto zz = quat.z * quat.z;
+            const auto zw = quat.z * quat.w;
+
+            mat4<T> mat;
+            mat[0] = 1 - 2 * (yy + zz);
+            mat[1] = 2 * (xy + zw);
+            mat[2] = 2 * (xz - yw);
+            mat[3] = 0;
+
+            mat[4] = 2 * (xy - zw);
+            mat[5] = 1 - 2 * (xx + zz);
+            mat[6] = 2 * (yz + xw);
+            mat[7] = 0;
+
+            mat[8] = 2 * (xz + yw);
+            mat[9] = 2 * (yz - xw);
+            mat[10] = 1 - 2 * (xx + yy);
+            mat[11] = 0;
+
+            mat[12] = 0;
+            mat[13] = 0;
+            mat[14] = 0;
+            mat[15] = 1;
+            return mat;
+        }
+
         constexpr const T& operator[](std::size_t index) const {
             return values[index];
         }
 
         constexpr T& operator[](std::size_t index) {
             return values[index];
+        }
+        
+        static quat<T> to_quat(const mat4<T>& mat) {
+            const auto m11 = mat[0], m12 = mat[4], m13 = mat[8];
+            const auto m21 = mat[1], m22 = mat[5], m23 = mat[9];
+            const auto m31 = mat[2], m32 = mat[6], m33 = mat[10];
+            const auto trace = m11 + m22 + m33;
+
+            quat<T> result;
+            if (trace > 0) {
+                const auto s = static_cast<T>(0.5) / std::sqrt(trace + 1);
+
+                result.w = static_cast<T>(0.25) / s;
+                result.x = (m32 - m23) * s;
+                result.y = (m13 - m31) * s;
+                result.z = (m21 - m12) * s;
+            } else if (m11 > m22 && m11 > m33) {
+                const auto s = 2.0 * std::sqrt(1.0 + m11 - m22 - m33);
+
+                result.w = (m32 - m23) / s;
+                result.x = static_cast<T>(0.25) * s;
+                result.y = (m12 + m21) / s;
+                result.z = (m13 + m31) / s;
+            } else if (m22 > m33) {
+                const auto s = 2.0 * std::sqrt(1.0 + m22 - m11 - m33);
+
+                result.w = (m13 - m31) / s;
+                result.x = (m12 + m21) / s;
+                result.y = static_cast<T>(0.25) * s;
+                result.z = (m23 + m32) / s;
+            } else {
+                const auto s = 2.0 * std::sqrt(1.0 + m33 - m11 - m22);
+
+                result.w = (m21 - m12) / s;
+                result.x = (m13 + m31) / s;
+                result.y = (m23 + m32) / s;
+                result.z = static_cast<T>(0.25) * s;
+            }
+            return result;
         }
 
 		T values[16];
