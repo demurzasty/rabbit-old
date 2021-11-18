@@ -1072,8 +1072,9 @@ void graphics_vulkan::_query_surface() {
         "Failed to query surface format count");
 
     // Enumarate all surface formats.
-    auto surface_formats = std::make_unique<VkSurfaceFormatKHR[]>(surface_format_count);
-    RB_VK(vkGetPhysicalDeviceSurfaceFormatsKHR(_physical_device, _surface, &surface_format_count, surface_formats.get()), 
+    //auto surface_formats = std::make_unique<VkSurfaceFormatKHR[]>(surface_format_count);
+    std::vector<VkSurfaceFormatKHR> surface_formats(surface_format_count);
+    RB_VK(vkGetPhysicalDeviceSurfaceFormatsKHR(_physical_device, _surface, &surface_format_count, surface_formats.data()), 
         "Failed to enumerate surface formats");
 
     // Choose surface color format.

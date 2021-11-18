@@ -34,11 +34,11 @@ layout (std140, set = 0, binding = 0) uniform camera_data {
 layout(set = 0, binding = 1) uniform sampler2D u_brdf_map;
 layout(set = 0, binding = 2) uniform sampler2DArray u_shadow_map;
 
-layout (std140, set = 1, binding = 0) uniform MaterialData {
-    vec4 u_base_color;
-    float u_roughness;
-    float u_metallic;
-};
+layout (std140, set = 1, binding = 0) uniform material_data {
+    vec4 base_color;
+    float roughness;
+    float metallic;
+} u_material;
 
 #ifdef ALBEDO_MAP 
 layout (set = 1, binding = 1) uniform sampler2D u_albedo_map;
@@ -290,7 +290,7 @@ void main() {
 	ivec2 tile_id = location / ivec2(16, 16);
 	uint index = tile_id.y * u_culling_data.number_of_tiles_x + tile_id.x;
 
-    vec4 albedo = u_base_color;
+    vec4 albedo = u_material.base_color;
 #ifdef ALBEDO_MAP
         albedo *= texture(u_albedo_map, v_texcoord);
 #ifndef TRANSLUCENT
@@ -306,12 +306,12 @@ void main() {
         normal = perturb(texture(u_normal_map, v_texcoord).rgb * 2.0 - 1.0, normalize(normal), normalize(u_camera.position - v_position), v_texcoord);
 #endif
 
-    float roughness = u_roughness;
+    float roughness = u_material.roughness;
 #ifdef ROUGHNESS_MAP
         roughness *= texture(u_roughness_map, v_texcoord).g;
 #endif
    
-    float metallic = u_metallic;
+    float metallic = u_material.metallic;
 #ifdef METALLIC_MAP
         metallic *= texture(u_metallic_map, v_texcoord).b;
 #endif
