@@ -13,33 +13,28 @@ material_vulkan::material_vulkan(VkDevice device,
     std::vector<VkDescriptorSetLayoutBinding> material_bindings;
     material_bindings.push_back({ 0, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr });
 
-    std::uint32_t map_count{ 0 };
     if (flags() & material_flags::albedo_map_bit) {
-        map_count++;
+        material_bindings.push_back({ 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr });
     }
 
     if (flags() & material_flags::normal_map_bit) {
-        map_count++;
+        material_bindings.push_back({ 2, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr });
     }
 
     if (flags() & material_flags::roughness_map_bit) {
-        map_count++;
+        material_bindings.push_back({ 3, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr });
     }
 
     if (flags() & material_flags::metallic_map_bit) {
-        map_count++;
+        material_bindings.push_back({ 4, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr });
     }
 
     if (flags() & material_flags::emissive_map_bit) {
-        map_count++;
+        material_bindings.push_back({ 5, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr });
     }
 
     if (flags() & material_flags::ambient_map_bit) {
-        map_count++;
-    }
-    
-    if (map_count > 0) {
-        material_bindings.push_back({ 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, map_count, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr });
+        material_bindings.push_back({ 6, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr });
     }
 
     VkDescriptorSetLayoutCreateInfo material_descriptor_set_layout_info;
@@ -123,37 +118,57 @@ material_vulkan::material_vulkan(VkDevice device,
         return texture ? std::static_pointer_cast<texture_vulkan>(texture)->sampler() : VK_NULL_HANDLE;
     };
 
-    std::vector<VkDescriptorImageInfo> image_infos;
+    VkDescriptorImageInfo image_infos[6];
 
     if (flags() & material_flags::albedo_map_bit) {
-        image_infos.push_back({ sampler(desc.albedo_map), image_view(desc.albedo_map), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL });
+        image_infos[0] = { sampler(desc.albedo_map), image_view(desc.albedo_map), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL };
     }
 
     if (flags() & material_flags::normal_map_bit) {
-        image_infos.push_back({ sampler(desc.normal_map), image_view(desc.normal_map), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL });
+        image_infos[1] = { sampler(desc.normal_map), image_view(desc.normal_map), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL };
     }
 
     if (flags() & material_flags::roughness_map_bit) {
-        image_infos.push_back({ sampler(desc.roughness_map), image_view(desc.roughness_map), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL });
+        image_infos[2] = { sampler(desc.roughness_map), image_view(desc.roughness_map), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL };
     }
 
     if (flags() & material_flags::metallic_map_bit) {
-        image_infos.push_back({ sampler(desc.metallic_map), image_view(desc.metallic_map), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL });
+        image_infos[3] = { sampler(desc.metallic_map), image_view(desc.metallic_map), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL };
     }
 
     if (flags() & material_flags::emissive_map_bit) {
-        image_infos.push_back({ sampler(desc.emissive_map), image_view(desc.emissive_map), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL });
+        image_infos[4] = { sampler(desc.emissive_map), image_view(desc.emissive_map), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL };
     }
 
     if (flags() & material_flags::ambient_map_bit) {
-        image_infos.push_back({ sampler(desc.ambient_map), image_view(desc.ambient_map), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL });
+        image_infos[5] = { sampler(desc.ambient_map), image_view(desc.ambient_map), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL };
     }
 
     std::vector<VkWriteDescriptorSet> write_infos;
     write_infos.push_back({ VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET, nullptr, _descriptor_set, 0, 0, 1, VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, nullptr, &buffer_infos[0], nullptr });
     
-    if (!image_infos.empty()) {
-        write_infos.push_back({ VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET, nullptr, _descriptor_set, 1, 0, static_cast<std::uint32_t>(image_infos.size()), VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, image_infos.data(), nullptr, nullptr });
+    if (flags() & material_flags::albedo_map_bit) {
+        write_infos.push_back({ VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET, nullptr, _descriptor_set, 1, 0, 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, &image_infos[0], nullptr, nullptr });
+    }
+
+    if (flags() & material_flags::normal_map_bit) {
+        write_infos.push_back({ VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET, nullptr, _descriptor_set, 2, 0, 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, &image_infos[1], nullptr, nullptr });
+    }
+
+    if (flags() & material_flags::roughness_map_bit) {
+        write_infos.push_back({ VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET, nullptr, _descriptor_set, 3, 0, 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, &image_infos[2], nullptr, nullptr });
+    }
+
+    if (flags() & material_flags::metallic_map_bit) {
+        write_infos.push_back({ VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET, nullptr, _descriptor_set, 4, 0, 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, &image_infos[3], nullptr, nullptr });
+    }
+
+    if (flags() & material_flags::emissive_map_bit) {
+        write_infos.push_back({ VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET, nullptr, _descriptor_set, 5, 0, 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, &image_infos[4], nullptr, nullptr });
+    }
+
+    if (flags() & material_flags::ambient_map_bit) {
+        write_infos.push_back({ VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET, nullptr, _descriptor_set, 6, 0, 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, &image_infos[5], nullptr, nullptr });
     }
 
     vkUpdateDescriptorSets(_device, static_cast<std::uint32_t>(write_infos.size()), write_infos.data(), 0, nullptr);

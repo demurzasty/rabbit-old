@@ -2,6 +2,8 @@
 
 #include <rabbit/span.hpp>
 
+#include <vector>
+
 namespace rb {
 	class shaders_vulkan {
 	public:
@@ -16,8 +18,7 @@ namespace rb {
 		static span<const std::uint32_t> geometry_nomaps_frag();
 		static span<const std::uint32_t> depth_vert();
 		static span<const std::uint32_t> forward_vert();
-		static span<const std::uint32_t> forward_frag();
-		static span<const std::uint32_t> forward_nomaps_frag();
+		static std::vector<std::uint32_t> forward_frag(const span<const std::string> definitions);
 		static span<const std::uint32_t> skybox_vert();
 		static span<const std::uint32_t> skybox_frag();
 		static span<const std::uint32_t> ambient_frag();

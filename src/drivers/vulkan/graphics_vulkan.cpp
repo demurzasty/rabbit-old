@@ -1800,6 +1800,32 @@ VkPipeline graphics_vulkan::_create_forward_pipeline(const std::shared_ptr<mater
 
     const auto pipeline_layout = _get_forward_pipeline_layout(material);
 
+    const auto flags = material->flags();
+
+    std::vector<std::string> definitions;
+    if (flags & material_flags::albedo_map_bit) {
+        definitions.push_back("ALBEDO_MAP 1");
+    }
+    if (flags & material_flags::normal_map_bit) {
+        definitions.push_back("NORMAL_MAP 1");
+    }
+    if (flags & material_flags::roughness_map_bit) {
+        definitions.push_back("ROUGHNESS_MAP 1");
+    }
+    if (flags & material_flags::metallic_map_bit) {
+        definitions.push_back("METALLIC_MAP 1");
+    }
+    if (flags & material_flags::emissive_map_bit) {
+        definitions.push_back("EMISSIVE_MAP 1");
+    }
+    if (flags & material_flags::ambient_map_bit) {
+        definitions.push_back("AMBIENT_MAP 1");
+    }
+    if (flags & material_flags::translucent_bit) {
+        definitions.push_back("TRANSLUCENT 1");
+    }
+    auto forward_frag = shaders_vulkan::forward_frag(definitions);
+
     VkShaderModule forward_shader_modules[2];
 
     VkShaderModuleCreateInfo vertex_shader_module_info;
@@ -1815,13 +1841,8 @@ VkPipeline graphics_vulkan::_create_forward_pipeline(const std::shared_ptr<mater
     fragment_shader_module_info.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
     fragment_shader_module_info.pNext = nullptr;
     fragment_shader_module_info.flags = 0;
-    if (material->flags() & material_flags::all_maps_bits) {
-        fragment_shader_module_info.codeSize = shaders_vulkan::forward_frag().size_bytes();
-        fragment_shader_module_info.pCode = shaders_vulkan::forward_frag().data();
-    } else {
-        fragment_shader_module_info.codeSize = shaders_vulkan::forward_nomaps_frag().size_bytes();
-        fragment_shader_module_info.pCode = shaders_vulkan::forward_nomaps_frag().data();
-    }
+    fragment_shader_module_info.codeSize = forward_frag.size() * sizeof(std::uint32_t);
+    fragment_shader_module_info.pCode = forward_frag.data();
     RB_VK(vkCreateShaderModule(_device, &fragment_shader_module_info, nullptr, &forward_shader_modules[1]),
         "Failed to create shader module");
 
@@ -1951,72 +1972,11 @@ VkPipeline graphics_vulkan::_create_forward_pipeline(const std::shared_ptr<mater
     vertex_shader_stage_info.module = forward_shader_modules[0];
     vertex_shader_stage_info.pName = "main";
 
-    struct specialization_data_t {
-        int albedo_map{ -1 };
-        int normal_map{ -1 };
-        int roughness_map{ -1 };
-        int metallic_map{ -1 };
-        int emissive_map{ -1 };
-        int ambient_map{ -1 };
-        int max_maps{ -1 };
-        int max_shadow_map_cascades{ graphics_limits::max_shadow_cascades };
-        int translucent{ 0 };
-    } specialization_data;
-
-    const auto flags = material->flags();
-
-    int index{ 0 };
-    if (flags & material_flags::albedo_map_bit) {
-        specialization_data.albedo_map = index++;
-    }
-    if (flags & material_flags::normal_map_bit) {
-        specialization_data.normal_map = index++;
-    }
-    if (flags & material_flags::roughness_map_bit) {
-        specialization_data.roughness_map = index++;
-    }
-    if (flags & material_flags::metallic_map_bit) {
-        specialization_data.metallic_map = index++;
-    }
-    if (flags & material_flags::emissive_map_bit) {
-        specialization_data.emissive_map = index++;
-    }
-    if (flags & material_flags::ambient_map_bit) {
-        specialization_data.ambient_map = index++;
-    }
-    specialization_data.max_maps = index;
-
-    if (flags & material_flags::translucent_bit) {
-        specialization_data.translucent = 1;
-    }
-
-    VkSpecializationMapEntry specializtion_map_entries[9]{
-        { 0, offsetof(specialization_data_t, albedo_map), sizeof(int) },
-        { 1, offsetof(specialization_data_t, normal_map), sizeof(int) },
-        { 2, offsetof(specialization_data_t, roughness_map), sizeof(int) },
-        { 3, offsetof(specialization_data_t, metallic_map), sizeof(int) },
-        { 4, offsetof(specialization_data_t, emissive_map), sizeof(int) },
-        { 5, offsetof(specialization_data_t, ambient_map), sizeof(int) },
-        { 6, offsetof(specialization_data_t, max_maps), sizeof(int) },
-        { 7, offsetof(specialization_data_t, max_shadow_map_cascades), sizeof(int) },
-        { 8, offsetof(specialization_data_t, translucent), sizeof(int) }
-    };
-
-    VkSpecializationInfo specialization_info;
-    specialization_info.dataSize = sizeof(specialization_data);
-    specialization_info.mapEntryCount = 9;
-    specialization_info.pMapEntries = specializtion_map_entries;
-    specialization_info.pData = &specialization_data;
-
     VkPipelineShaderStageCreateInfo fragment_shader_stage_info{};
     fragment_shader_stage_info.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
     fragment_shader_stage_info.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
     fragment_shader_stage_info.module = forward_shader_modules[1];
     fragment_shader_stage_info.pName = "main";
-
-    if (material->flags()) {
-        fragment_shader_stage_info.pSpecializationInfo = &specialization_info;
-    }
 
     VkPipelineShaderStageCreateInfo shader_stages[] = {
         vertex_shader_stage_info,

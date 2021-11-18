@@ -6,15 +6,9 @@
 #define PCSS_BLOCKER_SEARCH_NUM_SAMPLES 4
 #define PCF_NUM_SAMPLES 64
 
-layout (constant_id = 0) const int ALBEDO_MAP = 0;
-layout (constant_id = 1) const int NORMAL_MAP = 1;
-layout (constant_id = 2) const int ROUGHNESS_MAP = 2;
-layout (constant_id = 3) const int METALLIC_MAP = 3;
-layout (constant_id = 4) const int EMISSIVE_MAP = 4;
-layout (constant_id = 5) const int AMBIENT_MAP = 5;
-layout (constant_id = 6) const int MAX_MAPS = 6;
-layout (constant_id = 7) const int MAX_SHADOW_MAP_CASCADES = 4;
-layout (constant_id = 8) const int TRANSLUCENT = 0;
+#ifndef MAX_SHADOW_MAP_CASCADES
+#define MAX_SHADOW_MAP_CASCADES 4
+#endif
 
 struct light {
 	vec4 position_or_direction; // .a < 0.5 ? point_light : directional_light
@@ -45,7 +39,30 @@ layout (std140, set = 1, binding = 0) uniform MaterialData {
     float u_roughness;
     float u_metallic;
 };
-layout(set = 1, binding = 1) uniform sampler2D u_maps[MAX_MAPS];
+
+#ifdef ALBEDO_MAP 
+layout (set = 1, binding = 1) uniform sampler2D u_albedo_map;
+#endif 
+
+#ifdef NORMAL_MAP 
+layout (set = 1, binding = 2) uniform sampler2D u_normal_map;
+#endif
+
+#ifdef ROUGHNESS_MAP 
+layout (set = 1, binding = 3) uniform sampler2D u_roughness_map;
+#endif
+
+#ifdef METALLIC_MAP 
+layout (set = 1, binding = 4) uniform sampler2D u_metallic_map;
+#endif
+
+#ifdef EMISSIVE_MAP 
+layout (set = 1, binding = 5) uniform sampler2D u_emissive_map;
+#endif
+
+#ifdef AMBIENT_MAP 
+layout (set = 1, binding = 6) uniform sampler2D u_ambient_map;
+#endif
 
 layout(set = 2, binding = 0) uniform samplerCube u_radiance_map;
 layout(set = 2, binding = 1) uniform samplerCube u_irradiance_map;
@@ -274,40 +291,40 @@ void main() {
 	uint index = tile_id.y * u_culling_data.number_of_tiles_x + tile_id.x;
 
     vec4 albedo = u_base_color;
-    if (ALBEDO_MAP > -1) {
-        albedo *= texture(u_maps[ALBEDO_MAP], v_texcoord);
-		if (TRANSLUCENT == 0) {
+#ifdef ALBEDO_MAP
+        albedo *= texture(u_albedo_map, v_texcoord);
+#ifndef TRANSLUCENT
 			// TODO: Customizable cutoff.
 			if (albedo.a < 0.5) {
 				discard;
 			}
-		}
-    }
+#endif
+#endif
 
     vec3 normal = v_normal;
-    if (NORMAL_MAP > -1) {
-        normal = perturb(texture(u_maps[NORMAL_MAP], v_texcoord).rgb * 2.0 - 1.0, normalize(normal), normalize(u_camera.position - v_position), v_texcoord);
-    }
+#ifdef NORMAL_MAP
+        normal = perturb(texture(u_normal_map, v_texcoord).rgb * 2.0 - 1.0, normalize(normal), normalize(u_camera.position - v_position), v_texcoord);
+#endif
 
     float roughness = u_roughness;
-    if (ROUGHNESS_MAP > -1) {
-        roughness *= texture(u_maps[ROUGHNESS_MAP], v_texcoord).g;
-    }
+#ifdef ROUGHNESS_MAP
+        roughness *= texture(u_roughness_map, v_texcoord).g;
+#endif
    
     float metallic = u_metallic;
-    if (METALLIC_MAP > -1) {
-        metallic *= texture(u_maps[METALLIC_MAP], v_texcoord).b;
-    }
+#ifdef METALLIC_MAP
+        metallic *= texture(u_metallic_map, v_texcoord).b;
+#endif
     
     vec3 emissive = vec3(0.0);
-    if (EMISSIVE_MAP > -1) {
-        emissive = texture(u_maps[EMISSIVE_MAP], v_texcoord).rgb;
-    }
+#ifdef EMISSIVE_MAP
+        emissive = texture(u_emissive_map, v_texcoord).rgb;
+#endif
 
     float ao = 1.0;
-    if (AMBIENT_MAP > -1) {
-        ao = texture(u_maps[AMBIENT_MAP], v_texcoord).r;
-    }
+#ifdef AMBIENT_MAP
+        ao = texture(u_ambient_map, v_texcoord).r;
+#endif
 
     vec3 v = normalize(u_camera.position - v_position);
     vec3 n = normalize(normal);
