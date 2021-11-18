@@ -21,7 +21,7 @@ namespace rb {
         using variant_type = std::variant<Ts...>;
 
         template<typename T>
-        static constexpr auto is_acceptable_v = std::disjunction_v<std::is_same<std::decay_t<T>, Ts>...>;
+        static constexpr auto is_acceptable_v = std::disjunction_v<std::is_enum<T>, std::is_same<std::decay_t<T>, Ts>...>;
     };
 
     /**
@@ -52,8 +52,12 @@ namespace rb {
         variant(variant&&) = default;
 
         template<typename T, std::enable_if_t<helpers::is_acceptable_v<T>, int> = 0>
-        variant(const T& data)
-            : _data(data) {
+        variant(const T& data) {
+            if constexpr (std::is_enum_v<T>) {
+                _data = static_cast<int>(data);
+            } else {
+                _data = data;
+            }
         }
 
         variant& operator=(const variant&) = default;
@@ -61,18 +65,30 @@ namespace rb {
 
         template<typename T, std::enable_if_t<helpers::is_acceptable_v<T>, int> = 0>
         variant& operator=(const T& data) {
-            _data = data;
+            if constexpr (std::is_enum_v<T>) {
+                _data = static_cast<int>(data);
+            } else {
+                _data = data;
+            }
             return *this;
         }
 
         template<typename T, std::enable_if_t<helpers::is_acceptable_v<T>, int> = 0>
         operator const T& () const {
-            return std::get<T>(_data);
+            if constexpr (std::is_enum_v<T>) {
+                return static_cast<T>(std::get<int>(_data));
+            } else {
+                return std::get<T>(_data);
+            }
         }
 
         template<typename T, std::enable_if_t<helpers::is_acceptable_v<T>, int> = 0>
         bool holds() const {
-            return std::holds_alternative<T>(_data);
+            if constexpr (std::is_enum_v<T>) {
+                return std::holds_alternative<int>(_data);
+            } else {
+                return std::holds_alternative<T>(_data);
+            }
         }
 
     private:
