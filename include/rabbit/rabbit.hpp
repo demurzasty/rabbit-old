@@ -28,6 +28,7 @@
 #include "plane.hpp"
 #include "prefab.hpp"
 #include "ray3.hpp"
+#include "reflection.hpp"
 #include "renderer.hpp"
 #include "s3tc.hpp"
 #include "settings.hpp"
