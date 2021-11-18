@@ -20,6 +20,10 @@ static std::map<shader_stage, EShLanguage> stages = {
 };
 
 std::vector<std::uint32_t> glsl::compile(shader_stage stage, const std::string& code) {
+    return compile(stage, code, {});
+}
+
+std::vector<std::uint32_t> glsl::compile(shader_stage stage, const std::string& code, const span<const std::string> definitions) {
     static const auto initialized = glslang::InitializeProcess();
     RB_ASSERT(initialized, "GLSLang is not initialized.");
 
@@ -34,6 +38,12 @@ std::vector<std::uint32_t> glsl::compile(shader_stage stage, const std::string& 
     shader.setEnvTarget(glslang::EShTargetSpv, glslang::EShTargetSpv_1_0);
 
     const auto messages = (EShMessages)(EShMsgSpvRules | EShMsgVulkanRules);
+
+    std::string preamble;
+    for (const auto& definition : definitions) {
+        preamble += format("#define {}\n", definition);
+    }
+    shader.setPreamble(preamble.c_str());
 
     std::string pre_processed_code;
     if (!shader.preprocess(&glslang::DefaultTBuiltInResource, 100, ENoProfile, false, false, messages, &pre_processed_code, includer)) {
