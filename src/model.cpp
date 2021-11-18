@@ -371,7 +371,7 @@ void model::import(ibstream& input, obstream& output, const json& metadata) {
 
             const std::size_t index_count = gltf_index_accessor["count"];
             const std::size_t byte_offset = gltf_index_accessor.contains("byteOffset") ?
-                gltf_index_accessor["byteOffset"] : 0u;
+                (unsigned int)gltf_index_accessor["byteOffset"] : 0u;
 
             std::vector<std::uint32_t> indices(index_count);
             
@@ -380,7 +380,7 @@ void model::import(ibstream& input, obstream& output, const json& metadata) {
 
             const std::size_t index_buffer_index = gltf_index_buffer_view["buffer"];
             const std::size_t index_buffer_offset = gltf_index_buffer_view.contains("byteOffset") ?
-                gltf_index_buffer_view["byteOffset"] : 0u;
+                (unsigned int)gltf_index_buffer_view["byteOffset"] : 0u;
             //const auto& gltf_index_buffer = gltf_buffers[index_buffer_index];
             const auto& index_buffer = buffers[index_buffer_index];
 
@@ -408,14 +408,14 @@ void model::import(ibstream& input, obstream& output, const json& metadata) {
 
                 const std::size_t count = gltf_accessor["count"];
                 const std::size_t byte_offset = gltf_accessor.contains("byteOffset") ?
-                    gltf_accessor["byteOffset"] : 0u;
+                    (unsigned int)gltf_accessor["byteOffset"] : 0u;
 
                 const std::size_t buffer_view_index = gltf_accessor["bufferView"];
                 const auto& gltf_buffer_view = gltf_buffer_views[buffer_view_index];
 
                 const std::size_t buffer_index = gltf_buffer_view["buffer"];
                 const std::size_t buffer_offset = gltf_buffer_view.contains("byteOffset") ?
-                    gltf_buffer_view["byteOffset"] : 0u;
+                    (unsigned int)gltf_buffer_view["byteOffset"] : 0u;
                 const auto& buffer = buffers[buffer_index];
 
                 if (vertices.size() < count) {
@@ -424,7 +424,7 @@ void model::import(ibstream& input, obstream& output, const json& metadata) {
 
                 if (name == "POSITION") {
                     const std::size_t buffer_stride = gltf_buffer_view.contains("byteStride") ?
-                        gltf_buffer_view["byteStride"] : sizeof(vec3f); // TODO: Calculate byte stride!
+                        (unsigned int)gltf_buffer_view["byteStride"] : sizeof(vec3f); // TODO: Calculate byte stride!
 
                     const std::uint8_t* data = buffer.data() + byte_offset + buffer_offset;
                     for (std::size_t index{ 0 }; index < count; ++index) {
@@ -433,7 +433,7 @@ void model::import(ibstream& input, obstream& output, const json& metadata) {
                     }
                 } else if (name == "NORMAL") {
                     const std::size_t buffer_stride = gltf_buffer_view.contains("byteStride") ?
-                        gltf_buffer_view["byteStride"] : sizeof(vec3f); // TODO: Calculate byte stride!
+                        (unsigned int)gltf_buffer_view["byteStride"] : sizeof(vec3f); // TODO: Calculate byte stride!
 
                     const std::uint8_t* data = buffer.data() + byte_offset + buffer_offset;
                     for (std::size_t index{ 0 }; index < count; ++index) {
@@ -442,7 +442,7 @@ void model::import(ibstream& input, obstream& output, const json& metadata) {
                     }
                 } else if (name == "TEXCOORD_0") {
                     const std::size_t buffer_stride = gltf_buffer_view.contains("byteStride") ?
-                        gltf_buffer_view["byteStride"] : sizeof(vec2f); // TODO: Calculate byte stride!
+                        (unsigned int)gltf_buffer_view["byteStride"] : sizeof(vec2f); // TODO: Calculate byte stride!
 
                     const std::uint8_t* data = buffer.data() + byte_offset + buffer_offset;
                     for (std::size_t index{ 0 }; index < count; ++index) {

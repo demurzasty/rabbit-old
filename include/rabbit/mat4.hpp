@@ -352,7 +352,7 @@ namespace rb {
 
     template<typename T>
     constexpr T determinant(const mat4<T>& mat) {
-        if (mat == mat4f::identity()) {
+        if (mat == mat4<T>::identity()) {
             return 1;
         }
 
