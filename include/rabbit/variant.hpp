@@ -73,6 +73,12 @@ namespace rb {
             return *this;
         }
 
+        template<typename T>
+        variant& operator=(const std::shared_ptr<T>& data) {
+            _data = data;
+            return *this;
+        }
+
         template<typename T, std::enable_if_t<helpers::is_acceptable_v<T>, int> = 0>
         operator const T& () const {
             if constexpr (std::is_enum_v<T>) {
@@ -80,6 +86,11 @@ namespace rb {
             } else {
                 return std::get<T>(_data);
             }
+        }
+
+        template<typename T>
+        operator std::shared_ptr<T> () const {
+            return std::static_pointer_cast<T>(std::get<std::shared_ptr<void>>(_data));
         }
 
         template<typename T, std::enable_if_t<helpers::is_acceptable_v<T>, int> = 0>
