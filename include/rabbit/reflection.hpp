@@ -49,12 +49,6 @@ namespace rb {
             return *this;
         }
 
-        //template<typename T, typename F>
-        //meta<T>& field(F T::* field_ptr) {
-        //    rb::field field;
-        //    return *this;
-        //}
-
     private:
         rb::type& _type;
     };
