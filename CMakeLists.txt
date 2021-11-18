@@ -18,6 +18,7 @@ option (RB_PROD_BUILD "Enable production build" OFF)
 add_subdirectory ("lib")
 
 set (GLSLANG_VALIDATOR "${CMAKE_CURRENT_SOURCE_DIR}/bin/win32/glslangValidator.exe")
+set (B2H "${CMAKE_CURRENT_SOURCE_DIR}/bin/win32/b2h.exe")
 
 file (GLOB_RECURSE GLSL_SOURCE_FILES "data/shaders/*.vert" "data/shaders/*.frag" "data/shaders/*.comp")
 
@@ -26,6 +27,7 @@ foreach (GLSL_SRC ${GLSL_SOURCE_FILES})
 	get_filename_component (FILE_EXT ${GLSL_SRC} EXT)
 
 	set (GENERATED_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/generated/include/rabbit/generated/shaders")
+	set (GLSL_H "${GENERATED_DIRECTORY}/${FILE_NAME}.glsl.h")
 	set (SPIRV_H "${GENERATED_DIRECTORY}/${FILE_NAME}.spv.h")
 
 	string (REPLACE "." "_" VARIABLE_NAME ${FILE_NAME})
@@ -33,6 +35,8 @@ foreach (GLSL_SRC ${GLSL_SOURCE_FILES})
 	add_custom_command (
 		OUTPUT ${SPIRV_H}
 		COMMAND ${CMAKE_COMMAND} -E make_directory ${GENERATED_DIRECTORY}
+		# GLSL -> C Header
+		COMMAND ${B2H} ${GLSL_SRC} ${GLSL_H} "${VARIABLE_NAME}"
 		# GLSL -> SPIR-V -> C Header
 		COMMAND ${GLSLANG_VALIDATOR} -V ${GLSL_SRC} --vn "${VARIABLE_NAME}" -Os -o ${SPIRV_H}
 		DEPENDS ${GLSL_SRC}

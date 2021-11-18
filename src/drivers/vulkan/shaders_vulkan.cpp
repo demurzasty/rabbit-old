@@ -31,6 +31,8 @@
 #include <rabbit/generated/shaders/present.frag.spv.h>
 #include <rabbit/generated/shaders/light_culling.comp.spv.h>
 
+#include <rabbit/glsl.hpp>
+
 using namespace rb;
 
 span<const std::uint32_t> shaders_vulkan::quad_vert() {
