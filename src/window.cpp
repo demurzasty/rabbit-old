@@ -1,7 +1,7 @@
 #include <rabbit/window.hpp>
 
 #if RB_WINDOWS
-#	include "win32/window_win32.hpp"
+#	include "drivers/win32/window_win32.hpp"
 #endif
 
 using namespace rb;

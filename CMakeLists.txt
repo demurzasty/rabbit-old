@@ -75,21 +75,21 @@ endif ()
 
 if (RB_WINDOWS) 
 	set (SRC ${SRC}
-		"src/win32/input_win32.cpp"
-		"src/win32/window_win32.cpp"
+		"src/drivers/win32/input_win32.cpp"
+		"src/drivers/win32/window_win32.cpp"
 	)
 endif ()
 
 if (RB_VULKAN) 
 	set (SRC ${SRC}
-		"src/vulkan/environment_vulkan.cpp"
-		"src/vulkan/graphics_vulkan.cpp"
-		"src/vulkan/material_vulkan.cpp"
-		"src/vulkan/mesh_vulkan.cpp"
-		"src/vulkan/shaders_vulkan.cpp"
-		"src/vulkan/texture_vulkan.cpp"
-		"src/vulkan/utils_vulkan.cpp"
-		"src/vulkan/viewport_vulkan.cpp"
+		"src/drivers/vulkan/environment_vulkan.cpp"
+		"src/drivers/vulkan/graphics_vulkan.cpp"
+		"src/drivers/vulkan/material_vulkan.cpp"
+		"src/drivers/vulkan/mesh_vulkan.cpp"
+		"src/drivers/vulkan/shaders_vulkan.cpp"
+		"src/drivers/vulkan/texture_vulkan.cpp"
+		"src/drivers/vulkan/utils_vulkan.cpp"
+		"src/drivers/vulkan/viewport_vulkan.cpp"
 	)
 endif ()
 

@@ -2,7 +2,7 @@
 #include <rabbit/settings.hpp>
 
 #if RB_VULKAN
-#	include "vulkan/graphics_vulkan.hpp"
+#	include "drivers/vulkan/graphics_vulkan.hpp"
 #endif
 
 using namespace rb;

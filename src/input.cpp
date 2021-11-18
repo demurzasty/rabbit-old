@@ -1,7 +1,7 @@
 #include <rabbit/input.hpp>
 
 #if RB_WINDOWS
-#	include "win32/input_win32.hpp"
+#	include "drivers/win32/input_win32.hpp"
 #endif
 
 using namespace rb;
