@@ -21,6 +21,16 @@ namespace rb {
 		std::uint32_t size;
 	};
 
+	struct mesh_cluster {
+		/* offsets within meshlet_vertices and meshlet_triangles arrays with meshlet data */
+		std::uint32_t vertex_offset;
+		std::uint32_t triangle_offset;
+
+		/* number of vertices and triangles used in the meshlet; data is stored in consecutive range defined by offset and count */
+		std::uint32_t vertex_count;
+		std::uint32_t triangle_count;
+	};
+
 	struct mesh_desc {
 		span<const vertex> vertices;
 		span<const std::uint32_t> indices;
@@ -52,6 +62,8 @@ namespace rb {
 
 		span<const mesh_lod> lods() const;
 
+		span<const mesh_cluster> clusters() const;
+
 		span<const trianglef> convex_hull() const;
 
 		const bspheref& bsphere() const;
@@ -65,6 +77,7 @@ namespace rb {
 		const std::vector<vertex> _vertices;
 		const std::vector<std::uint32_t> _indices;
 		const std::vector<mesh_lod> _lods;
+		const std::vector<mesh_cluster> _clusters;
 		const std::vector<trianglef> _convex_hull;
 		const bspheref _bsphere;
 		const bboxf _bbox;

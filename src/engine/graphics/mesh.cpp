@@ -149,6 +149,9 @@ void mesh::import(ibstream& input, obstream& output, const json& metadata) {
         simplify(vertices, indices, 0.075f, 0.05f),
     };
 
+    // build clusters
+    // size_t meshopt_buildMeshletsBound(size_t index_count, size_t max_vertices, size_t max_triangles);
+
     quickhull::QuickHull<float> quickhull;
     auto hull = quickhull.getConvexHull(&positions[0].x, positions.size(), true, false);
     auto hull_indices = hull.getIndexBuffer();
@@ -340,6 +343,10 @@ span<const mesh_lod> mesh::lods() const {
     return _lods;
 }
 
+span<const mesh_cluster> mesh::clusters() const {
+    return _clusters;
+}
+
 span<const trianglef> mesh::convex_hull() const {
     return _convex_hull;
 }
@@ -352,10 +359,33 @@ const bboxf& mesh::bbox() const {
     return _bbox;
 }
 
+static std::vector<mesh_cluster> calculate_clusters(const span<const vertex>& vertices, const span<const std::uint32_t>& indices) {
+    const auto max_vertices = 64u;
+    const auto max_triangles = 124u;
+    const auto cone_weight = 0.0f;
+    const auto max_meshlets = meshopt_buildMeshletsBound(indices.size(), max_vertices, max_triangles);
+    std::vector<meshopt_Meshlet> meshlets(max_meshlets);
+    std::vector<unsigned int> meshlet_vertices(max_meshlets * max_vertices);
+    std::vector<unsigned char> meshlet_triangles(max_meshlets * max_triangles * 3);
+    meshlets.resize(meshopt_buildMeshlets(&meshlets[0], &meshlet_vertices[0], &meshlet_triangles[0], &indices[0], indices.size(), &vertices[0].position.x, vertices.size(), sizeof(vertex), max_vertices, max_triangles, cone_weight));
+
+    std::vector<mesh_cluster> clusters;
+    for (const auto& meshlet : meshlets) {
+        clusters.push_back({
+            meshlet.vertex_offset,
+            meshlet.triangle_offset,
+            meshlet.vertex_count,
+            meshlet.triangle_count
+        });
+    }
+    return clusters;
+}
+
 mesh::mesh(const mesh_desc& desc)
 	: _vertices(desc.vertices.begin(), desc.vertices.end())
 	, _indices(desc.indices.begin(), desc.indices.end())
     , _lods(desc.lods.begin(), desc.lods.end())
+    , _clusters(calculate_clusters(desc.vertices, desc.indices))
     , _convex_hull(desc.convex_hull.begin(), desc.convex_hull.end())
     , _bsphere(desc.bsphere ? *desc.bsphere : calculate_bsphere(desc.vertices))
     , _bbox(desc.bbox ? *desc.bbox : calculate_bbox(desc.vertices)) {
