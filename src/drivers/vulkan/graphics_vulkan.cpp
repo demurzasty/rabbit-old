@@ -475,21 +475,17 @@ void graphics_vulkan::draw_forward(const std::shared_ptr<viewport>& viewport, co
         VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 4, descriptor_sets,
         0, nullptr);
 
+    const auto& clustered_data = mesh->clustered_data();
+
     VkDeviceSize offset{ 0 };
     VkBuffer buffer{ native_mesh->vertex_buffer() };
     vkCmdBindVertexBuffers(_command_buffers[_command_index], 0, 1, &buffer, &offset);
-    vkCmdBindIndexBuffer(_command_buffers[_command_index], native_mesh->index_buffer(), 0, VK_INDEX_TYPE_UINT32);
+    vkCmdBindIndexBuffer(_command_buffers[_command_index], native_mesh->clustered_index_buffer(), 0, VK_INDEX_TYPE_UINT32);
 
     vkCmdPushConstants(_command_buffers[_command_index], pipeline_layout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(mat4f), &world);
 
     vkCmdBindPipeline(_command_buffers[_command_index], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
-
-    const auto& lod = native_mesh->lods()[mesh_lod_index];
-    // vkCmdDrawIndexed(_command_buffers[_command_index], lod.size, 1, lod.offset, 0, 0);
-
-    for (auto i = 0u; i < lod.size; i += 64) {
-        vkCmdDrawIndexed(_command_buffers[_command_index], 64u, 1, lod.offset + i, 0, i);
-    }
+    vkCmdDrawIndexedIndirect(_command_buffers[_command_index], native_mesh->indirect_command_buffer(), 0, clustered_data.clusters.size(), sizeof(VkDrawIndexedIndirectCommand));
 }
 
 void graphics_vulkan::end_forward_pass(const std::shared_ptr<viewport>& viewport) {
@@ -1851,21 +1847,15 @@ VkPipeline graphics_vulkan::_create_forward_pipeline(const std::shared_ptr<mater
     RB_VK(vkCreateShaderModule(_device, &fragment_shader_module_info, nullptr, &forward_shader_modules[1]),
         "Failed to create shader module");
 
-    struct forward_vertex {
-        vec3f position;
-        vec2f texcoord;
-        vec3f normal;
-    };
-
     VkVertexInputBindingDescription vertex_input_binding_desc;
     vertex_input_binding_desc.binding = 0;
-    vertex_input_binding_desc.stride = sizeof(forward_vertex);
+    vertex_input_binding_desc.stride = sizeof(vertex);
     vertex_input_binding_desc.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
 
     VkVertexInputAttributeDescription vertex_attributes[3]{
-        { 0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(forward_vertex, position) },
-        { 1, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(forward_vertex, texcoord) },
-        { 2, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(forward_vertex, normal) }
+        { 0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(vertex, position) },
+        { 1, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(vertex, texcoord) },
+        { 2, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(vertex, normal) }
     };
 
     VkPipelineVertexInputStateCreateInfo vertex_input_info;

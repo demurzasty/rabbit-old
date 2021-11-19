@@ -64,12 +64,40 @@ mesh_vulkan::mesh_vulkan(VkDevice device, VmaAllocator allocator, const mesh_des
     RB_VK(vmaMapMemory(_allocator, _clustered_index_allocation, &ptr), "Failed to map memory");
     std::memcpy(ptr, clustered_data().indices.data(), clustered_data().indices.size() * sizeof(std::uint32_t));
     vmaUnmapMemory(_allocator, _clustered_index_allocation);
+
+    std::vector<VkDrawIndexedIndirectCommand> commands;
+    commands.reserve(clustered_data().clusters.size());
+
+    std::uint32_t cluster_index{ 0 };
+    for (const auto& cluster : clustered_data().clusters) {
+        commands.push_back({ cluster.size, 1u, cluster.offset, 0u, cluster_index++ });
+    }
+
+    VkBufferCreateInfo command_buffer_info;
+    command_buffer_info.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+    command_buffer_info.pNext = nullptr;
+    command_buffer_info.flags = 0;
+    command_buffer_info.size = commands.size() * sizeof(VkDrawIndexedIndirectCommand);
+    command_buffer_info.usage = VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
+    command_buffer_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+    command_buffer_info.queueFamilyIndexCount = 0;
+    command_buffer_info.pQueueFamilyIndices = nullptr;
+
+    VmaAllocationCreateInfo command_allocation_info{};
+    command_allocation_info.usage = VMA_MEMORY_USAGE_CPU_TO_GPU;
+    RB_VK(vmaCreateBuffer(allocator, &command_buffer_info, &command_allocation_info, &_indirect_command_buffer, &_indirect_command_allocation, nullptr),
+        "Failed to create Vulkan buffer.");
+
+    RB_VK(vmaMapMemory(_allocator, _indirect_command_allocation, &ptr), "Failed to map memory");
+    std::memcpy(ptr, commands.data(), commands.size() * sizeof(VkDrawIndexedIndirectCommand));
+    vmaUnmapMemory(_allocator, _indirect_command_allocation);
 }
 
 mesh_vulkan::~mesh_vulkan() {
     vmaDestroyBuffer(_allocator, _vertex_buffer, _vertex_allocation);
     vmaDestroyBuffer(_allocator, _index_buffer, _index_allocation);
     vmaDestroyBuffer(_allocator, _clustered_index_buffer, _clustered_index_allocation);
+    vmaDestroyBuffer(_allocator, _indirect_command_buffer, _indirect_command_allocation);
 }
 
 VkBuffer mesh_vulkan::vertex_buffer() const {
@@ -82,4 +110,8 @@ VkBuffer mesh_vulkan::index_buffer() const {
 
 VkBuffer mesh_vulkan::clustered_index_buffer() const {
     return _clustered_index_buffer;
+}
+
+VkBuffer mesh_vulkan::indirect_command_buffer() const {
+    return _indirect_command_buffer;
 }

@@ -55,7 +55,7 @@ void renderer::draw(registry& registry) {
     // TODO: Entities that is not visible from camera perspective should be culled. 
     for (const auto& [entity, transform, geometry] : registry.view<transform, geometry>().each()) {
         if (!geometry.material || !geometry.material->translucent()) {
-            graphics::draw_depth(_viewport, get_world(registry, entity, transform), geometry.mesh, 0);
+             graphics::draw_depth(_viewport, get_world(registry, entity, transform), geometry.mesh, 0);
         }
     }
 

@@ -18,6 +18,8 @@ namespace rb {
 
 		VkBuffer clustered_index_buffer() const;
 
+		VkBuffer indirect_command_buffer() const;
+
 	private:
 		VkDevice _device;
 		VmaAllocator _allocator;
@@ -30,5 +32,8 @@ namespace rb {
 
 		VkBuffer _clustered_index_buffer;
 		VmaAllocation _clustered_index_allocation;
+
+		VkBuffer _indirect_command_buffer;
+		VmaAllocation _indirect_command_allocation;
 	};
 }

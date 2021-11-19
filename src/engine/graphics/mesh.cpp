@@ -68,6 +68,18 @@ std::shared_ptr<mesh> mesh::load(ibstream& stream) {
     const auto lods = std::make_unique<mesh_lod[]>(lod_count);
     stream.read(lods.get(), lod_count * sizeof(mesh_lod));
 
+    mesh_clustered_data clustered_data;
+
+    std::uint32_t cluster_count;
+    stream.read(cluster_count);
+    clustered_data.clusters.resize(cluster_count);
+    stream.read(clustered_data.clusters.data(), cluster_count * sizeof(mesh_lod));
+
+    std::uint32_t clusters_index_count;
+    stream.read(clusters_index_count);
+    clustered_data.indices.resize(clusters_index_count);
+    stream.read(clustered_data.indices.data(), clusters_index_count * sizeof(std::uint32_t));
+
     std::uint32_t triangle_count;
     stream.read(triangle_count);
     const auto triangles = std::make_unique<trianglef[]>(triangle_count);
@@ -83,6 +95,7 @@ std::shared_ptr<mesh> mesh::load(ibstream& stream) {
     desc.vertices = { vertices.get(), vertex_count };
     desc.indices = { indices.get(), total_index_count };
     desc.lods = { lods.get(), lod_count };
+    desc.clustered_data = clustered_data;
     desc.convex_hull = { triangles.get(), triangle_count };
     desc.bsphere = bsphere;
     desc.bbox = bbox;
@@ -132,6 +145,50 @@ static std::vector<std::uint32_t> simplify(std::vector<vertex>& vertices, const 
     return lod;
 }
 
+static mesh_clustered_data calculate_clusters(const span<const vertex>& vertices, const span<const std::uint32_t>& indices, const mesh_lod& lod) {
+    const auto max_vertices = 64u;
+    const auto max_triangles = 124u;
+    const auto cone_weight = 0.0f;
+    const auto max_meshlets = meshopt_buildMeshletsBound(lod.size, max_vertices, max_triangles);
+    std::vector<meshopt_Meshlet> meshlets(max_meshlets);
+    std::vector<unsigned int> meshlet_vertices(max_meshlets * max_vertices);
+    std::vector<unsigned char> meshlet_triangles(max_meshlets * max_triangles * 3);
+    meshlets.resize(meshopt_buildMeshlets(&meshlets[0], &meshlet_vertices[0], &meshlet_triangles[0], &indices[lod.offset], lod.size, &vertices[0].position.x, vertices.size(), sizeof(vertex), max_vertices, max_triangles, cone_weight));
+
+    if (meshlets.size()) {
+        const auto& last = meshlets.back();
+
+        // this is an example of how to trim the vertex/triangle arrays when copying data out to GPU storage
+        meshlet_vertices.resize(last.vertex_offset + last.vertex_count);
+        meshlet_triangles.resize(last.triangle_offset + ((last.triangle_count * 3 + 3) & ~3));
+    }
+
+    std::vector<mesh_lod> clusters;
+    std::vector<std::uint32_t> clusters_indices;
+
+    std::uint32_t offset{ 0 };
+    for (const auto& meshlet : meshlets) {
+        clusters.push_back({
+            offset,
+            meshlet.triangle_count * 3
+        });
+
+        for (auto i = 0u; i < meshlet.triangle_count; ++i) {
+            const auto vertex_index1 = meshlet_vertices[meshlet.vertex_offset + meshlet_triangles[meshlet.triangle_offset + i * 3]];
+            const auto vertex_index2 = meshlet_vertices[meshlet.vertex_offset + meshlet_triangles[meshlet.triangle_offset + i * 3 + 1]];
+            const auto vertex_index3 = meshlet_vertices[meshlet.vertex_offset + meshlet_triangles[meshlet.triangle_offset + i * 3 + 2]];
+
+            clusters_indices.push_back(vertex_index1);
+            clusters_indices.push_back(vertex_index2);
+            clusters_indices.push_back(vertex_index3);
+        }
+
+        offset += meshlet.triangle_count * 3;
+    }
+
+    return { clusters, clusters_indices };
+}
+
 void mesh::import(ibstream& input, obstream& output, const json& metadata) {
     std::vector<vertex> vertices;
     std::vector<std::uint32_t> indices;
@@ -150,7 +207,7 @@ void mesh::import(ibstream& input, obstream& output, const json& metadata) {
     };
 
     // build clusters
-    // size_t meshopt_buildMeshletsBound(size_t index_count, size_t max_vertices, size_t max_triangles);
+    const auto clustered_data = calculate_clusters(vertices, indices, { 0, static_cast<std::uint32_t>(indices.size()) });
 
     quickhull::QuickHull<float> quickhull;
     auto hull = quickhull.getConvexHull(&positions[0].x, positions.size(), true, false);
@@ -194,6 +251,11 @@ void mesh::import(ibstream& input, obstream& output, const json& metadata) {
         output.write(mesh_lod{ offset, size });
         offset += size;
     }
+
+    output.write<std::uint32_t>(clustered_data.clusters.size());
+    output.write(clustered_data.clusters.data(), clustered_data.clusters.size() * sizeof(mesh_lod));
+    output.write<std::uint32_t>(clustered_data.indices.size());
+    output.write(clustered_data.indices.data(), clustered_data.indices.size() * sizeof(std::uint32_t));
 
     output.write<std::uint32_t>(convex_hull.size() / 3); // in triangle count
     output.write(convex_hull.data(), convex_hull.size() * sizeof(vec3f));
@@ -359,38 +421,11 @@ const bboxf& mesh::bbox() const {
     return _bbox;
 }
 
-static mesh_clustered_data calculate_clusters(const span<const vertex>& vertices, const span<const std::uint32_t>& indices) {
-    const auto max_vertices = 64u;
-    const auto max_triangles = 124u;
-    const auto cone_weight = 0.0f;
-    const auto max_meshlets = meshopt_buildMeshletsBound(indices.size(), max_vertices, max_triangles);
-    std::vector<meshopt_Meshlet> meshlets(max_meshlets);
-    std::vector<unsigned int> meshlet_vertices(max_meshlets * max_vertices);
-    std::vector<unsigned char> meshlet_triangles(max_meshlets * max_triangles * 3);
-    meshlets.resize(meshopt_buildMeshlets(&meshlets[0], &meshlet_vertices[0], &meshlet_triangles[0], &indices[0], indices.size(), &vertices[0].position.x, vertices.size(), sizeof(vertex), max_vertices, max_triangles, cone_weight));
-
-    std::vector<mesh_cluster> clusters;
-    for (const auto& meshlet : meshlets) {
-        clusters.push_back({
-            meshlet.vertex_offset,
-            meshlet.triangle_offset,
-            meshlet.vertex_count,
-            meshlet.triangle_count
-        });
-    }
-
-    return {
-        clusters,
-        meshlet_vertices,
-        meshlet_triangles
-    };
-}
-
 mesh::mesh(const mesh_desc& desc)
 	: _vertices(desc.vertices.begin(), desc.vertices.end())
 	, _indices(desc.indices.begin(), desc.indices.end())
     , _lods(desc.lods.begin(), desc.lods.end())
-    , _clustered_data(calculate_clusters(desc.vertices, desc.indices))
+    , _clustered_data(desc.clustered_data ? *desc.clustered_data : calculate_clusters(desc.vertices, desc.indices, !_lods.empty() ? _lods.front() : mesh_lod{ 0u, static_cast<std::uint32_t>(desc.indices.size()) }))
     , _convex_hull(desc.convex_hull.begin(), desc.convex_hull.end())
     , _bsphere(desc.bsphere ? *desc.bsphere : calculate_bsphere(desc.vertices))
     , _bbox(desc.bbox ? *desc.bbox : calculate_bbox(desc.vertices)) {
