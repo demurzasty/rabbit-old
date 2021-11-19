@@ -1,6 +1,6 @@
 #include "window_win32.hpp"
 
-#include <rabbit/config.hpp>
+#include <rabbit/engine/core/config.hpp>
 
 using namespace rb;
 

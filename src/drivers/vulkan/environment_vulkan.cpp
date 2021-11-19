@@ -1,7 +1,7 @@
 #include "environment_vulkan.hpp"
 #include "utils_vulkan.hpp"
 
-#include <rabbit/graphics.hpp>
+#include <rabbit/engine/graphics/graphics.hpp>
 
 using namespace rb;
 

@@ -1,7 +1,7 @@
 #pragma once 
 
-#include <rabbit/window.hpp>
-#include <rabbit/settings.hpp>
+#include <rabbit/engine/platform/window.hpp>
+#include <rabbit/engine/core/settings.hpp>
 
 #include <Windows.h>
 

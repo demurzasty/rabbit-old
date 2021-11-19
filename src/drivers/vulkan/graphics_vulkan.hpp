@@ -1,12 +1,12 @@
 #pragma once 
 
-#include <rabbit/graphics.hpp>
-#include <rabbit/window.hpp>
-#include <rabbit/settings.hpp>
-#include <rabbit/mat4.hpp>
-#include <rabbit/vec3.hpp>
-#include <rabbit/vec4.hpp>
-#include <rabbit/math.hpp>
+#include <rabbit/engine/graphics/graphics.hpp>
+#include <rabbit/engine/platform/window.hpp>
+#include <rabbit/engine/core/settings.hpp>
+#include <rabbit/engine/math/mat4.hpp>
+#include <rabbit/engine/math/vec3.hpp>
+#include <rabbit/engine/math/vec4.hpp>
+#include <rabbit/engine/math/math.hpp>
 
 #include "environment_vulkan.hpp"
 

@@ -1,8 +1,8 @@
 #pragma once 
 
-#include <rabbit/viewport.hpp>
-#include <rabbit/vec3.hpp>
-#include <rabbit/vec4.hpp>
+#include <rabbit/engine/graphics/viewport.hpp>
+#include <rabbit/engine/math/vec3.hpp>
+#include <rabbit/engine/math/vec4.hpp>
 
 #include <volk.h>
 #include <vk_mem_alloc.h>

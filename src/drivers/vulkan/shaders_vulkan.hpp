@@ -1,6 +1,6 @@
 #pragma once 
 
-#include <rabbit/span.hpp>
+#include <rabbit/engine/core/span.hpp>
 
 #include <vector>
 

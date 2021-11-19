@@ -30,7 +30,7 @@
 #include <rabbit/generated/shaders/present.frag.spv.h>
 #include <rabbit/generated/shaders/light_culling.comp.spv.h>
 
-#include <rabbit/glsl.hpp>
+#include <rabbit/engine/graphics/glsl.hpp>
 
 using namespace rb;
 

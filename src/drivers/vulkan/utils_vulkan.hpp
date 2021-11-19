@@ -1,6 +1,6 @@
 #pragma once 
 
-#include <rabbit/config.hpp>
+#include <rabbit/engine/core/config.hpp>
 
 #ifdef _MSC_VER
 #   pragma warning(disable : 26812)

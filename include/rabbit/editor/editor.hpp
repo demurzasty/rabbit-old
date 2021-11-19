@@ -1,7 +1,7 @@
 #pragma once 
 
-#include "../json.hpp"
-#include "../bstream.hpp"
+#include <rabbit/engine/core/json.hpp>
+#include <rabbit/engine/core/bstream.hpp>
 
 #include <string>
 #include <functional>
