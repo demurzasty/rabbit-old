@@ -485,7 +485,11 @@ void graphics_vulkan::draw_forward(const std::shared_ptr<viewport>& viewport, co
     vkCmdBindPipeline(_command_buffers[_command_index], VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
 
     const auto& lod = native_mesh->lods()[mesh_lod_index];
-    vkCmdDrawIndexed(_command_buffers[_command_index], lod.size, 1, lod.offset, 0, 0);
+    // vkCmdDrawIndexed(_command_buffers[_command_index], lod.size, 1, lod.offset, 0, 0);
+
+    for (auto i = 0u; i < lod.size; i += 64) {
+        vkCmdDrawIndexed(_command_buffers[_command_index], 64u, 1, lod.offset + i, 0, i);
+    }
 }
 
 void graphics_vulkan::end_forward_pass(const std::shared_ptr<viewport>& viewport) {

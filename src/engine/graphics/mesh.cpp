@@ -343,8 +343,8 @@ span<const mesh_lod> mesh::lods() const {
     return _lods;
 }
 
-span<const mesh_cluster> mesh::clusters() const {
-    return _clusters;
+const mesh_clustered_data& mesh::clustered_data() const {
+    return _clustered_data;
 }
 
 span<const trianglef> mesh::convex_hull() const {
@@ -359,7 +359,7 @@ const bboxf& mesh::bbox() const {
     return _bbox;
 }
 
-static std::vector<mesh_cluster> calculate_clusters(const span<const vertex>& vertices, const span<const std::uint32_t>& indices) {
+static mesh_clustered_data calculate_clusters(const span<const vertex>& vertices, const span<const std::uint32_t>& indices) {
     const auto max_vertices = 64u;
     const auto max_triangles = 124u;
     const auto cone_weight = 0.0f;
@@ -378,14 +378,19 @@ static std::vector<mesh_cluster> calculate_clusters(const span<const vertex>& ve
             meshlet.triangle_count
         });
     }
-    return clusters;
+
+    return {
+        clusters,
+        meshlet_vertices,
+        meshlet_triangles
+    };
 }
 
 mesh::mesh(const mesh_desc& desc)
 	: _vertices(desc.vertices.begin(), desc.vertices.end())
 	, _indices(desc.indices.begin(), desc.indices.end())
     , _lods(desc.lods.begin(), desc.lods.end())
-    , _clusters(calculate_clusters(desc.vertices, desc.indices))
+    , _clustered_data(calculate_clusters(desc.vertices, desc.indices))
     , _convex_hull(desc.convex_hull.begin(), desc.convex_hull.end())
     , _bsphere(desc.bsphere ? *desc.bsphere : calculate_bsphere(desc.vertices))
     , _bbox(desc.bbox ? *desc.bbox : calculate_bbox(desc.vertices)) {

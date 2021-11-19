@@ -18,7 +18,7 @@ mesh_vulkan::mesh_vulkan(VkDevice device, VmaAllocator allocator, const mesh_des
     vertex_buffer_info.pQueueFamilyIndices = nullptr;
 
     VmaAllocationCreateInfo vertex_allocation_info{};
-    vertex_allocation_info.usage = VMA_MEMORY_USAGE_CPU_ONLY;
+    vertex_allocation_info.usage = VMA_MEMORY_USAGE_CPU_TO_GPU;
     RB_VK(vmaCreateBuffer(allocator, &vertex_buffer_info, &vertex_allocation_info, &_vertex_buffer, &_vertex_allocation, nullptr),
         "Failed to create Vulkan buffer.");
 
@@ -38,18 +38,38 @@ mesh_vulkan::mesh_vulkan(VkDevice device, VmaAllocator allocator, const mesh_des
     index_buffer_info.pQueueFamilyIndices = nullptr;
 
     VmaAllocationCreateInfo index_allocation_info{};
-    index_allocation_info.usage = VMA_MEMORY_USAGE_CPU_ONLY;
+    index_allocation_info.usage = VMA_MEMORY_USAGE_CPU_TO_GPU;
     RB_VK(vmaCreateBuffer(allocator, &index_buffer_info, &index_allocation_info, &_index_buffer, &_index_allocation, nullptr),
         "Failed to create Vulkan buffer.");
 
     RB_VK(vmaMapMemory(_allocator, _index_allocation, &ptr), "Failed to map memory");
     std::memcpy(ptr, desc.indices.data(), desc.indices.size_bytes());
     vmaUnmapMemory(_allocator, _index_allocation);
+
+    VkBufferCreateInfo clustered_index_buffer_info;
+    clustered_index_buffer_info.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+    clustered_index_buffer_info.pNext = nullptr;
+    clustered_index_buffer_info.flags = 0;
+    clustered_index_buffer_info.size = clustered_data().indices.size() * sizeof(std::uint32_t);
+    clustered_index_buffer_info.usage = VK_BUFFER_USAGE_INDEX_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
+    clustered_index_buffer_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+    clustered_index_buffer_info.queueFamilyIndexCount = 0;
+    clustered_index_buffer_info.pQueueFamilyIndices = nullptr;
+
+    VmaAllocationCreateInfo clustered_index_allocation_info{};
+    clustered_index_allocation_info.usage = VMA_MEMORY_USAGE_CPU_TO_GPU;
+    RB_VK(vmaCreateBuffer(allocator, &clustered_index_buffer_info, &clustered_index_allocation_info, &_clustered_index_buffer, &_clustered_index_allocation, nullptr),
+        "Failed to create Vulkan buffer.");
+
+    RB_VK(vmaMapMemory(_allocator, _clustered_index_allocation, &ptr), "Failed to map memory");
+    std::memcpy(ptr, clustered_data().indices.data(), clustered_data().indices.size() * sizeof(std::uint32_t));
+    vmaUnmapMemory(_allocator, _clustered_index_allocation);
 }
 
 mesh_vulkan::~mesh_vulkan() {
     vmaDestroyBuffer(_allocator, _vertex_buffer, _vertex_allocation);
     vmaDestroyBuffer(_allocator, _index_buffer, _index_allocation);
+    vmaDestroyBuffer(_allocator, _clustered_index_buffer, _clustered_index_allocation);
 }
 
 VkBuffer mesh_vulkan::vertex_buffer() const {
@@ -58,4 +78,8 @@ VkBuffer mesh_vulkan::vertex_buffer() const {
 
 VkBuffer mesh_vulkan::index_buffer() const {
     return _index_buffer;
+}
+
+VkBuffer mesh_vulkan::clustered_index_buffer() const {
+    return _clustered_index_buffer;
 }

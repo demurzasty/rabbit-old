@@ -31,6 +31,12 @@ namespace rb {
 		std::uint32_t triangle_count;
 	};
 
+	struct mesh_clustered_data {
+		std::vector<mesh_cluster> clusters;
+		std::vector<std::uint32_t> indices;
+		std::vector<std::uint8_t> triangles;
+	};
+
 	struct mesh_desc {
 		span<const vertex> vertices;
 		span<const std::uint32_t> indices;
@@ -62,7 +68,7 @@ namespace rb {
 
 		span<const mesh_lod> lods() const;
 
-		span<const mesh_cluster> clusters() const;
+		const mesh_clustered_data& clustered_data() const;
 
 		span<const trianglef> convex_hull() const;
 
@@ -77,7 +83,7 @@ namespace rb {
 		const std::vector<vertex> _vertices;
 		const std::vector<std::uint32_t> _indices;
 		const std::vector<mesh_lod> _lods;
-		const std::vector<mesh_cluster> _clusters;
+		const mesh_clustered_data _clustered_data;
 		const std::vector<trianglef> _convex_hull;
 		const bspheref _bsphere;
 		const bboxf _bbox;

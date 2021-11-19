@@ -16,6 +16,8 @@ namespace rb {
 
 		VkBuffer index_buffer() const;
 
+		VkBuffer clustered_index_buffer() const;
+
 	private:
 		VkDevice _device;
 		VmaAllocator _allocator;
@@ -25,5 +27,8 @@ namespace rb {
 
 		VkBuffer _index_buffer;
 		VmaAllocation _index_allocation;
+
+		VkBuffer _clustered_index_buffer;
+		VmaAllocation _clustered_index_allocation;
 	};
 }
