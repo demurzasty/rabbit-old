@@ -14,7 +14,7 @@ std::unordered_map<std::string, importer> editor::_importers;
 void editor::init() {
 	add_importer<texture_importer>(".png", ".bmp", ".jpg");
 	add_importer<mesh_importer>(".msh");
-	add_importer<material>(".mat");
+	add_importer<material_importer>(".mat");
 	add_importer<environment>(".env");
 	add_importer<prefab>(".scn");
 	add_importer<model>(".gltf");

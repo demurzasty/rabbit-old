@@ -2,7 +2,6 @@
 
 #include <rabbit/engine/core/span.hpp>
 #include <rabbit/engine/math/vec2.hpp>
-#include <rabbit/engine/core/json.hpp>
 #include <rabbit/engine/graphics/color.hpp>
 #include <rabbit/engine/core/bstream.hpp>
 #include <rabbit/engine/core/fnv1a.hpp>

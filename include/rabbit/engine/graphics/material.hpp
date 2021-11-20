@@ -2,7 +2,6 @@
 
 #include <rabbit/engine/math/vec4.hpp>
 #include <rabbit/engine/graphics/texture.hpp>
-#include <rabbit/engine/core/json.hpp>
 #include <rabbit/engine/core/bstream.hpp>
 #include <rabbit/engine/core/fnv1a.hpp>
 
@@ -42,8 +41,6 @@ namespace rb {
 		static constexpr auto magic_number{ fnv1a("material") };
 
 		static std::shared_ptr<material> load(ibstream& stream);
-
-		static void import(ibstream& input, obstream& output, const json& metadata);
 
 		virtual ~material() = default;
 

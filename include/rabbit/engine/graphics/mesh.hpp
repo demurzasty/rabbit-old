@@ -2,7 +2,6 @@
 
 #include <rabbit/engine/graphics/vertex.hpp>
 #include <rabbit/engine/core/span.hpp>
-#include <rabbit/engine/core/json.hpp>
 #include <rabbit/engine/collision/triangle.hpp>
 #include <rabbit/engine/collision/bsphere.hpp>
 #include <rabbit/engine/collision/bbox.hpp>

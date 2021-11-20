@@ -55,6 +55,7 @@
 #include <rabbit/runtime/systems/renderer.hpp>
 
 #if !RB_PROD_BUILD
+#   include <rabbit/editor/importers/material_importer.hpp>
 #   include <rabbit/editor/importers/mesh_importer.hpp>
 #   include <rabbit/editor/importers/texture_importer.hpp>
 #   include <rabbit/editor/editor.hpp>
