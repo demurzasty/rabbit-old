@@ -47,7 +47,6 @@ std::shared_ptr<texture> texture::load(ibstream& stream) {
 	std::uint32_t pixels_size;
 	stream.read(pixels_size);
 	
-	const auto bits_per_pixel = calculate_bits_per_pixel(desc.format);
 	const auto pixels = std::make_unique<std::uint8_t[]>(pixels_size);
 	compression::uncompress(compressed_pixels.get(), compressed_size, pixels.get(), pixels_size);
 

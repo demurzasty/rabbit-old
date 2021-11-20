@@ -206,6 +206,10 @@ void mesh::import(ibstream& input, obstream& output, const json& metadata) {
         simplify(vertices, indices, 0.075f, 0.05f),
     };
 
+    for (auto& lod : lods) {
+        optimize(vertices, lod);
+    }
+
     // build clusters
     const auto clustered_data = calculate_clusters(vertices, indices, { 0, static_cast<std::uint32_t>(indices.size()) });
 
