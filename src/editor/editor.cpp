@@ -12,7 +12,7 @@ using namespace rb;
 std::unordered_map<std::string, importer> editor::_importers;
 
 void editor::init() {
-	add_importer<texture>(".png", ".bmp", ".jpg");
+	add_importer<texture_importer>(".png", ".bmp", ".jpg");
 	add_importer<mesh_importer>(".msh");
 	add_importer<material>(".mat");
 	add_importer<environment>(".env");

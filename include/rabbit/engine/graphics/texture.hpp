@@ -38,13 +38,18 @@ namespace rb {
 		std::uint32_t mipmaps{ 0 };
 	};
 
+	class texture_utils {
+	public:
+		static std::size_t calculate_mipmap_levels(const vec2u& texture_size);
+
+		static std::size_t calculate_bits_per_pixel(texture_format format);
+	};
+
 	class texture {
 	public:
 		static constexpr auto magic_number{ fnv1a("texture") };
 
 		static std::shared_ptr<texture> load(ibstream& stream);
-
-		static void import(ibstream& input, obstream& output, const json& metadata);
 
 		static std::shared_ptr<texture> make_one_color(const color& color, const vec2u& size);
 
