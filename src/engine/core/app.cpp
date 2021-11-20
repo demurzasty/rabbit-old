@@ -11,30 +11,30 @@ std::list<std::shared_ptr<rb::system>(*)()> app::_systems;
 std::unordered_map<std::string, void(*)(registry&, entity, json_read_visitor&)> app::_deserializers;
 
 void app::setup() {
-	app::submodule<window>();
-	app::submodule<input>();
-	app::submodule<graphics>();
-	app::submodule<assets>();
+	app::add_submodule<window>();
+	app::add_submodule<input>();
+	app::add_submodule<graphics>();
+	app::add_submodule<assets>();
 
 #if !RB_PROD_BUILD
-	app::submodule<editor>();
+	app::add_submodule<editor>();
 #endif
 
-	app::component<identity>("identity");
-	app::component<transform>("transform");
-	app::component<camera>("camera");
-	app::component<geometry>("geometry");
-	app::component<light>("light");
-	app::component<directional_light>("directional_light");
-	app::component<point_light>("point_light");
+	app::add_component<identity>("identity");
+	app::add_component<transform>("transform");
+	app::add_component<camera>("camera");
+	app::add_component<geometry>("geometry");
+	app::add_component<light>("light");
+	app::add_component<directional_light>("directional_light");
+	app::add_component<point_light>("point_light");
 
 #if !RB_PROD_BUILD
-	app::init([] {
+	app::add_init([] {
 		editor::scan();
 	});
 #endif
 
-	app::init([] {
+	app::add_init([] {
 		assets::load_resources();
 		assets::add_loader<texture>(&texture::load);
 		assets::add_loader<environment>(&environment::load);
@@ -43,8 +43,8 @@ void app::setup() {
 		assets::add_loader<prefab>(&prefab::load);
 	});
 
-	app::system<hierarchy>();
-	app::system<renderer>();
+	app::add_system<hierarchy>();
+	app::add_system<renderer>();
 }
 
 void app::run(std::string initial_scene) {

@@ -15,19 +15,21 @@ namespace rb {
 		using deserializer = void(*)(registry&, entity, json_read_visitor&);
 
 	public:
+		static void setup();
+
 		template<typename Submodule>
-		static void submodule() {
+		static void add_submodule() {
 			_preinits.push_back(&Submodule::init);
 			_releases.push_front(&Submodule::release);
 		}
 
 		template<typename Func>
-		static void init(Func func) {
+		static void add_init(Func func) {
 			_inits.push_back(func);
 		}
 		
 		template<typename Component>
-		static void component(const std::string& name) {
+		static void add_component(const std::string& name) {
 			_deserializers.emplace(name, [](registry& registry, entity entity, json_read_visitor& visitor) {
 				auto& comp = registry.get_or_emplace<Component>(entity);
 				Component::visit(visitor, comp);
@@ -35,13 +37,11 @@ namespace rb {
 		}
 
 		template<typename System>
-		static void system() {
+		static void add_system() {
 			_systems.push_back([]() -> std::shared_ptr<rb::system> {
 				return std::make_shared<System>();
 			});
 		}
-
-		static void setup();
 
 		static void run(std::string initial_scene = "");
 
