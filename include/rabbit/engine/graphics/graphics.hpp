@@ -101,13 +101,11 @@ namespace rb {
 
 		virtual void end_postprocess_pass(const std::shared_ptr<viewport>& viewport) = 0;
 
-		virtual void begin_immediate_pass() = 0;
+		virtual void begin_canvas_pass() = 0;
 
-		virtual void draw_immediate_color(const span<const vertex>& vertices, const color& color) = 0;
+		virtual void draw_canvas_textured(const span<const canvas_vertex>& vertices, const std::shared_ptr<texture>& texture) = 0;
 
-		virtual void draw_immediate_textured(const span<const vertex>& vertices, const std::shared_ptr<texture>& texture) = 0;
-
-		virtual void end_immediate_pass() = 0;
+		virtual void end_canvas_pass() = 0;
 
 		virtual void present(const std::shared_ptr<viewport>& viewport) = 0;
 
@@ -192,13 +190,11 @@ namespace rb {
 
 		static void end_postprocess_pass(const std::shared_ptr<viewport>& viewport);
 
-		static void begin_immediate_pass();
+		static void begin_canvas_pass();
 
-		static void draw_immediate_color(const span<const vertex>& vertices, const color& color);
+		static void draw_canvas_textured(const span<const canvas_vertex>& vertices, const std::shared_ptr<texture>& texture);
 
-		static void draw_immediate_textured(const span<const vertex>& vertices, const std::shared_ptr<texture>& texture);
-
-		static void end_immediate_pass();
+		static void end_canvas_pass();
 
 		static void present(const std::shared_ptr<viewport>& viewport);
 

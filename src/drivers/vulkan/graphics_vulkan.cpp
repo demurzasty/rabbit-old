@@ -746,19 +746,15 @@ void graphics_vulkan::end_postprocess_pass(const std::shared_ptr<viewport>& view
     native_viewport->end_postprocess_pass(_command_buffers[_command_index]);
 }
 
-void graphics_vulkan::begin_immediate_pass() {
+void graphics_vulkan::begin_canvas_pass() {
 
 }
 
-void graphics_vulkan::draw_immediate_color(const span<const vertex>& vertices, const color& color) {
+void graphics_vulkan::draw_canvas_textured(const span<const canvas_vertex>& vertices, const std::shared_ptr<texture>& texture) {
 
 }
 
-void graphics_vulkan::draw_immediate_textured(const span<const vertex>& vertices, const std::shared_ptr<texture>& texture) {
-
-}
-
-void graphics_vulkan::end_immediate_pass() {
+void graphics_vulkan::end_canvas_pass() {
 
 }
 

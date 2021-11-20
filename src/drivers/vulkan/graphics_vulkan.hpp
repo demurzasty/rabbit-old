@@ -156,13 +156,11 @@ namespace rb {
 
 		void end_postprocess_pass(const std::shared_ptr<viewport>& viewport) override;
 
-		void begin_immediate_pass() override;
+		void begin_canvas_pass() override;
 
-		void draw_immediate_color(const span<const vertex>& vertices, const color& color) override;
+		void draw_canvas_textured(const span<const canvas_vertex>& vertices, const std::shared_ptr<texture>& texture) override;
 
-		void draw_immediate_textured(const span<const vertex>& vertices, const std::shared_ptr<texture>& texture) override;
-
-		void end_immediate_pass() override;
+		void end_canvas_pass() override;
 
 		void end() override;
 
@@ -415,7 +413,14 @@ namespace rb {
 		VkPipeline _fill_pipeline;
 
 		VkPipelineLayout _outline_pipeline_layout;
-		VkPipeline _outline_pipeline; 
+		VkPipeline _outline_pipeline;
+
+		VkDescriptorPool _canvas_descriptor_pool;
+		VkDescriptorSetLayout _canvas_descriptor_layout;
+		VkPipelineLayout _canvas_pipeline_layout;
+		VkPipeline _canvas_pipeline;
+
+		std::unordered_map<std::intptr_t, VkDescriptorSet> _canvas_descriptor_sets;
 
 		VkPipelineLayout _present_pipeline_layout;
 		VkPipeline _present_pipeline;
