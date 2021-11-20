@@ -460,7 +460,7 @@ void model::import(ibstream& input, obstream& output, const json& metadata) {
 
             {
                 fobstream stream{ (data_path / mesh_filename).string() };
-                mesh::save(stream, vertices, indices);
+                mesh_utils::save(stream, vertices, indices);
             }
 
             json jmesh_metadata;

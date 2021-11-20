@@ -75,6 +75,7 @@ set (SRC
 
 if (NOT RB_PROD_BUILD) 
 	set (SRC ${SRC}
+		"src/editor/importers/mesh_importer.cpp"
 		"src/editor/editor.cpp"
 	)
 endif ()

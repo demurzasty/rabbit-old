@@ -55,5 +55,6 @@
 #include <rabbit/runtime/systems/renderer.hpp>
 
 #if !RB_PROD_BUILD
-#	include <rabbit/editor/editor.hpp>
+#   include <rabbit/editor/importers/mesh_importer.hpp>
+#   include <rabbit/editor/editor.hpp>
 #endif

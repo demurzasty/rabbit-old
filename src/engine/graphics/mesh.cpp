@@ -13,7 +13,7 @@
 
 using namespace rb;
 
-static bspheref calculate_bsphere(const span<const vertex>& vertices) {
+bspheref mesh_utils::calculate_bsphere(const span<const vertex>& vertices) {
     bspheref bsphere{ vec3f::zero(), 0.0f };
 
     // 1. Calculate center of sphere
@@ -33,7 +33,7 @@ static bspheref calculate_bsphere(const span<const vertex>& vertices) {
     return bsphere;
 }
 
-static bboxf calculate_bbox(const span<const vertex>& vertices) {
+bboxf mesh_utils::calculate_bbox(const span<const vertex>& vertices) {
     constexpr auto fmax = std::numeric_limits<float>::max();
     constexpr auto fmin = std::numeric_limits<float>::min();
 
@@ -102,50 +102,7 @@ std::shared_ptr<mesh> mesh::load(ibstream& stream) {
     return graphics::make_mesh(desc);
 }
 
-static void load_mesh(ibstream& input, std::vector<vertex>& vertices, std::vector<std::uint32_t>& indices, std::vector<vec3f>& positions) {
-    vertices.clear();
-    positions.clear();
-    indices.clear();
-
-    std::uint32_t vertex_count;
-    input.read(vertex_count);
-    vertices.resize(vertex_count);
-    input.read(&vertices[0], vertex_count * sizeof(vertex));
-
-    std::uint32_t index_count;
-    input.read(index_count);
-    indices.resize(index_count);
-    input.read(&indices[0], index_count * sizeof(std::uint32_t));
-
-    positions.reserve(vertices.size());
-    for (const auto& vertex : vertices) {
-        positions.push_back(vertex.position);
-    }
-}
-
-static void optimize(std::vector<vertex>& vertices, std::vector<std::uint32_t>& indices) {
-    meshopt_optimizeVertexCache(indices.data(), indices.data(), indices.size(), vertices.size());
-    meshopt_optimizeOverdraw(indices.data(), indices.data(), indices.size(), &vertices[0].position.x, vertices.size(), sizeof(vertex), 1.05f);
-}
-
-static void optimize_vertices(std::vector<vertex>& vertices, std::vector<std::uint32_t>& indices) {
-    meshopt_optimizeVertexFetch(vertices.data(), indices.data(), indices.size(), vertices.data(), vertices.size(), sizeof(vertex));
-}
-
-static std::vector<std::uint32_t> simplify(std::vector<vertex>& vertices, const std::vector<std::uint32_t>& indices, float threshold, float target_error) {
-    std::size_t target_index_count = static_cast<std::size_t>(indices.size() * threshold);
-
-    std::vector<std::uint32_t> lod(indices.size());
-    float lod_error = 0.f;
-
-    std::size_t lod_size = meshopt_simplify(&lod[0], indices.data(), indices.size(), &vertices[0].position.x, vertices.size(), sizeof(vertex), target_index_count, target_error, &lod_error);
-    lod.resize(lod_size);
-
-    optimize(vertices, lod);
-    return lod;
-}
-
-static mesh_clustered_data calculate_clusters(const span<const vertex>& vertices, const span<const std::uint32_t>& indices, const mesh_lod& lod) {
+mesh_clustered_data mesh_utils::calculate_clusters(const span<const vertex>& vertices, const span<const std::uint32_t>& indices, const mesh_lod& lod) {
     const auto max_vertices = 64u;
     const auto max_triangles = 124u;
     const auto cone_weight = 0.0f;
@@ -189,85 +146,7 @@ static mesh_clustered_data calculate_clusters(const span<const vertex>& vertices
     return { clusters, clusters_indices };
 }
 
-void mesh::import(ibstream& input, obstream& output, const json& metadata) {
-    std::vector<vertex> vertices;
-    std::vector<std::uint32_t> indices;
-    std::vector<vec3f> positions;
-    load_mesh(input, vertices, indices, positions);
-
-    optimize(vertices, indices);
-    optimize_vertices(vertices, indices);
-
-    // level of details indices (excluding base indices)
-    std::array<std::vector<std::uint32_t>, 4> lods{
-        simplify(vertices, indices, 0.8f, 0.05f),
-        simplify(vertices, indices, 0.4f, 0.05f),
-        simplify(vertices, indices, 0.2f, 0.05f),
-        simplify(vertices, indices, 0.075f, 0.05f),
-    };
-
-    for (auto& lod : lods) {
-        optimize(vertices, lod);
-    }
-
-    // build clusters
-    const auto clustered_data = calculate_clusters(vertices, indices, { 0, static_cast<std::uint32_t>(indices.size()) });
-
-    quickhull::QuickHull<float> quickhull;
-    auto hull = quickhull.getConvexHull(&positions[0].x, positions.size(), true, false);
-    auto hull_indices = hull.getIndexBuffer();
-    auto hull_vertices = hull.getVertexBuffer();
-
-    std::vector<vec3f> convex_hull;
-    for (auto& index : hull_indices) {
-        convex_hull.push_back({
-            hull_vertices[index].x,
-            hull_vertices[index].y,
-            hull_vertices[index].z,
-        });
-    }
-
-    const auto bsphere = calculate_bsphere(vertices);
-    const auto bbox = calculate_bbox(vertices);
-
-    std::size_t total_index_count{ indices.size() };
-    for (const auto& lod : lods) {
-        total_index_count += lod.size();
-    }
-
-    output.write(mesh::magic_number);
-
-    output.write<std::uint32_t>(vertices.size());
-    output.write(vertices.data(), vertices.size() * sizeof(vertex));
-
-    output.write<std::uint32_t>(total_index_count);
-    output.write(indices.data(), indices.size() * sizeof(std::uint32_t)); // base indices
-    for (const auto& lod : lods) {
-        output.write(lod.data(), lod.size() * sizeof(std::uint32_t));
-    }
-
-    output.write<std::uint32_t>(lods.size() + 1); // including base indices
-    output.write(mesh_lod{ 0u, static_cast<std::uint32_t>(indices.size()) });
-
-    std::uint32_t offset{ static_cast<std::uint32_t>(indices.size()) };
-    for (const auto& lod : lods) {
-        const auto size = static_cast<std::uint32_t>(lod.size());
-        output.write(mesh_lod{ offset, size });
-        offset += size;
-    }
-
-    output.write<std::uint32_t>(clustered_data.clusters.size());
-    output.write(clustered_data.clusters.data(), clustered_data.clusters.size() * sizeof(mesh_lod));
-    output.write<std::uint32_t>(clustered_data.indices.size());
-    output.write(clustered_data.indices.data(), clustered_data.indices.size() * sizeof(std::uint32_t));
-
-    output.write<std::uint32_t>(convex_hull.size() / 3); // in triangle count
-    output.write(convex_hull.data(), convex_hull.size() * sizeof(vec3f));
-    output.write(bsphere);
-    output.write(bbox);
-}
-
-void mesh::save(obstream& stream, const span<const vertex>& vertices, const span<const std::uint32_t>& indices) {
+void mesh_utils::save(obstream& stream, const span<const vertex>& vertices, const span<const std::uint32_t>& indices) {
     stream.write<std::uint32_t>(vertices.size());
     stream.write(vertices.data(), vertices.size_bytes());
     stream.write<std::uint32_t>(indices.size());
@@ -429,10 +308,10 @@ mesh::mesh(const mesh_desc& desc)
 	: _vertices(desc.vertices.begin(), desc.vertices.end())
 	, _indices(desc.indices.begin(), desc.indices.end())
     , _lods(desc.lods.begin(), desc.lods.end())
-    , _clustered_data(desc.clustered_data ? *desc.clustered_data : calculate_clusters(desc.vertices, desc.indices, !_lods.empty() ? _lods.front() : mesh_lod{ 0u, static_cast<std::uint32_t>(desc.indices.size()) }))
+    , _clustered_data(desc.clustered_data ? *desc.clustered_data : mesh_utils::calculate_clusters(desc.vertices, desc.indices, !_lods.empty() ? _lods.front() : mesh_lod{ 0u, static_cast<std::uint32_t>(desc.indices.size()) }))
     , _convex_hull(desc.convex_hull.begin(), desc.convex_hull.end())
-    , _bsphere(desc.bsphere ? *desc.bsphere : calculate_bsphere(desc.vertices))
-    , _bbox(desc.bbox ? *desc.bbox : calculate_bbox(desc.vertices)) {
+    , _bsphere(desc.bsphere ? *desc.bsphere : mesh_utils::calculate_bsphere(desc.vertices))
+    , _bbox(desc.bbox ? *desc.bbox : mesh_utils::calculate_bbox(desc.vertices)) {
     RB_ASSERT(!_vertices.empty(), "No vertices has been provided for mesh.");
     RB_ASSERT(!_indices.empty(), "No indices has been provided for mesh.");
 }

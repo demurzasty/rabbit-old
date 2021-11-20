@@ -36,15 +36,22 @@ namespace rb {
 		std::optional<bboxf> bbox;
 	};
 
+	class mesh_utils {
+	public:
+		static bspheref calculate_bsphere(const span<const vertex>& vertices);
+
+		static bboxf calculate_bbox(const span<const vertex>& vertices);
+
+		static mesh_clustered_data calculate_clusters(const span<const vertex>& vertices, const span<const std::uint32_t>& indices, const mesh_lod& lod);
+
+		static void save(obstream& stream, const span<const vertex>& vertices, const span<const std::uint32_t>& indices);
+	};
+
 	class mesh {
 	public:
 		static constexpr auto magic_number{ fnv1a("mesh") };
 
 		static std::shared_ptr<mesh> load(ibstream& stream);
-
-		static void import(ibstream& input, obstream& output, const json& metadata);
-
-		static void save(obstream& stream, const span<const vertex>& vertices, const span<const std::uint32_t>& indices);
 
 		static std::shared_ptr<mesh> make_box(const vec3f& extent, const vec2f& uv_scale);
 
