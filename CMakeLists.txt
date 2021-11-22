@@ -124,6 +124,9 @@ target_compile_definitions (rabbit PUBLIC RB_DIRECTX12=$<BOOL:${RB_DIRECTX12}>)
 
 target_compile_definitions (rabbit PUBLIC -DRB_PROD_BUILD=$<BOOL:${RB_PROD_BUILD}>)
 
+add_library (rabbit-interop SHARED "src/interop/rabbit.cpp")
+target_link_libraries (rabbit-interop PUBLIC rabbit)
+
 if (CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
 	add_subdirectory ("example")
 endif ()
