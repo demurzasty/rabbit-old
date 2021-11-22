@@ -1,6 +1,8 @@
 #include <rabbit/assets.hpp>
 #include <rabbit/config.hpp>
 
+#include <filesystem>
+
 using namespace rb;
 
 std::unordered_map<std::type_index, assets::loader> assets::_loaders;
@@ -16,6 +18,10 @@ void assets::release() {
 }
 
 void assets::load_resources() {
+    if (!std::filesystem::is_regular_file("package/resources")) {
+        return;
+    }
+
     fibstream stream{ "package/resources" };
 
     std::uint32_t cbor_size;

@@ -43,6 +43,10 @@ static void retrieve_entries(const std::filesystem::directory_iterator& di, std:
 }
 
 void editor::scan() {
+	if (!std::filesystem::is_directory("data")) {
+		return;
+	}
+
 	const auto package_directory = std::filesystem::current_path() / "package";
 	const auto cache_directory = std::filesystem::current_path() / "cache";
 
