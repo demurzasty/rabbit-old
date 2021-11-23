@@ -14,7 +14,7 @@ void prefab::import(ibstream& input, obstream& output, const json& metadata) {
     const auto dump = json::to_cbor(json);
 
     output.write(prefab::magic_number);
-    output.write<std::uint32_t>(dump.size());
+    output.write(static_cast<std::uint32_t>(dump.size()));
     output.write(&dump[0], dump.size());
 }
 
