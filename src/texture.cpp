@@ -59,7 +59,7 @@ void texture::import(ibstream& input, obstream& output, const json& metadata) {
 	// 1. Load image from file to RGBA image
 	auto image = image::load_from_stream(input);
 
-	if (image.is_power_of_two()) {
+	if (!image.is_power_of_two()) {
 		const auto& size = image.size();
 		image = image::resize(image, { next_power_of_two(size.x), next_power_of_two(size.y) });
 	}
