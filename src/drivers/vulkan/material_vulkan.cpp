@@ -76,6 +76,7 @@ material_vulkan::material_vulkan(VkDevice device,
     data.base_color = desc.base_color;
     data.roughness = desc.roughness;
     data.metallic = desc.metallic;
+    data.occlusion_strength = desc.occlusion_strength;
 
     void* ptr;
     RB_VK(vmaMapMemory(_allocator, _uniform_buffer_allocation, &ptr), "Failed to map memory");

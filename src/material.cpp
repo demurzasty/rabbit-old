@@ -52,6 +52,7 @@ std::shared_ptr<material> material::load(ibstream& stream) {
     stream.read(desc.base_color);
     stream.read(desc.roughness);
     stream.read(desc.metallic);
+    stream.read(desc.occlusion_strength);
     stream.read(desc.translucent);
     stream.read(desc.double_sided);
 
@@ -95,6 +96,7 @@ void material::import(ibstream& input, obstream& output, const json& metadata) {
     vec4f base_color{ 1.0f, 1.0f, 1.0f, 1.0f };
     float roughness{ 0.8f };
     float metallic{ 0.0f };
+    float occlusion_strength{ 1.0f };
     bool translucent{ false };
     bool double_sided{ false };
 
@@ -115,6 +117,10 @@ void material::import(ibstream& input, obstream& output, const json& metadata) {
         metallic = json["metallic"];
     }
 
+    if (json.contains("occlusion_strength")) {
+        occlusion_strength = json["occlusion_strength"];
+    }
+
     if (json.contains("translucent")) {
         translucent = json["translucent"];
     }
@@ -127,6 +133,7 @@ void material::import(ibstream& input, obstream& output, const json& metadata) {
     output.write(base_color);
     output.write(roughness);
     output.write(metallic);
+    output.write(occlusion_strength);
     output.write(translucent);
     output.write(double_sided);
     

@@ -283,7 +283,8 @@ void model::import(ibstream& input, obstream& output, const json& metadata) {
 
         // Read occlusion texture.
         if (gltf_material.contains("occlusionTexture")) {
-            const std::size_t texture_index = gltf_material["occlusionTexture"]["index"];
+            const auto& gltf_occlusion_texture = gltf_material["occlusionTexture"];
+            const std::size_t texture_index = gltf_occlusion_texture["index"];
             const auto& texture = gltf_textures[texture_index];
 
             const std::size_t image_index = texture["source"];
@@ -299,6 +300,10 @@ void model::import(ibstream& input, obstream& output, const json& metadata) {
                     std::ifstream{ image_metadata_path } >> image_metadata;
                     jmaterial["ambient_map"] = image_metadata["uuid"];
                 }
+            }
+
+            if (gltf_occlusion_texture.contains("strength")) {
+                jmaterial["occlusion_strength"] = gltf_occlusion_texture["strength"];
             }
         }
 

@@ -38,6 +38,7 @@ layout (std140, set = 1, binding = 0) uniform material_data {
     vec4 base_color;
     float roughness;
     float metallic;
+    float occlusion_strength;
 } u_material;
 
 #ifdef ALBEDO_MAP 
@@ -292,38 +293,38 @@ void main() {
 
     vec4 albedo = u_material.base_color;
 #ifdef ALBEDO_MAP
-        albedo *= texture(u_albedo_map, v_texcoord);
+    albedo *= texture(u_albedo_map, v_texcoord);
 #ifndef TRANSLUCENT
-			// TODO: Customizable cutoff.
-			if (albedo.a < 0.5) {
-				discard;
-			}
+	// TODO: Customizable cutoff.
+	if (albedo.a < 0.5) {
+		discard;
+	}
 #endif
 #endif
 
     vec3 normal = v_normal;
 #ifdef NORMAL_MAP
-        normal = perturb(texture(u_normal_map, v_texcoord).rgb * 2.0 - 1.0, normalize(normal), normalize(u_camera.position - v_position), v_texcoord);
+   normal = perturb(texture(u_normal_map, v_texcoord).rgb * 2.0 - 1.0, normalize(normal), normalize(u_camera.position - v_position), v_texcoord);
 #endif
 
     float roughness = u_material.roughness;
 #ifdef ROUGHNESS_MAP
-        roughness *= texture(u_roughness_map, v_texcoord).g;
+    roughness *= texture(u_roughness_map, v_texcoord).g;
 #endif
    
     float metallic = u_material.metallic;
 #ifdef METALLIC_MAP
-        metallic *= texture(u_metallic_map, v_texcoord).b;
+    metallic *= texture(u_metallic_map, v_texcoord).b;
 #endif
     
     vec3 emissive = vec3(0.0);
 #ifdef EMISSIVE_MAP
-        emissive = texture(u_emissive_map, v_texcoord).rgb;
+    emissive = texture(u_emissive_map, v_texcoord).rgb;
 #endif
 
     float ao = 1.0;
 #ifdef AMBIENT_MAP
-        ao = texture(u_ambient_map, v_texcoord).r;
+    ao = texture(u_ambient_map, v_texcoord).r;
 #endif
 
     vec3 v = normalize(u_camera.position - v_position);
@@ -391,7 +392,11 @@ void main() {
     vec2 brdf = texture(u_brdf_map, vec2(n_dot_v, roughness)).rg;
     vec3 spec = prefilter_color * (ks * brdf.x + brdf.y);
 
-    vec3 ambient = (kd * diff + spec) * ao;
+    vec3 ambient = (kd * diff + spec);
+	
+#ifdef AMBIENT_MAP
+	ambient = mix(ambient, ambient * ao, u_material.occlusion_strength);
+#endif
 
     out_color = vec4(ambient + lo + emissive, albedo.a);
 }

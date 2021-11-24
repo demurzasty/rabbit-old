@@ -11,6 +11,7 @@ namespace rb {
 			vec4f base_color;
 			float roughness;
 			float metallic;
+			float occlusion_strength;
 		};
 
 	public:

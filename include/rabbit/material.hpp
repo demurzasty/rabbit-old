@@ -27,6 +27,7 @@ namespace rb {
 		vec4f base_color{ 1.0f, 1.0f, 1.0f, 1.0f }; // TODO: Use color structure instead.
 		float roughness{ 0.8f };
 		float metallic{ 0.0f };
+		float occlusion_strength{ 1.0f }; // ambient = mix(ambient, ambient * ambient_map.r, occlusion_strength);
 		bool translucent{ false };
 		bool double_sided{ false };
 		std::shared_ptr<texture> albedo_map;
