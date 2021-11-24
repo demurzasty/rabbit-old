@@ -61,6 +61,7 @@ set (SRC
 	"src/mesh.cpp"
 	"src/model.cpp"
 	"src/prefab.cpp"
+	"src/rect_pack.cpp"
 	"src/reflection.cpp"
 	"src/renderer.cpp"
 	"src/s3tc.cpp"
