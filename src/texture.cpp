@@ -7,9 +7,9 @@
 
 using namespace rb;
 
-inline std::size_t calculate_mipmap_levels(const vec2u& texture_size) {
+inline std::uint32_t calculate_mipmap_levels(const vec2u& texture_size) {
 	vec2u size{ texture_size };
-	std::size_t mipmaps{ 0 };
+	std::uint32_t mipmaps{ 0 };
 	while (size.x > 4 && size.y > 4) {
 		mipmaps++;
 		size = size / 2u;
@@ -17,7 +17,7 @@ inline std::size_t calculate_mipmap_levels(const vec2u& texture_size) {
 	return mipmaps;
 }
 
-inline std::size_t calculate_bits_per_pixel(texture_format format) {
+inline std::uint32_t calculate_bits_per_pixel(texture_format format) {
 	switch (format) {
 		case texture_format::r8: return 8;
 		case texture_format::rg8: return 16;
@@ -74,7 +74,7 @@ void texture::import(ibstream& input, obstream& output, const json& metadata) {
 	const auto base_size = image.size();
 
 	// Calculate mipmap count based on image size
-	const auto mipmap_count = calculate_mipmap_levels(image.size());
+	const auto mipmap_count = std::min(calculate_mipmap_levels(image.size()), 6u);
 
 	mobstream stream;
 	for (auto i = 0u; i < mipmap_count; ++i) {
