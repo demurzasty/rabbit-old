@@ -1847,21 +1847,15 @@ VkPipeline graphics_vulkan::_create_forward_pipeline(const std::shared_ptr<mater
     RB_VK(vkCreateShaderModule(_device, &fragment_shader_module_info, nullptr, &forward_shader_modules[1]),
         "Failed to create shader module");
 
-    struct forward_vertex {
-        vec3f position;
-        vec2f texcoord;
-        vec3f normal;
-    };
-
     VkVertexInputBindingDescription vertex_input_binding_desc;
     vertex_input_binding_desc.binding = 0;
-    vertex_input_binding_desc.stride = sizeof(forward_vertex);
+    vertex_input_binding_desc.stride = sizeof(vertex);
     vertex_input_binding_desc.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
 
     VkVertexInputAttributeDescription vertex_attributes[3]{
-        { 0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(forward_vertex, position) },
-        { 1, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(forward_vertex, texcoord) },
-        { 2, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(forward_vertex, normal) }
+        { 0, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(vertex, position) },
+        { 1, 0, VK_FORMAT_R32G32_SFLOAT, offsetof(vertex, texcoord) },
+        { 2, 0, VK_FORMAT_R32G32B32_SFLOAT, offsetof(vertex, normal) }
     };
 
     VkPipelineVertexInputStateCreateInfo vertex_input_info;
