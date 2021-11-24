@@ -36,6 +36,8 @@ namespace rb {
 
         std::size_t stride() const;
 
+        bool is_power_of_two() const;
+
     private:
         image(const color* pixels, const vec2u& size);
 

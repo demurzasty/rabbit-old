@@ -58,6 +58,11 @@ std::shared_ptr<texture> texture::load(ibstream& stream) {
 void texture::import(ibstream& input, obstream& output, const json& metadata) {
 	// 1. Load image from file to RGBA image
 	auto image = image::load_from_stream(input);
+
+	if (image.is_power_of_two()) {
+		const auto& size = image.size();
+		image = image::resize(image, { next_power_of_two(size.x), next_power_of_two(size.y) });
+	}
 	
 	RB_ASSERT(image, "Cannot load image.");
 	RB_ASSERT(image.size().x % 4 == 0 && image.size().y % 4 == 0, "Incorrect texture size of image.");

@@ -1,5 +1,6 @@
 #include <rabbit/image.hpp>
 #include <rabbit/config.hpp>
+#include <rabbit/math.hpp>
 
 #define STBI_MAX_DIMENSIONS 8192
 #define STB_IMAGE_IMPLEMENTATION
@@ -76,6 +77,10 @@ const vec2u& image::size() const {
 
 std::size_t image::stride() const {
     return _size.x * 4;
+}
+
+bool image::is_power_of_two() const {
+    return rb::is_power_of_two(_size.x) && rb::is_power_of_two(_size.y);
 }
 
 image::image(const color* pixels, const vec2u& size)
