@@ -21,6 +21,7 @@ namespace rb {
 			roughness_map_bit | metallic_map_bit | emissive_map_bit | ambient_map_bit;
 		static constexpr std::uint32_t translucent_bit = (1 << 6);
 		static constexpr std::uint32_t double_sided_bit = (1 << 7);
+		static constexpr std::uint32_t wireframe_bit = (1 << 8);
 	};
 
 	struct material_desc {
@@ -30,6 +31,7 @@ namespace rb {
 		float occlusion_strength{ 1.0f }; // ambient = mix(ambient, ambient * ambient_map.r, occlusion_strength);
 		bool translucent{ false };
 		bool double_sided{ false };
+		bool wireframe{ false };
 		std::shared_ptr<texture> albedo_map;
 		std::shared_ptr<texture> normal_map;
 		std::shared_ptr<texture> roughness_map;
@@ -58,6 +60,8 @@ namespace rb {
 
 		bool double_sided() const;
 
+		bool wireframe() const;
+
 		const std::shared_ptr<texture>& albedo_map() const;
 
 		const std::shared_ptr<texture>& normal_map() const;
@@ -81,6 +85,7 @@ namespace rb {
 		const float _metallic;
 		const bool _translucent;
 		const bool _double_sided;
+		const bool _wireframe;
 		const std::shared_ptr<texture> _albedo_map;
 		const std::shared_ptr<texture> _normal_map;
 		const std::shared_ptr<texture> _roughness_map;

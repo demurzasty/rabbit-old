@@ -54,7 +54,7 @@ void renderer::draw(registry& registry) {
     // Draw depth for every geometry in scene.
     // TODO: Entities that is not visible from camera perspective should be culled. 
     for (const auto& [entity, transform, geometry] : registry.view<transform, geometry>().each()) {
-        if (!geometry.material || !geometry.material->translucent()) {
+        if (!geometry.material || (!geometry.material->translucent() && !geometry.material->wireframe())) {
             graphics::draw_depth(_viewport, get_world(registry, entity, transform), geometry.mesh, 0);
         }
     }

@@ -1901,11 +1901,11 @@ VkPipeline graphics_vulkan::_create_forward_pipeline(const std::shared_ptr<mater
     rasterizer_state_info.flags = 0;
     rasterizer_state_info.depthClampEnable = VK_FALSE;
     rasterizer_state_info.rasterizerDiscardEnable = VK_FALSE;
-    rasterizer_state_info.polygonMode = VK_POLYGON_MODE_FILL;
+    rasterizer_state_info.polygonMode = material->wireframe() ? VK_POLYGON_MODE_LINE : VK_POLYGON_MODE_FILL;
     rasterizer_state_info.cullMode = material->double_sided() ? VK_CULL_MODE_NONE : VK_CULL_MODE_BACK_BIT;
     rasterizer_state_info.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
     rasterizer_state_info.depthBiasEnable = VK_FALSE;
-    rasterizer_state_info.depthBiasConstantFactor = -4.75f;
+    rasterizer_state_info.depthBiasConstantFactor = 0.0f;
     rasterizer_state_info.depthBiasClamp = 0.0f;
     rasterizer_state_info.depthBiasSlopeFactor = 0.0f;
     rasterizer_state_info.lineWidth = 1.0f;
@@ -1927,7 +1927,7 @@ VkPipeline graphics_vulkan::_create_forward_pipeline(const std::shared_ptr<mater
     depth_stencil_state_info.flags = 0;
     depth_stencil_state_info.depthTestEnable = VK_TRUE;
     depth_stencil_state_info.depthWriteEnable = material->translucent() ? VK_FALSE : VK_TRUE;
-    depth_stencil_state_info.depthCompareOp = material->translucent() ? VK_COMPARE_OP_LESS : VK_COMPARE_OP_EQUAL;
+    depth_stencil_state_info.depthCompareOp = (material->wireframe() || material->translucent()) ? VK_COMPARE_OP_LESS : VK_COMPARE_OP_EQUAL;
     depth_stencil_state_info.depthBoundsTestEnable = VK_FALSE;
     depth_stencil_state_info.stencilTestEnable = VK_FALSE;
 

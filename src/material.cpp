@@ -20,6 +20,10 @@ inline std::uint32_t calculate_material_flags(const material_desc& desc) {
         flags |= material_flags::double_sided_bit;
     }
 
+    if (desc.wireframe) {
+        flags |= material_flags::wireframe_bit;
+    }
+
     if (desc.albedo_map) {
         flags |= material_flags::albedo_map_bit;
     }
@@ -194,6 +198,10 @@ bool material::double_sided() const {
     return _double_sided;
 }
 
+bool material::wireframe() const {
+    return _wireframe;
+}
+
 const std::shared_ptr<texture>& material::albedo_map() const {
     return _albedo_map;
 }
@@ -228,6 +236,7 @@ material::material(const material_desc& desc)
     , _metallic(desc.metallic)
     , _translucent(desc.translucent)
     , _double_sided(desc.double_sided)
+    , _wireframe(desc.wireframe)
     , _albedo_map(desc.albedo_map)
     , _normal_map(desc.normal_map)
     , _roughness_map(desc.roughness_map)
