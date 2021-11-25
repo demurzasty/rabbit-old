@@ -12,9 +12,9 @@
     },
     {
       "transform": {
-        "position": [ -2.5, 1.5, 0.0 ],
+        "position": [ -2.5, 0.0, 0.0 ],
         "rotation": [ 0.0, 0.0, 0.0 ],
-        "scaling": [ 0.2, 0.2, 0.2 ]
+        "scaling": [ 1.5, 1.5, 1.5 ]
       },
       "children": [
         "6faef073-9403-52e3-3a66-ce834f5f29e7"
