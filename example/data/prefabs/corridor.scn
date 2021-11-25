@@ -1,0 +1,48 @@
+{
+  "entities": [
+    {
+      "transform": {
+        "position": [ 0.0, 0.0, 0.0 ],
+        "rotation": [ 0.0, 0.0, 0.0 ],
+        "scaling": [ 1.0, 1.0, 1.0 ]
+      },
+      "children": [
+        "f70619b2-9884-7dc1-feba-c2725fbdd5a5"
+      ]
+    },
+    {
+      "identity": {
+        "name": "Light"
+      },
+      "transform": {
+        "position": [ 0.0, 0.0, 0.0 ],
+        "rotation": [ 0.785398185, -2.35619450, 0.0 ],
+        "scaling": [ 1.0, 1.0, 1.0 ]
+      },
+      "light": {
+        "color": [ 255, 255, 255, 255 ]
+      },
+      "directional_light": {
+        "shadow_enabled": true
+      }
+    },
+    {
+      "identity": {
+        "name": "Camera"
+      },
+      "transform": {
+        "position": [ -4.0, 3.0, 4.0 ],
+        "rotation": [ -0.471238941, -0.785398185, 0.0 ],
+        "scaling": [ 1.0, 1.0, 1.0 ]
+      },
+      "camera": {
+        "type": "perspective",
+        "size": 11.25,
+        "field_of_view": 45.0,
+        "z_near": 0.1,
+        "z_far": 100.0,
+        "environment": "01d84041-4221-3169-1a9d-e28b2a1175c5"
+      }
+    }
+  ]
+}

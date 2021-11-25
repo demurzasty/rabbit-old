@@ -68,8 +68,8 @@ private:
 
 private:
     vec2i _last_mouse_position;
-    vec3f _target_camera_position{ -4.0f, 3.0f, 4.0f };
-    vec3f _target_camera_rotation{ -0.471238941f, -0.785398185f, 0.0f };
+    vec3f _target_camera_position{ 0.0f, 0.5f, 0.0f };
+    vec3f _target_camera_rotation{ 0.0f, -pi<float>() * 0.5f, 0.0f };
 };
 
 class fps_meter : public rb::system {
@@ -102,5 +102,5 @@ int main(int argc, char* argv[]) {
     app::system<camera_controller>();
     app::system<fps_meter>();
 
-    app::run("data/prefabs/scene.scn");
+    app::run("data/prefabs/corridor.scn");
 }

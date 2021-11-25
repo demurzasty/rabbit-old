@@ -5841,7 +5841,7 @@ void graphics_vulkan::_create_shadow_map() {
     rasterizer_state_info.depthClampEnable = VK_FALSE;
     rasterizer_state_info.rasterizerDiscardEnable = VK_FALSE;
     rasterizer_state_info.polygonMode = VK_POLYGON_MODE_FILL;
-    rasterizer_state_info.cullMode = VK_CULL_MODE_BACK_BIT;
+    rasterizer_state_info.cullMode = VK_CULL_MODE_FRONT_BIT;
     rasterizer_state_info.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
     rasterizer_state_info.depthBiasEnable = VK_TRUE;
     rasterizer_state_info.depthBiasConstantFactor = 1.25f;

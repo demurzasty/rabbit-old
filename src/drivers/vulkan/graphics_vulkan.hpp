@@ -17,6 +17,7 @@
 #include <unordered_map>
 
 namespace rb {
+
 	class graphics_vulkan : public graphics_impl {
 	public:
 		static constexpr std::size_t max_command_buffers{ 3 };
