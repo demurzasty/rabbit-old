@@ -94,6 +94,9 @@ static json parse_node(const json& gltf_meshes,
 
             rotation = euler_angles(mat4f::to_quat(temp));
         }
+    } else if (gltf_node.contains("translation")) {
+        const auto& gltf_translation = gltf_node["translation"];
+        position = { gltf_translation[0], gltf_translation[1], gltf_translation[2] };
     }
 
     jentity["transform"] = {
