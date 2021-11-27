@@ -468,8 +468,13 @@ void graphics_vulkan::draw_forward(const std::shared_ptr<viewport>& viewport, co
         native_viewport->light_descriptor_set()
     };
 
+    std::uint64_t internal_flags = 0;
+    if (native_viewport->has_shadows()) {
+        internal_flags |= graphics_vulkan_flags::shadow_map_bit;
+    }
+
     const auto pipeline_layout = _get_forward_pipeline_layout(native_material);
-    const auto pipeline = _get_forward_pipeline(native_material);
+    const auto pipeline = _get_forward_pipeline(native_material, internal_flags);
 
     vkCmdBindDescriptorSets(_command_buffers[_command_index],
         VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline_layout, 0, 4, descriptor_sets,
@@ -1796,12 +1801,12 @@ VkPipelineLayout graphics_vulkan::_get_forward_pipeline_layout(const std::shared
     return pipeline_layout = _create_forward_pipeline_layout(material);
 }
 
-VkPipeline graphics_vulkan::_create_forward_pipeline(const std::shared_ptr<material>& material) {
+VkPipeline graphics_vulkan::_create_forward_pipeline(const std::shared_ptr<material>& material, std::uint64_t internal_flags) {
     const auto native_material = std::static_pointer_cast<material_vulkan>(material);
 
     const auto pipeline_layout = _get_forward_pipeline_layout(material);
 
-    const auto flags = material->flags();
+    auto flags = static_cast<std::uint64_t>(material->flags()) | internal_flags;
 
     std::vector<std::string> definitions;
     if (flags & material_flags::albedo_map_bit) {
@@ -1824,6 +1829,9 @@ VkPipeline graphics_vulkan::_create_forward_pipeline(const std::shared_ptr<mater
     }
     if (flags & material_flags::translucent_bit) {
         definitions.push_back("TRANSLUCENT 1");
+    }
+    if (flags & graphics_vulkan_flags::shadow_map_bit) {
+        definitions.push_back("SHADOW_MAP 1");
     }
     auto forward_frag = shaders_vulkan::forward_frag(definitions);
 
@@ -2016,13 +2024,14 @@ VkPipeline graphics_vulkan::_create_forward_pipeline(const std::shared_ptr<mater
     return pipeline;
 }
 
-VkPipeline graphics_vulkan::_get_forward_pipeline(const std::shared_ptr<material>& material) {
-    const auto flags = material ? material->flags() : 0;
+VkPipeline graphics_vulkan::_get_forward_pipeline(const std::shared_ptr<material>& material, std::uint64_t internal_flags) {
+    const std::uint64_t material_flags = material ? material->flags() : 0;
+    const auto flags = material_flags | internal_flags;
     auto& pipeline = _forward_pipelines[flags];
     if (pipeline) {
         return pipeline;
     }
-    return pipeline = _create_forward_pipeline(material);
+    return pipeline = _create_forward_pipeline(material, internal_flags);
 }
 
 void graphics_vulkan::_create_forward() {
@@ -5841,7 +5850,7 @@ void graphics_vulkan::_create_shadow_map() {
     rasterizer_state_info.depthClampEnable = VK_FALSE;
     rasterizer_state_info.rasterizerDiscardEnable = VK_FALSE;
     rasterizer_state_info.polygonMode = VK_POLYGON_MODE_FILL;
-    rasterizer_state_info.cullMode = VK_CULL_MODE_FRONT_BIT;
+    rasterizer_state_info.cullMode = VK_CULL_MODE_BACK_BIT;
     rasterizer_state_info.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
     rasterizer_state_info.depthBiasEnable = VK_TRUE;
     rasterizer_state_info.depthBiasConstantFactor = 1.25f;

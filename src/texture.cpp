@@ -69,7 +69,9 @@ void texture::import(ibstream& input, obstream& output, const json& metadata) {
 
 	// Decide which format to use.
 	texture_format format;
-	if (metadata.contains("alpha") && metadata["alpha"]) {
+	if (metadata.contains("normal_map") && metadata["normal_map"]) {
+		format = texture_format::rgba8; // TODO: Use bc4?
+	} else if (metadata.contains("alpha") && metadata["alpha"]) {
 		format = texture_format::bc3;
 	} else {
 		format = texture_format::bc1;
@@ -83,16 +85,18 @@ void texture::import(ibstream& input, obstream& output, const json& metadata) {
 
 	mobstream stream;
 	for (auto i = 0u; i < mipmap_count; ++i) {
-		if (metadata.contains("alpha") && metadata["alpha"]) {
+		if (format == texture_format::bc3) {
 			// Compress mipmaps pixels to lossy, gpu friendly BC3
 			const auto bc3_pixels = s3tc::bc3(image);
 			RB_ASSERT(!bc3_pixels.empty(), "Cannot compress image.");
 			stream.write(bc3_pixels.data(), bc3_pixels.size());
-		} else {
+		} else if (format == texture_format::bc1) {
 			// Compress mipmaps pixels to lossy, gpu friendly BC1
 			const auto bc1_pixels = s3tc::bc1(image);
 			RB_ASSERT(!bc1_pixels.empty(), "Cannot compress image.");
 			stream.write(bc1_pixels.data(), bc1_pixels.size());
+		} else {
+			stream.write(image.pixels().data(), image.pixels().size_bytes());
 		}
 
 		image = image::resize(image, image.size() / 2u);

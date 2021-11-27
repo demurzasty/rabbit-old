@@ -32,7 +32,10 @@ layout (std140, set = 0, binding = 0) uniform camera_data {
 } u_camera;
 
 layout(set = 0, binding = 1) uniform sampler2D u_brdf_map;
+
+#ifdef SHADOW_MAP
 layout(set = 0, binding = 2) uniform sampler2DArray u_shadow_map;
+#endif
 
 layout (std140, set = 1, binding = 0) uniform material_data {
     vec4 base_color;
@@ -166,6 +169,7 @@ float penumbra_size(float z_receiver, float z_blocker) {
 	return max((z_receiver - z_blocker) / z_blocker * 12.0, 0.0);
 }
 
+#ifdef SHADOW_MAP
 vec2 find_blocker(vec2 texcoord, float z_receiver, float cascade) {
 	ivec2 texture_size = textureSize(u_shadow_map, 0).xy;
 	vec2 texel = vec2(1.0 / texture_size.x, 1.0 / texture_size.y);
@@ -204,6 +208,7 @@ float pcss(vec3 texcoord, float cascade) {
 	vec2 blockers = find_blocker(texcoord.xy, texcoord.z, cascade);
 	return pcf(texcoord.xy, texcoord.z, 2.0 + penumbra_size(texcoord.z, blockers.x), cascade);
 }
+#endif
 
 float distribution_ggx(vec3 n, vec3 h, float roughness) {
     float a = roughness * roughness;
@@ -270,6 +275,7 @@ vec3 perturb(vec3 map, vec3 n, vec3 v, vec2 texcoord) {
 }
 
 float compute_shadow() {
+#ifdef SHADOW_MAP
 	for (int i = 0; i < MAX_SHADOW_MAP_CASCADES; ++i) {
 		vec4 shadow_coord = u_camera.light_proj_views[i] * vec4(v_position, 1.0);
 		shadow_coord.xyz = shadow_coord.xyz / shadow_coord.w;
@@ -282,7 +288,7 @@ float compute_shadow() {
 			return pcf(shadow_coord.xy, shadow_coord.z - 0.002, 3.0, i);
 		} 
 	}
-
+#endif
 	return 1.0;
 }
 
@@ -336,8 +342,6 @@ void main() {
 
     vec3 lo = vec3(0.0);
 
-    float shadow = compute_shadow(); // texture_proj(v_shadow_coord / v_shadow_coord.w, vec2(0.0));
-
 	uint offset = index * 1024;
 	for (uint i = 0; i < 1024 && u_visible_light_indices_buffer.data[offset + i].index != -1; ++i) {
 		uint light_index = u_visible_light_indices_buffer.data[offset + i].index;
@@ -346,13 +350,15 @@ void main() {
         vec3 radiance = light.color.xyz;
 
         vec3 l = vec3(0.0);
-        float shadow = 0.0;
+        float shadow = 1.0;
 
         if (light.position_or_direction.w > 0.5) {
             l = -normalize(light.position_or_direction.xyz);
+#ifdef SHADOW_MAP
 			if (light.color.w > 0.5) {
 				shadow = compute_shadow();
 			}
+#endif
         } else {
 			vec3 diff = light.position_or_direction.xyz - v_position;
             float dist = length(diff);

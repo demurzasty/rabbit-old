@@ -15,15 +15,101 @@
         "name": "Light"
       },
       "transform": {
-        "position": [ 0.0, 0.0, 0.0 ],
-        "rotation": [ 0.785398185, -2.35619450, 0.0 ],
+        "position": [ 0.0, 1.10, 0.0 ],
+        "rotation": [ 0.0, 0.0, 0.0 ],
         "scaling": [ 1.0, 1.0, 1.0 ]
       },
       "light": {
-        "color": [ 255, 255, 255, 255 ]
+        "color": [ 255, 255, 255, 255 ],
+        "intensity": 10.0
       },
-      "directional_light": {
-        "shadow_enabled": true
+      "point_light": {
+        "radius": 5.0
+      }
+    },
+    {
+      "identity": {
+        "name": "Light"
+      },
+      "transform": {
+        "position": [ -1.0, 1.10, 0.0 ],
+        "rotation": [ 0.0, 0.0, 0.0 ],
+        "scaling": [ 1.0, 1.0, 1.0 ]
+      },
+      "light": {
+        "color": [ 255, 255, 255, 255 ],
+        "intensity": 10.0
+      },
+      "point_light": {
+        "radius": 5.0
+      }
+    },
+    {
+      "identity": {
+        "name": "Light"
+      },
+      "transform": {
+        "position": [ -2.0, 1.10, 0.0 ],
+        "rotation": [ 0.0, 0.0, 0.0 ],
+        "scaling": [ 1.0, 1.0, 1.0 ]
+      },
+      "light": {
+        "color": [ 255, 255, 255, 255 ],
+        "intensity": 10.0
+      },
+      "point_light": {
+        "radius": 5.0
+      }
+    },
+    {
+      "identity": {
+        "name": "Light"
+      },
+      "transform": {
+        "position": [ -3.0, 1.10, 0.0 ],
+        "rotation": [ 0.0, 0.0, 0.0 ],
+        "scaling": [ 1.0, 1.0, 1.0 ]
+      },
+      "light": {
+        "color": [ 255, 255, 255, 255 ],
+        "intensity": 10.0
+      },
+      "point_light": {
+        "radius": 5.0
+      }
+    },
+    {
+      "identity": {
+        "name": "Light"
+      },
+      "transform": {
+        "position": [ -4.0, 1.10, 0.0 ],
+        "rotation": [ 0.0, 0.0, 0.0 ],
+        "scaling": [ 1.0, 1.0, 1.0 ]
+      },
+      "light": {
+        "color": [ 255, 255, 255, 255 ],
+        "intensity": 10.0
+      },
+      "point_light": {
+        "radius": 5.0
+      }
+    },
+    {
+      "identity": {
+        "name": "Light"
+      },
+      "transform": {
+        "position": [ -5.0, 1.10, 0.0 ],
+        "rotation": [ 0.0, 0.0, 0.0 ],
+        "scaling": [ 1.0, 1.0, 1.0 ]
+      },
+      "light": {
+        "color": [ 255, 255, 255, 255 ],
+        "intensity": 10.0
+      },
+      "point_light": {
+        "radius": 5.0
       }
     },
     {
@@ -31,8 +117,8 @@
         "name": "Camera"
       },
       "transform": {
-        "position": [ -4.0, 3.0, 4.0 ],
-        "rotation": [ -0.471238941, -0.785398185, 0.0 ],
+        "position": [ 0.0, 0.5, 0.0 ],
+        "rotation": [ 0.0, -1.5707963267948966, 0.0 ],
         "scaling": [ 1.0, 1.0, 1.0 ]
       },
       "camera": {
@@ -41,7 +127,7 @@
         "field_of_view": 45.0,
         "z_near": 0.1,
         "z_far": 100.0,
-        "environment": "01d84041-4221-3169-1a9d-e28b2a1175c5"
+        "environment": "29479413-0deb-3dd8-a1b7-7b638b03755b"
       }
     }
   ]

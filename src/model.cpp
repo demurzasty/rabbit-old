@@ -280,6 +280,10 @@ void model::import(ibstream& input, obstream& output, const json& metadata) {
                     json image_metadata;
                     std::ifstream{ image_metadata_path } >> image_metadata;
                     jmaterial["normal_map"] = image_metadata["uuid"];
+
+                    // Flag texture as normal map.
+                    image_metadata["normal_map"] = true;
+                    std::ofstream{ image_metadata_path } << image_metadata;
                 }
             }
         }

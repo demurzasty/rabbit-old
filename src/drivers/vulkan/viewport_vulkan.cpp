@@ -106,6 +106,7 @@ void viewport_vulkan::begin_light_pass(VkCommandBuffer command_buffer) {
 
     _light_data = static_cast<light_data*>(mapped_data);
     _light_index = 0;
+    _has_shadows = false;
 }
 
 void viewport_vulkan::add_point_light(const vec3f& position, float radius, const vec3f& color) {
@@ -117,6 +118,7 @@ void viewport_vulkan::add_point_light(const vec3f& position, float radius, const
 void viewport_vulkan::add_directional_light(const vec3f& direction, const vec3f& color, bool shadow_enabled) {
     _light_data[_light_index].position_or_direction = { direction.x, direction.y, direction.z, 1.0f };
     _light_data[_light_index].color_and_radius = { color.x, color.y, color.z, shadow_enabled ? 1.0f : 0.0f };
+    _has_shadows = _has_shadows || shadow_enabled;
     ++_light_index;
 }
 
@@ -231,6 +233,10 @@ VkDescriptorSet viewport_vulkan::fill_descriptor_set() const {
 
 VkFramebuffer viewport_vulkan::fill_framebuffer() const {
     return _fill_framebuffer;
+}
+
+bool viewport_vulkan::has_shadows() const {
+    return _has_shadows;
 }
 
 void viewport_vulkan::_create_descriptor_pool(const viewport_desc& desc) {

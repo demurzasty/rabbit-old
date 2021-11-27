@@ -58,10 +58,12 @@ private:
         const auto diff = target - origin;
         if (diff != vec3f::zero()) {
             const auto len = length(diff);
-            const auto dir = diff / len;
-            const auto ftr = std::max(len * 20.0f, 0.01f);
-            const auto off = std::min(elapsed_time * ftr, len);
-            return origin + dir * off;
+            if (len > 0.0f) {
+                const auto dir = diff / len;
+                const auto ftr = std::max(len * 20.0f, 0.01f);
+                const auto off = std::min(elapsed_time * ftr, len);
+                return origin + dir * off;
+            }
         }
         return target;
     }
@@ -101,6 +103,6 @@ int main(int argc, char* argv[]) {
 
     app::system<camera_controller>();
     app::system<fps_meter>();
-
-    app::run("data/prefabs/corridor.scn");
+    
+    app::run("data/prefabs/scene.scn");
 }

@@ -43,6 +43,11 @@ namespace rb {
 	}
 
 	template<typename T>
+	constexpr vec2<T> operator*(const vec2<T>& a, const T& b) {
+		return { a.x * b, a.y * b };
+	}
+
+	template<typename T>
 	constexpr vec2<T> operator/(const vec2<T>& a, const T& b) {
 		return { a.x / b, a.y / b };
 	}

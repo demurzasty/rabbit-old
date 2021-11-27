@@ -7,6 +7,8 @@
 #include <volk.h>
 #include <vk_mem_alloc.h>
 
+#include <atomic>
+
 namespace rb {
     // 1. Depth Pre-Pass
     // 2. Forward pass (with depth comparison set to equal)
@@ -80,6 +82,8 @@ namespace rb {
 
         VkFramebuffer fill_framebuffer() const;
 
+        bool has_shadows() const;
+
     private:
         void _create_descriptor_pool(const viewport_desc& desc);
 
@@ -125,7 +129,9 @@ namespace rb {
         VmaAllocation _light_info_buffer_allocation;
 
         light_data* _light_data;
-        std::size_t _light_index{ 0 };
+        std::atomic<std::size_t> _light_index{ 0 };
+
+        bool _has_shadows{ false };
 
         VkImage _forward_image; // also as composition image as first pass
         VmaAllocation _forward_image_allocation;

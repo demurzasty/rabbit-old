@@ -17,6 +17,9 @@
 #include <unordered_map>
 
 namespace rb {
+	struct graphics_vulkan_flags {
+		static constexpr std::uint64_t shadow_map_bit{ 1llu << 32llu };
+	};
 
 	class graphics_vulkan : public graphics_impl {
 	public:
@@ -228,9 +231,9 @@ namespace rb {
 
 		VkPipelineLayout _get_forward_pipeline_layout(const std::shared_ptr<material>& material);
 
-		VkPipeline _create_forward_pipeline(const std::shared_ptr<material>& material);
+		VkPipeline _create_forward_pipeline(const std::shared_ptr<material>& material, std::uint64_t internal_flags);
 
-		VkPipeline _get_forward_pipeline(const std::shared_ptr<material>& material);
+		VkPipeline _get_forward_pipeline(const std::shared_ptr<material>& material, std::uint64_t internal_flags);
 
 		void _create_postprocess();
 
@@ -368,8 +371,8 @@ namespace rb {
 
 		VkDescriptorSetLayout _forward_descriptor_set_layout;
 		VkRenderPass _forward_render_pass;
-		std::unordered_map<std::uint32_t, VkPipelineLayout> _forward_pipeline_layouts;
-		std::unordered_map<std::uint32_t, VkPipeline> _forward_pipelines;
+		std::unordered_map<std::uint64_t, VkPipelineLayout> _forward_pipeline_layouts;
+		std::unordered_map<std::uint64_t, VkPipeline> _forward_pipelines;
 
 		VkDescriptorSetLayout _postprocess_descriptor_set_layout;
 		VkRenderPass _postprocess_render_pass;
