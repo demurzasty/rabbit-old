@@ -153,6 +153,9 @@ namespace rb {
         VkDescriptorSet _fill_descriptor_set;
 
         VkImage _bloom_image;
-
+        VmaAllocation _bloom_image_allocation;
+        VkImageView _bloom_image_view;
+        VkFramebuffer _bloom_framebuffer;
+        VkDescriptorSet _bloom_descriptor_set;
     };
 }

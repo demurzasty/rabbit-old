@@ -98,7 +98,9 @@ graphics_vulkan::~graphics_vulkan() {
     vkDestroyPipeline(_device, _sharpen_pipeline, nullptr);
     vkDestroyPipelineLayout(_device, _sharpen_pipeline_layout, nullptr);
 
-    vkDestroyPipeline(_device, _blur_pipeline, nullptr);
+    for (auto i = 0u; i < 2u; ++i) {
+        vkDestroyPipeline(_device, _blur_pipelines[i], nullptr);
+    }
     vkDestroyPipelineLayout(_device, _blur_pipeline_layout, nullptr);
 
     vkDestroyPipeline(_device, _fxaa_pipeline, nullptr);
@@ -675,7 +677,18 @@ void graphics_vulkan::draw_blur(const std::shared_ptr<viewport>& viewport, int s
     blur_data.strength = strength;
     vkCmdPushConstants(_command_buffers[_command_index], _blur_pipeline_layout, VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(blur_data), &blur_data);
 
-    vkCmdBindPipeline(_command_buffers[_command_index], VK_PIPELINE_BIND_POINT_GRAPHICS, _blur_pipeline);
+    vkCmdBindPipeline(_command_buffers[_command_index], VK_PIPELINE_BIND_POINT_GRAPHICS, _blur_pipelines[0]);
+    vkCmdDrawIndexed(_command_buffers[_command_index], 6, 1, 0, 0, 0);
+
+    next_postprocess_pass(viewport);
+
+    descriptor_sets[0] = native_viewport->postprocess_descriptor_set();
+
+    vkCmdBindDescriptorSets(_command_buffers[_command_index],
+        VK_PIPELINE_BIND_POINT_GRAPHICS, _blur_pipeline_layout, 0, 1, descriptor_sets,
+        0, nullptr);
+
+    vkCmdBindPipeline(_command_buffers[_command_index], VK_PIPELINE_BIND_POINT_GRAPHICS, _blur_pipelines[1]);
     vkCmdDrawIndexed(_command_buffers[_command_index], 6, 1, 0, 0, 0);
 }
 
@@ -3240,11 +3253,25 @@ void graphics_vulkan::_create_blur_pipeline() {
     vertex_shader_stage_info.module = blur_shader_modules[0];
     vertex_shader_stage_info.pName = "main";
 
+    int orientation = 0;
+
+    VkSpecializationMapEntry map_entry;
+    map_entry.constantID = 0;
+    map_entry.offset = 0;
+    map_entry.size = sizeof(int);
+
+    VkSpecializationInfo specialization_info;
+    specialization_info.dataSize = sizeof(int);
+    specialization_info.mapEntryCount = 1;
+    specialization_info.pData = &orientation;
+    specialization_info.pMapEntries = &map_entry;
+
     VkPipelineShaderStageCreateInfo fragment_shader_stage_info{};
     fragment_shader_stage_info.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
     fragment_shader_stage_info.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
     fragment_shader_stage_info.module = blur_shader_modules[1];
     fragment_shader_stage_info.pName = "main";
+    fragment_shader_stage_info.pSpecializationInfo = &specialization_info;
 
     VkPipelineShaderStageCreateInfo shader_stages[] = {
         vertex_shader_stage_info,
@@ -3278,7 +3305,12 @@ void graphics_vulkan::_create_blur_pipeline() {
     pipeline_info.renderPass = _postprocess_render_pass;
     pipeline_info.basePipelineHandle = VK_NULL_HANDLE;
     pipeline_info.pDynamicState = &dynamic_state_info;
-    RB_VK(vkCreateGraphicsPipelines(_device, VK_NULL_HANDLE, 1, &pipeline_info, nullptr, &_blur_pipeline),
+    RB_VK(vkCreateGraphicsPipelines(_device, VK_NULL_HANDLE, 1, &pipeline_info, nullptr, &_blur_pipelines[0]),
+        "Failed to create Vulkan graphics pipeline");
+
+    orientation = 1;
+
+    RB_VK(vkCreateGraphicsPipelines(_device, VK_NULL_HANDLE, 1, &pipeline_info, nullptr, &_blur_pipelines[1]),
         "Failed to create Vulkan graphics pipeline");
 
     vkDestroyShaderModule(_device, blur_shader_modules[1], nullptr);

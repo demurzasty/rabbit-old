@@ -405,7 +405,7 @@ namespace rb {
 		VkPipeline _fxaa_pipeline;
 
 		VkPipelineLayout _blur_pipeline_layout;
-		VkPipeline _blur_pipeline;
+		VkPipeline _blur_pipelines[2];
 
 		VkPipelineLayout _sharpen_pipeline_layout;
 		VkPipeline _sharpen_pipeline;
