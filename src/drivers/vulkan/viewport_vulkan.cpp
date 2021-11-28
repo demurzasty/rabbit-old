@@ -49,8 +49,10 @@ viewport_vulkan::~viewport_vulkan() {
     }
 
     vkDestroyFramebuffer(_device, _forward_framebuffer, nullptr);
-    vkDestroyImageView(_device, _forward_image_view, nullptr);
-    vmaDestroyImage(_allocator, _forward_image, _forward_image_allocation);
+    for (auto i = 0; i < 2u; ++i) {
+        vkDestroyImageView(_device, _forward_images_views[i], nullptr);
+        vmaDestroyImage(_allocator, _forward_images[i], _forward_images_allocations[i]);
+    }
 
     vmaDestroyBuffer(_allocator, _light_info_buffer, _light_info_buffer_allocation);
     vmaDestroyBuffer(_allocator, _visible_light_indices_buffer, _visible_light_indices_buffer_allocation);
@@ -241,7 +243,7 @@ bool viewport_vulkan::has_shadows() const {
 
 void viewport_vulkan::_create_descriptor_pool(const viewport_desc& desc) {
     VkDescriptorPoolSize pool_sizes[3]{
-        { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 9 },
+        { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 10 },
         { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1 },
         { VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 2 }
     };
@@ -429,65 +431,63 @@ void viewport_vulkan::_create_light(const viewport_desc& desc) {
 }
 
 void viewport_vulkan::_create_forward(const viewport_desc& desc) {
-    VkImageCreateInfo image_info;
-    image_info.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
-    image_info.pNext = nullptr;
-    image_info.flags = 0;
-    image_info.imageType = VK_IMAGE_TYPE_2D;
-    image_info.format = VK_FORMAT_R8G8B8A8_UNORM;
-    image_info.extent = { desc.size.x, desc.size.y, 1 };
-    image_info.mipLevels = 1;
-    image_info.arrayLayers = 1;
-    image_info.samples = VK_SAMPLE_COUNT_1_BIT;
-    image_info.tiling = VK_IMAGE_TILING_OPTIMAL;
-    image_info.usage = VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT
-        | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
-    image_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-    image_info.queueFamilyIndexCount = 0;
-    image_info.pQueueFamilyIndices = 0;
-    image_info.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    for (auto i = 0u; i < 2u; ++i) {
+        VkImageCreateInfo image_info;
+        image_info.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+        image_info.pNext = nullptr;
+        image_info.flags = 0;
+        image_info.imageType = VK_IMAGE_TYPE_2D;
+        image_info.format = VK_FORMAT_R8G8B8A8_UNORM;
+        image_info.extent = { desc.size.x, desc.size.y, 1 };
+        image_info.mipLevels = 1;
+        image_info.arrayLayers = 1;
+        image_info.samples = VK_SAMPLE_COUNT_1_BIT;
+        image_info.tiling = VK_IMAGE_TILING_OPTIMAL;
+        image_info.usage = VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT
+            | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+        image_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+        image_info.queueFamilyIndexCount = 0;
+        image_info.pQueueFamilyIndices = 0;
+        image_info.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 
-    VmaAllocationCreateInfo allocation_info{};
-    allocation_info.usage = VMA_MEMORY_USAGE_GPU_ONLY;
-    RB_VK(vmaCreateImage(_allocator, &image_info, &allocation_info, &_forward_image, &_forward_image_allocation, nullptr),
-        "Failed to create Vulkan image");
+        VmaAllocationCreateInfo allocation_info{};
+        allocation_info.usage = VMA_MEMORY_USAGE_GPU_ONLY;
+        RB_VK(vmaCreateImage(_allocator, &image_info, &allocation_info, &_forward_images[i], &_forward_images_allocations[i], nullptr),
+            "Failed to create Vulkan image");
 
-    VkImageViewCreateInfo image_view_info;
-    image_view_info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-    image_view_info.pNext = nullptr;
-    image_view_info.flags = 0;
-    image_view_info.image = _forward_image;
-    image_view_info.viewType = VK_IMAGE_VIEW_TYPE_2D;
-    image_view_info.format = VK_FORMAT_R8G8B8A8_UNORM;
-    image_view_info.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
-    image_view_info.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
-    image_view_info.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
-    image_view_info.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
-    image_view_info.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-    image_view_info.subresourceRange.baseMipLevel = 0;
-    image_view_info.subresourceRange.levelCount = 1;
-    image_view_info.subresourceRange.baseArrayLayer = 0;
-    image_view_info.subresourceRange.layerCount = 1;
-    RB_VK(vkCreateImageView(_device, &image_view_info, nullptr, &_forward_image_view), "Failed to create image view");
+        VkImageViewCreateInfo image_view_info;
+        image_view_info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+        image_view_info.pNext = nullptr;
+        image_view_info.flags = 0;
+        image_view_info.image = _forward_images[i];
+        image_view_info.viewType = VK_IMAGE_VIEW_TYPE_2D;
+        image_view_info.format = VK_FORMAT_R8G8B8A8_UNORM;
+        image_view_info.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
+        image_view_info.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
+        image_view_info.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
+        image_view_info.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
+        image_view_info.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+        image_view_info.subresourceRange.baseMipLevel = 0;
+        image_view_info.subresourceRange.levelCount = 1;
+        image_view_info.subresourceRange.baseArrayLayer = 0;
+        image_view_info.subresourceRange.layerCount = 1;
+        RB_VK(vkCreateImageView(_device, &image_view_info, nullptr, &_forward_images_views[i]), "Failed to create image view");
+    }
 
-    VkImageView framebuffer_images_views[2]{ _forward_image_view, _depth_image_view };
+    VkImageView framebuffer_images_views[3]{ _forward_images_views[0], _forward_images_views[1], _depth_image_view };
 
     VkFramebufferCreateInfo framebuffer_info;
     framebuffer_info.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
     framebuffer_info.pNext = nullptr;
     framebuffer_info.flags = 0;
     framebuffer_info.renderPass = _forward_render_pass;
-    framebuffer_info.attachmentCount = 2;
+    framebuffer_info.attachmentCount = 3;
     framebuffer_info.pAttachments = framebuffer_images_views;
     framebuffer_info.width = desc.size.x;
     framebuffer_info.height = desc.size.y;
     framebuffer_info.layers = 1;
     RB_VK(vkCreateFramebuffer(_device, &framebuffer_info, nullptr, &_forward_framebuffer),
         "Failed to create Vulkan framebuffer");
-
-    VkDescriptorSetLayoutBinding bindings[1]{
-        { 0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr },
-    };
 
     VkDescriptorSetAllocateInfo descriptor_set_allocate_info;
     descriptor_set_allocate_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
@@ -498,15 +498,17 @@ void viewport_vulkan::_create_forward(const viewport_desc& desc) {
     RB_VK(vkAllocateDescriptorSets(_device, &descriptor_set_allocate_info, &_forward_descriptor_set),
         "Failed to allocatore desctiptor set");
 
-    VkDescriptorImageInfo image_infos[1]{
-        { _sampler, _forward_image_view, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL },
+    VkDescriptorImageInfo image_infos[2]{
+        { _sampler, _forward_images_views[0], VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL },
+        { _sampler, _forward_images_views[1], VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL },
     };
 
-    VkWriteDescriptorSet write_infos[1]{
+    VkWriteDescriptorSet write_infos[2]{
         { VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET, nullptr, _forward_descriptor_set, 0, 0, 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, &image_infos[0], nullptr, nullptr },
+        { VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET, nullptr, _forward_descriptor_set, 1, 0, 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, &image_infos[1], nullptr, nullptr },
     };
 
-    vkUpdateDescriptorSets(_device, 1, write_infos, 0, nullptr);
+    vkUpdateDescriptorSets(_device, 2, write_infos, 0, nullptr);
 }
 
 void viewport_vulkan::_create_postprocess(const viewport_desc& desc) {

@@ -23,6 +23,9 @@ layout (location = 0) in vec3 v_position;
 layout (location = 1) in vec2 v_texcoord;
 layout (location = 2) in vec3 v_normal;
 
+layout (location = 0) out vec4 o_color;
+layout (location = 1) out vec4 o_bright;
+
 layout (std140, set = 0, binding = 0) uniform camera_data {
     mat4 proj;
     mat4 view;
@@ -85,8 +88,6 @@ layout(std140, set = 3, binding = 2) uniform culling_data {
 	uint light_count;
     uint number_of_tiles_x;
 } u_culling_data;
-
-layout (location = 0) out vec4 out_color;
 
 const vec2 poisson_disk[64] = {
 	vec2( -0.04117257, -0.1597612 ),
@@ -404,5 +405,11 @@ void main() {
 	ambient = mix(ambient, ambient * ao, u_material.occlusion_strength);
 #endif
 
-    out_color = vec4(ambient + lo + emissive, albedo.a);
+    o_color = vec4(ambient + lo + emissive, albedo.a);
+
+	if (dot(o_color.rgb, vec3(0.2126, 0.7152, 0.0722)) > 1.0) {
+		o_bright = vec4(o_color.rgb, 1.0);
+	} else {
+		o_bright = vec4(0.0, 0.0, 0.0, 1.0);
+	}
 }

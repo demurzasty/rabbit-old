@@ -133,11 +133,11 @@ namespace rb {
 
         bool _has_shadows{ false };
 
-        VkImage _forward_image; // also as composition image as first pass
-        VmaAllocation _forward_image_allocation;
-        VkImageView _forward_image_view;
+        VkImage _forward_images[2];
+        VmaAllocation _forward_images_allocations[2];
+        VkImageView _forward_images_views[2];
         VkFramebuffer _forward_framebuffer;
-        VkDescriptorSet _forward_descriptor_set; // contains composition image
+        VkDescriptorSet _forward_descriptor_set;
 
         VkImage _postprocess_images[2];
         VmaAllocation _postprocess_image_allocations[2];
@@ -151,5 +151,8 @@ namespace rb {
         VkImageView _fill_image_view;
         VkFramebuffer _fill_framebuffer;
         VkDescriptorSet _fill_descriptor_set;
+
+        VkImage _bloom_image;
+
     };
 }

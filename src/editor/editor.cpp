@@ -130,7 +130,7 @@ uuid editor::import(const std::string& filename) {
 		return {};
 	}
 
-	const auto importer = _importers[extension.string()];
+	const auto& importer = _importers[extension.string()];
 	if (!importer) {
 		return {};
 	}

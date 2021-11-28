@@ -79,6 +79,7 @@ graphics_vulkan::~graphics_vulkan() {
     vkDeviceWaitIdle(_device);
 
     vkDestroyPipeline(_device, _forward_copy_pipeline, nullptr);
+    vkDestroyPipelineLayout(_device, _forward_copy_pipeline_layout, nullptr);
     vkDestroyPipeline(_device, _light_copy_pipeline, nullptr);
     vkDestroyPipeline(_device, _present_pipeline, nullptr);
     vkDestroyPipelineLayout(_device, _present_pipeline_layout, nullptr);
@@ -595,7 +596,7 @@ void graphics_vulkan::begin_postprocess_pass(const std::shared_ptr<viewport>& vi
     };
 
     vkCmdBindDescriptorSets(_command_buffers[_command_index],
-        VK_PIPELINE_BIND_POINT_GRAPHICS, _present_pipeline_layout, 0, 1, descriptor_sets,
+        VK_PIPELINE_BIND_POINT_GRAPHICS, _forward_copy_pipeline_layout, 0, 1, descriptor_sets,
         0, nullptr);
 
     VkDeviceSize offset{ 0 };
@@ -610,10 +611,6 @@ void graphics_vulkan::next_postprocess_pass(const std::shared_ptr<viewport>& vie
     const auto native_viewport = std::static_pointer_cast<viewport_vulkan>(viewport);
     native_viewport->end_postprocess_pass(_command_buffers[_command_index]);
     native_viewport->begin_postprocess_pass(_command_buffers[_command_index]);
-
-    VkDescriptorSet descriptor_sets[]{
-        native_viewport->postprocess_descriptor_set()
-    };
 }
 
 void graphics_vulkan::draw_ssao(const std::shared_ptr<viewport>& viewport) {
@@ -1956,13 +1953,14 @@ VkPipeline graphics_vulkan::_create_forward_pipeline(const std::shared_ptr<mater
 
     VkPipelineColorBlendAttachmentState color_blend_attachment_state_infos[]{
         color_blend_attachment_state_info,
+        color_blend_attachment_state_info
     };
 
     VkPipelineColorBlendStateCreateInfo color_blend_state_info{};
     color_blend_state_info.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
     color_blend_state_info.logicOpEnable = VK_FALSE;
     color_blend_state_info.logicOp = VK_LOGIC_OP_COPY;
-    color_blend_state_info.attachmentCount = 1;
+    color_blend_state_info.attachmentCount = 2;
     color_blend_state_info.pAttachments = color_blend_attachment_state_infos;
     color_blend_state_info.blendConstants[0] = 0.0f;
     color_blend_state_info.blendConstants[1] = 0.0f;
@@ -2035,15 +2033,16 @@ VkPipeline graphics_vulkan::_get_forward_pipeline(const std::shared_ptr<material
 }
 
 void graphics_vulkan::_create_forward() {
-    VkDescriptorSetLayoutBinding bindings[1]{
+    VkDescriptorSetLayoutBinding bindings[2]{
         { 0, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr },
+        { 1, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1, VK_SHADER_STAGE_FRAGMENT_BIT, nullptr },
     };
 
     VkDescriptorSetLayoutCreateInfo descriptor_set_layout_info;
     descriptor_set_layout_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
     descriptor_set_layout_info.pNext = nullptr;
     descriptor_set_layout_info.flags = 0;
-    descriptor_set_layout_info.bindingCount = 1;
+    descriptor_set_layout_info.bindingCount = 2;
     descriptor_set_layout_info.pBindings = bindings;
     RB_VK(vkCreateDescriptorSetLayout(_device, &descriptor_set_layout_info, nullptr, &_forward_descriptor_set_layout),
         "Failed to create Vulkan descriptor set layout");
@@ -2058,6 +2057,17 @@ void graphics_vulkan::_create_forward() {
     color_attachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
     color_attachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
     color_attachment.finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+    VkAttachmentDescription bright_attachment;
+    bright_attachment.flags = 0;
+    bright_attachment.format = VK_FORMAT_R8G8B8A8_UNORM;
+    bright_attachment.samples = VK_SAMPLE_COUNT_1_BIT;
+    bright_attachment.loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+    bright_attachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+    bright_attachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+    bright_attachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+    bright_attachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    bright_attachment.finalLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
 
     const auto depth_format = _get_supported_depth_format();
 
@@ -2075,18 +2085,27 @@ void graphics_vulkan::_create_forward() {
     color_attachment_reference.attachment = 0;
     color_attachment_reference.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
-    VkAttachmentReference depth_attachment_reference{};
-    depth_attachment_reference.attachment = 1;
+    VkAttachmentReference bright_attachment_reference;
+    bright_attachment_reference.attachment = 1;
+    bright_attachment_reference.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+    VkAttachmentReference depth_attachment_reference;
+    depth_attachment_reference.attachment = 2;
     depth_attachment_reference.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_READ_ONLY_OPTIMAL;
 
     VkAttachmentReference resolve_reference{};
     resolve_reference.attachment = 1;
     resolve_reference.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
+    VkAttachmentReference color_attachment_references[]{
+        color_attachment_reference,
+        bright_attachment_reference
+    };
+
     VkSubpassDescription subpass{};
     subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-    subpass.colorAttachmentCount = 1;
-    subpass.pColorAttachments = &color_attachment_reference;
+    subpass.colorAttachmentCount = 2;
+    subpass.pColorAttachments = color_attachment_references;
     subpass.pDepthStencilAttachment = &depth_attachment_reference;
     subpass.pResolveAttachments = nullptr;
 
@@ -2125,7 +2144,7 @@ void graphics_vulkan::_create_forward() {
     subpass_dependencies[1].dstAccessMask = VK_ACCESS_MEMORY_READ_BIT;
     subpass_dependencies[1].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
 
-    VkAttachmentDescription attachments[] = { color_attachment, depth_attachment };
+    VkAttachmentDescription attachments[]{ color_attachment, bright_attachment, depth_attachment };
 
     VkRenderPassCreateInfo render_pass_info{};
     render_pass_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
@@ -6048,12 +6067,16 @@ void graphics_vulkan::_create_skybox_pipeline() {
         VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
     color_blend_attachment_state_info.blendEnable = VK_FALSE;
 
+    VkPipelineColorBlendAttachmentState attachments[]{
+        color_blend_attachment_state_info, color_blend_attachment_state_info
+    };
+
     VkPipelineColorBlendStateCreateInfo color_blend_state_info{};
     color_blend_state_info.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
     color_blend_state_info.logicOpEnable = VK_FALSE;
     color_blend_state_info.logicOp = VK_LOGIC_OP_COPY;
-    color_blend_state_info.attachmentCount = 1;
-    color_blend_state_info.pAttachments = &color_blend_attachment_state_info;
+    color_blend_state_info.attachmentCount = 2;
+    color_blend_state_info.pAttachments = attachments;
     color_blend_state_info.blendConstants[0] = 0.0f;
     color_blend_state_info.blendConstants[1] = 0.0f;
     color_blend_state_info.blendConstants[2] = 0.0f;
@@ -6112,7 +6135,7 @@ void graphics_vulkan::_create_skybox_pipeline() {
 
 void graphics_vulkan::_create_present_pipeline() {
     VkDescriptorSetLayout layouts[]{
-        _forward_descriptor_set_layout
+        _postprocess_descriptor_set_layout,
     };
 
     VkPipelineLayoutCreateInfo pipeline_layout_info;
@@ -6295,12 +6318,29 @@ void graphics_vulkan::_create_present_pipeline() {
     RB_VK(vkCreateGraphicsPipelines(_device, VK_NULL_HANDLE, 1, &pipeline_info, nullptr, &_present_pipeline),
         "Failed to create Vulkan graphics pipeline");
 
-    pipeline_info.renderPass = _forward_render_pass;
-    RB_VK(vkCreateGraphicsPipelines(_device, VK_NULL_HANDLE, 1, &pipeline_info, nullptr, &_light_copy_pipeline),
-        "Failed to create Vulkan graphics pipeline");
+    layouts[0] = _forward_descriptor_set_layout;
+
+    RB_VK(vkCreatePipelineLayout(_device, &pipeline_layout_info, nullptr, &_forward_copy_pipeline_layout),
+        "Failed to create Vulkan pipeline layout");
+
+    pipeline_info.layout = _forward_copy_pipeline_layout;
 
     pipeline_info.renderPass = _postprocess_render_pass;
     RB_VK(vkCreateGraphicsPipelines(_device, VK_NULL_HANDLE, 1, &pipeline_info, nullptr, &_forward_copy_pipeline),
+        "Failed to create Vulkan graphics pipeline");
+
+    VkPipelineColorBlendAttachmentState attachments[]{
+        color_blend_attachment_state_info,
+        color_blend_attachment_state_info
+    };
+
+    color_blend_state_info.attachmentCount = 2;
+    color_blend_state_info.pAttachments = attachments;
+
+    pipeline_info.layout = _present_pipeline_layout;
+
+    pipeline_info.renderPass = _forward_render_pass;
+    RB_VK(vkCreateGraphicsPipelines(_device, VK_NULL_HANDLE, 1, &pipeline_info, nullptr, &_light_copy_pipeline),
         "Failed to create Vulkan graphics pipeline");
 
     vkDestroyShaderModule(_device, shader_modules[1], nullptr);

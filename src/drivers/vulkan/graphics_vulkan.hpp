@@ -424,6 +424,7 @@ namespace rb {
 		VkPipelineLayout _present_pipeline_layout;
 		VkPipeline _present_pipeline;
 		VkPipeline _light_copy_pipeline;
+		VkPipelineLayout _forward_copy_pipeline_layout;
 		VkPipeline _forward_copy_pipeline;
 
 		VkCommandBuffer _shadow_command_buffer;
