@@ -60,7 +60,7 @@ private:
             const auto len = length(diff);
             if (len > 0.0f) {
                 const auto dir = diff / len;
-                const auto ftr = std::max(len * 20.0f, 0.01f);
+                const auto ftr = std::max(len * 40.0f, 0.01f);
                 const auto off = std::min(elapsed_time * ftr, len);
                 return origin + dir * off;
             }
