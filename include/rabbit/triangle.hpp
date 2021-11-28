@@ -38,7 +38,7 @@ namespace rb {
         const auto v2 = cross(ray.position - triangle[0], e1);
 
         const auto v = dot(ray.direction, v2) / d;
-        if (v < 0 || v > 1) {
+        if (v < 0 || u + v > 1) {
             return std::nullopt;
         }
 
