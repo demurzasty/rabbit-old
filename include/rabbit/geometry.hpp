@@ -16,4 +16,8 @@ namespace rb {
 			visitor("material", geometry.material);
 		}
 	};
+
+	struct cached_geometry {
+		std::uint32_t lod_index{ 0 };
+	};
 }

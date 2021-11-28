@@ -11,6 +11,8 @@
 using namespace rb;
 
 void renderer::initialize(registry& registry) {
+    registry.on_construct<geometry>().connect<&renderer::_on_geometry_construct>(this);
+
     _viewport = graphics::make_viewport({ settings::window_size });
 }
 
@@ -40,10 +42,21 @@ void renderer::draw(registry& registry) {
 
     // Set main camera information to graphics backend.
     const auto& [camera_transform, camera] = registry.get<transform, rb::camera>(_viewport->camera);
-    {
-        const auto projection = mat4f::perspective(deg2rad(camera.field_of_view), _viewport->aspect(), camera.z_near, camera.z_far);
-        const auto& world = get_world(registry, _viewport->camera, camera_transform);
-        graphics::set_camera(projection, invert(world), world, camera.environment);
+
+    const auto camera_projection = mat4f::perspective(deg2rad(camera.field_of_view), _viewport->aspect(), camera.z_near, camera.z_far);
+    const auto& camera_world = get_world(registry, _viewport->camera, camera_transform);
+    const vec3f camera_position{ camera_world[12], camera_world[13], camera_world[14] };
+    graphics::set_camera(camera_projection, invert(camera_world), camera_world, camera.environment);
+
+    // Update cached geometries.
+    for (auto& [entity, transform, geometry, cached_geometry] : registry.view<transform, geometry, cached_geometry>().each()) {
+        if (geometry.mesh) {
+            const auto& world = get_world(registry, entity, transform);
+            const vec3f geometry_position{ world[12], world[13], world[14] };
+            const auto distance = length(geometry_position - camera_position);
+            const auto factor = std::min(std::max((distance - camera.z_near) / camera.z_far, 0.0f), 0.99f);
+            cached_geometry.lod_index = static_cast<std::uint32_t>(factor * geometry.mesh->lods().size());
+        }
     }
 
     // Begin depth pre pass. Using this pass we achive few goals:
@@ -53,9 +66,9 @@ void renderer::draw(registry& registry) {
 
     // Draw depth for every geometry in scene.
     // TODO: Entities that is not visible from camera perspective should be culled. 
-    for (const auto& [entity, transform, geometry] : registry.view<transform, geometry>().each()) {
+    for (const auto& [entity, transform, geometry, cached_geometry] : registry.view<transform, geometry, cached_geometry>().each()) {
         if (!geometry.material || (!geometry.material->translucent() && !geometry.material->wireframe())) {
-            graphics::draw_depth(_viewport, get_world(registry, entity, transform), geometry.mesh, 0);
+            graphics::draw_depth(_viewport, get_world(registry, entity, transform), geometry.mesh, cached_geometry.lod_index);
         }
     }
 
@@ -101,18 +114,18 @@ void renderer::draw(registry& registry) {
 
     // Draw every geometry. 
     // TODO: Entities that is not visible from camera perspective should be culled. 
-    for (const auto& [entity, transform, geometry] : registry.view<transform, geometry>().each()) {
+    for (const auto& [entity, transform, geometry, cached_geometry] : registry.view<transform, geometry, cached_geometry>().each()) {
         if (geometry.material && !geometry.material->translucent()) {
-            graphics::draw_forward(_viewport, get_world(registry, entity, transform), geometry.mesh, geometry.material, 0);
+            graphics::draw_forward(_viewport, get_world(registry, entity, transform), geometry.mesh, geometry.material, cached_geometry.lod_index);
         }
     }
 
     // Draw skybox between. Minimize overdraw using depth testing.
     graphics::draw_skybox(_viewport);
 
-    for (const auto& [entity, transform, geometry] : registry.view<transform, geometry>().each()) {
+    for (const auto& [entity, transform, geometry, cached_geometry] : registry.view<transform, geometry, cached_geometry>().each()) {
         if (geometry.material && geometry.material->translucent()) {
-            graphics::draw_forward(_viewport, get_world(registry, entity, transform), geometry.mesh, geometry.material, 0);
+            graphics::draw_forward(_viewport, get_world(registry, entity, transform), geometry.mesh, geometry.material, cached_geometry.lod_index);
         }
     }
 
@@ -156,4 +169,8 @@ entity renderer::_find_directional_light_with_shadows(registry& registry) const 
     }
 
     return null;
+}
+
+void renderer::_on_geometry_construct(registry& registry, entity entity) {
+    registry.emplace_or_replace<cached_geometry>(entity);
 }

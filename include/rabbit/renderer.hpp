@@ -17,6 +17,8 @@ namespace rb {
 	private:
 		entity _find_directional_light_with_shadows(registry& registry) const;
 
+		void _on_geometry_construct(registry& registry, entity entity);
+
 	private:
 		std::shared_ptr<viewport> _viewport;
 	};
