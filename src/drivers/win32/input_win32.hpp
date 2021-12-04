@@ -1,6 +1,6 @@
 #pragma once 
 
-#include <rabbit/input.hpp>
+#include <rabbit/platform/input.hpp>
 
 #include <cstdint>
 

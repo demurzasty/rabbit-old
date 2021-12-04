@@ -1,6 +1,6 @@
 #pragma once 
 
-#include <rabbit/material.hpp>
+#include <rabbit/graphics/material.hpp>
 
 #include <volk.h>
 #include <vk_mem_alloc.h>

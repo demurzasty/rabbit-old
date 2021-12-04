@@ -1,7 +1,7 @@
 #include "viewport_vulkan.hpp"
 #include "utils_vulkan.hpp"
 
-#include <rabbit/graphics.hpp>
+#include <rabbit/graphics/graphics.hpp>
 
 using namespace rb;
 

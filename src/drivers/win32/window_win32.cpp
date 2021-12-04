@@ -1,11 +1,10 @@
 #include "window_win32.hpp"
 
-#include <rabbit/config.hpp>
+#include <rabbit/core/config.hpp>
 
 using namespace rb;
 
 static LRESULT CALLBACK window_proc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
-
 
 void setProcessDpiAware()
 {

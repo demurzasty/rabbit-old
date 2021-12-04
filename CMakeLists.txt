@@ -47,30 +47,33 @@ endforeach (GLSL_SRC)
 add_custom_target (shaders DEPENDS ${SPIRV_BINARY_FILES})
 
 set (SRC 
-	"src/app.cpp"
-	"src/assets.cpp"
-	"src/bstream.cpp"
-	"src/compression.cpp"
-	"src/environment.cpp"
-	"src/glsl.cpp"
-	"src/graphics.cpp"
-	"src/hierarchy.cpp"
-	"src/image.cpp"
-	"src/input.cpp"
-	"src/material.cpp"
-	"src/mesh.cpp"
-	"src/model.cpp"
-	"src/prefab.cpp"
-	"src/rect_pack.cpp"
-	"src/reflection.cpp"
-	"src/renderer.cpp"
-	"src/s3tc.cpp"
-	"src/settings.cpp"
-	"src/system.cpp"
-	"src/texture.cpp"
-	"src/uuid.cpp"
-	"src/viewport.cpp"
-	"src/window.cpp"
+	"src/core/app.cpp"
+	"src/core/assets.cpp"
+	"src/core/bstream.cpp"
+	"src/core/compression.cpp"
+	"src/core/prefab.cpp"
+	"src/core/rect_pack.cpp"
+	"src/core/reflection.cpp"
+	"src/core/settings.cpp"
+	"src/core/system.cpp"
+	"src/core/uuid.cpp"
+
+	"src/graphics/environment.cpp"
+	"src/graphics/glsl.cpp"
+	"src/graphics/graphics.cpp"
+	"src/graphics/image.cpp"
+	"src/graphics/material.cpp"
+	"src/graphics/mesh.cpp"
+	"src/graphics/model.cpp"
+	"src/graphics/s3tc.cpp"
+	"src/graphics/texture.cpp"
+	"src/graphics/viewport.cpp"
+	
+	"src/platform/input.cpp"
+	"src/platform/window.cpp"
+
+	"src/systems/hierarchy.cpp"
+	"src/systems/renderer.cpp"
 )
 
 if (NOT RB_PROD_BUILD) 
@@ -124,9 +127,6 @@ target_compile_definitions (rabbit PUBLIC RB_VULKAN=$<BOOL:${RB_VULKAN}>)
 target_compile_definitions (rabbit PUBLIC RB_DIRECTX12=$<BOOL:${RB_DIRECTX12}>)
 
 target_compile_definitions (rabbit PUBLIC -DRB_PROD_BUILD=$<BOOL:${RB_PROD_BUILD}>)
-
-add_library (rabbit-interop SHARED "src/interop/rabbit.cpp")
-target_link_libraries (rabbit-interop PUBLIC rabbit)
 
 if (CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
 	add_subdirectory ("example")
