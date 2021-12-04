@@ -18,7 +18,7 @@ void main() {
     
     vec3 up = texture(u_postprocess_map, v_texcoord + vec2(0.0, -1.0) * texel).rgb;
     vec3 left = texture(u_postprocess_map, v_texcoord + vec2(-1.0, 0.0) * texel).rgb;
-    vec3 center = texture(u_postprocess_map, v_texcoord + vec2(0.0, 0.0) * texel).rgb;
+    vec3 center = texture(u_postprocess_map, v_texcoord).rgb;
     vec3 right = texture(u_postprocess_map, v_texcoord + vec2(1.0, 0.0) * texel).rgb;
     vec3 down = texture(u_postprocess_map, v_texcoord + vec2(0.0, 1.0) * texel).rgb;
 
