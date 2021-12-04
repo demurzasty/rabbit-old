@@ -5,3 +5,5 @@
 /build
 /generated
 /CMakeSettings.json
+
+*.generated.h

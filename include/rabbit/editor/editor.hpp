@@ -1,36 +1,39 @@
 #pragma once 
 
-#include "../json.hpp"
-#include "../bstream.hpp"
+#include "entry.hpp"
+#include "importer.hpp"
+#include "../core/type.hpp"
 
-#include <string>
-#include <functional>
-#include <unordered_map>
+#include <memory>
 #include <filesystem>
 
 namespace rb {
-	class entry {
-		std::filesystem::path path;
-	};
+    class editor_impl {
+    public:
+        void scan();
 
-	using importer = std::function<void(ibstream&, obstream&, const json&)>;
+    private:
+        void scan(const std::shared_ptr<entry>& entry);
 
-	class editor {
-	public:
-		static void init();
+        std::shared_ptr<importer> _find_suitable_importer(const std::string_view& extension);
 
-		static void release();
+    private:
+        std::shared_ptr<entry> _root_entry;
+        std::unordered_map<id_type, std::shared_ptr<importer>> _importers;
+    };
 
-		static void scan();
+    class editor {
+    public:
+        static void setup();
 
-		static uuid import(const std::string& filename);
+        static void release();
 
-		template<typename Asset, typename... Extensions>
-		static void add_importer(Extensions&&... extensions) {
-			(_importers.emplace(extensions, &Asset::import), ...);
-		}
+        static void scan();
 
-	private:
-		static std::unordered_map<std::string, importer> _importers;
-	};
+    private:
+        static void _reflect();
+
+    private:
+        static std::unique_ptr<editor_impl> _impl;
+    };
 }

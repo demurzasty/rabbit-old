@@ -4,7 +4,7 @@
 #include <map>
 #include <algorithm>
 
-using namespace rb; 
+using namespace rb;
 
 static std::map<texture_format, VkFormat> formats = {
     { texture_format::r8, VK_FORMAT_R8_UNORM },
@@ -35,7 +35,7 @@ texture_vulkan::texture_vulkan(VkDevice device,
     , _allocator(allocator) {
     _create_image(desc);
 
-    if (desc.data) {
+    if (!desc.pixels.empty()) {
         _update_image(graphics_queue, command_pool, desc);
 
         if (desc.mipmaps == 0) {
@@ -123,7 +123,7 @@ void texture_vulkan::_update_image(VkQueue graphics_queue, VkCommandPool command
     void* data;
     RB_VK(vmaMapMemory(_allocator, staging_buffer_allocation, &data), "Failed to map staging buffer memory");
 
-    std::memcpy(data, desc.data, buffer_info.size);
+    std::memcpy(data, desc.pixels.data(), buffer_info.size);
 
     vmaUnmapMemory(_allocator, staging_buffer_allocation);
 
@@ -162,7 +162,7 @@ void texture_vulkan::_update_image(VkQueue graphics_queue, VkCommandPool command
         region.imageExtent = { mipmap_size.x, mipmap_size.y, 1 };
 
         vkCmdCopyBufferToImage(command_buffer, staging_buffer, _image, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, 1, &region);
-   
+
         buffer_offset += mipmap_size.x * mipmap_size.y * bits_per_pixel() / 8;
         mipmap_size = mipmap_size / 2u;
     }

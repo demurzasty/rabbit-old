@@ -1,13 +1,12 @@
 #include "window_win32.hpp"
 
-#include <rabbit/config.hpp>
+#include <rabbit/core/config.hpp>
 
 using namespace rb;
 
 static LRESULT CALLBACK window_proc(HWND hwnd, UINT uMsg, WPARAM wParam, LPARAM lParam);
 
-
-void setProcessDpiAware()
+static void setProcessDpiAware()
 {
 	// Try SetProcessDpiAwareness first
 	HINSTANCE shCoreDll = LoadLibrary("Shcore.dll");
@@ -78,48 +77,45 @@ window_win32::window_win32() {
 	auto screen_width = (unsigned int)GetDeviceCaps(screenDC, HORZRES);
 	auto screen_height = (unsigned int)GetDeviceCaps(screenDC, VERTRES);
 
-	if (settings::fullscreen) {
-		settings::window_size = { screen_width, screen_height };
+	if (settings::window.fullscreen) {
+		settings::window.size = { screen_width, screen_height };
 	}
 
-	auto left = (screen_width - settings::window_size.x) / 2;
-	auto top = (screen_height - settings::window_size.y) / 2;
+	auto left = (screen_width - settings::window.size.x) / 2;
+	auto top = (screen_height - settings::window.size.y) / 2;
 	ReleaseDC(NULL, screenDC);
 
 	RECT rect;
 	rect.left = rect.top = 0;
-	rect.right = settings::window_size.x;
-	rect.bottom = settings::window_size.y;
+	rect.right = settings::window.size.x;
+	rect.bottom = settings::window.size.y;
 
-	const DWORD style = settings::fullscreen ?
-		WS_VISIBLE | WS_POPUP : 
+	const DWORD style = settings::window.fullscreen ?
+		WS_VISIBLE | WS_POPUP :
 		WS_CAPTION | WS_MINIMIZEBOX | WS_SYSMENU | WS_VISIBLE;
 
-	auto width = settings::window_size.x;
-	auto height = settings::window_size.y;
+	auto width = settings::window.size.x;
+	auto height = settings::window.size.y;
 
-	if (!settings::fullscreen) {
+	if (!settings::window.fullscreen) {
 		if (AdjustWindowRect(&rect, style, FALSE)) {
 			width = rect.right - rect.left;
 			height = rect.bottom - rect.top;
 		}
-	} else {
+	}
+	else {
 		left = 0;
 		top = 0;
 		width = screen_width;
 		height = screen_height;
 	}
 
-	_hwnd = CreateWindow("RabBit", settings::window_title.c_str(), style,
+	_hwnd = CreateWindow("RabBit", settings::window.title.c_str(), style,
 		left, top, width, height, NULL, NULL, GetModuleHandle(NULL), this);
 	RB_ASSERT(_hwnd, "Cannot create window");
 }
 
 window_win32::~window_win32() {
-	if (settings::fullscreen) {
-		ChangeDisplaySettings(nullptr, 0);
-	}
-
 	DestroyWindow(_hwnd);
 	UnregisterClass("RabBit", GetModuleHandle(NULL));
 }

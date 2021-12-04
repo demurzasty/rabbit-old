@@ -1,9 +1,5 @@
 #include "utils_vulkan.hpp"
 
-#ifdef _MSC_VER
-#   pragma warning(disable : 26812)
-#endif
-
 using namespace rb;
 
 VkCommandBuffer utils_vulkan::begin_single_time_commands(VkDevice device, VkCommandPool command_pool) {
