@@ -5743,7 +5743,7 @@ void graphics_vulkan::_create_shadow_map() {
     sampler_info.mipLodBias = 0.0f;
     sampler_info.anisotropyEnable = VK_FALSE;
     sampler_info.maxAnisotropy = 1.0f;
-    sampler_info.compareEnable = VK_TRUE;
+    sampler_info.compareEnable = VK_FALSE;
     sampler_info.compareOp = VK_COMPARE_OP_LESS;
     sampler_info.minLod = 0.0f;
     sampler_info.maxLod = 1.0f;
