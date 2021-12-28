@@ -30,6 +30,10 @@ bool window::is_open() {
 	return _impl->is_open();
 }
 
+bool window::is_minimized() {
+	return _impl->is_minimized();
+}
+
 vec2u window::size() {
 	return _impl->size();
 }

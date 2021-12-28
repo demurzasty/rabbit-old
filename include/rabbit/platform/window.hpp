@@ -24,6 +24,8 @@ namespace rb {
 
 		virtual bool is_open() const = 0;
 
+		virtual bool is_minimized() const = 0;
+
 		virtual vec2u size() const = 0;
 
 		virtual void set_title(const std::string& title) = 0;
@@ -42,6 +44,8 @@ namespace rb {
 		static window_handle native_handle();
 
 		static bool is_open();
+
+		static bool is_minimized();
 
 		static vec2u size();
 

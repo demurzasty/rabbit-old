@@ -1,6 +1,7 @@
 #include <rabbit/rabbit.hpp>
 
 #include <chrono>
+#include <thread>
 
 using namespace rb;
 
@@ -94,11 +95,15 @@ void app::_main_loop(const std::string& initial_scene) {
 			system->update(registry, elapsed_time);
 		}
 
-		for (auto& system : systems) {
-			system->draw(registry);
-		}
+		if (!window::is_minimized()) {
+			for (auto& system : systems) {
+				system->draw(registry);
+			}
 
-		graphics::swap_buffers();
+			graphics::swap_buffers();
+		} else {
+			std::this_thread::sleep_for(std::chrono::milliseconds{ 100 });
+		}
 	}
 
 	graphics::flush();

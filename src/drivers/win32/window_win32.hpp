@@ -14,6 +14,8 @@ namespace rb {
 
 		bool is_open() const override;
 
+		bool is_minimized() const override;
+
 		window_handle native_handle() const override;
 
 		void poll_events() override;

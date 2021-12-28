@@ -127,6 +127,10 @@ bool window_win32::is_open() const {
 	return _open;
 }
 
+bool window_win32::is_minimized() const {
+	return IsIconic(_hwnd) == TRUE;
+}
+
 window_handle window_win32::native_handle() const {
 	return _hwnd;
 }
