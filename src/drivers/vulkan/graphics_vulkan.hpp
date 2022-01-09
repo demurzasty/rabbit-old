@@ -56,9 +56,11 @@ namespace rb {
 	private:
 		std::uint32_t _instance_index{ 0 };
 
+		VkBuffer _main_staging_buffer;
+		VmaAllocation _main_staging_buffer_allocation;
 		VkBuffer _main_buffer;
 		VmaAllocation _main_buffer_allocation;
-		main_data _main_buffer_staging;
+		main_data _main_staging_buffer_data;
 
 		VkBuffer _world_buffer;
 		VmaAllocation _world_buffer_allocation;

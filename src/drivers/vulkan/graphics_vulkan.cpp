@@ -40,6 +40,7 @@ graphics_vulkan::~graphics_vulkan() {
     vmaDestroyBuffer(_allocator, _index_buffer, _index_buffer_allocation);
     vmaDestroyBuffer(_allocator, _vertex_buffer, _vertex_buffer_allocation);
     vmaDestroyBuffer(_allocator, _world_buffer, _world_buffer_allocation);
+    vmaDestroyBuffer(_allocator, _main_staging_buffer, _main_staging_buffer_allocation);
     vmaDestroyBuffer(_allocator, _main_buffer, _main_buffer_allocation);
 }
 
@@ -69,11 +70,11 @@ std::shared_ptr<mesh> graphics_vulkan::make_mesh(const mesh_desc& desc) {
 }
 
 void graphics_vulkan::set_camera(const mat4f& proj, const mat4f& view, const mat4f& world) {
-    _main_buffer_staging.proj = proj;
-    _main_buffer_staging.view = view;
-    _main_buffer_staging.proj_view = proj * view;
-    _main_buffer_staging.inv_proj_view = invert(_main_buffer_staging.proj_view);
-    _main_buffer_staging.camera_position = { world[12], world[13], world[14], 0.0f };
+    _main_staging_buffer_data.proj = proj;
+    _main_staging_buffer_data.view = view;
+    _main_staging_buffer_data.proj_view = proj * view;
+    _main_staging_buffer_data.inv_proj_view = invert(_main_staging_buffer_data.proj_view);
+    _main_staging_buffer_data.camera_position = { world[12], world[13], world[14], 0.0f };
 }
 
 void graphics_vulkan::render(const mat4f& world, const std::shared_ptr<mesh>& mesh, const std::shared_ptr<material>& material) {
@@ -93,7 +94,7 @@ void graphics_vulkan::render(const mat4f& world, const std::shared_ptr<mesh>& me
 }
 
 void graphics_vulkan::present() {
-    const auto projection_t = transpose(_main_buffer_staging.proj);
+    const auto projection_t = transpose(_main_staging_buffer_data.proj);
 
     const auto a = *reinterpret_cast<const vec4f*>(&projection_t.values[3 * 4]);
     const auto b = *reinterpret_cast<const vec4f*>(&projection_t.values[0 * 4]);
@@ -102,13 +103,13 @@ void graphics_vulkan::present() {
     const auto frustum_x = normalize_plane(a + b); // x + w < 0
     const auto frustum_y = normalize_plane(a + c); // y + w < 0
 
-    _main_buffer_staging.camera_frustum = { frustum_x.x, frustum_x.z, frustum_y.y, frustum_y.z };
-    _main_buffer_staging.instance_count = _instance_index;
+    _main_staging_buffer_data.camera_frustum = { frustum_x.x, frustum_x.z, frustum_y.y, frustum_y.z };
+    _main_staging_buffer_data.instance_count = _instance_index;
 
     void* ptr;
-    //RB_VK(vmaMapMemory(_allocator, _main_buffer_allocation, &ptr), "Failed to map memory");
-    //std::memcpy(ptr, &_main_buffer_staging, sizeof(main_data));
-    //vmaUnmapMemory(_allocator, _main_buffer_allocation);
+    RB_VK(vmaMapMemory(_allocator, _main_staging_buffer_allocation, &ptr), "Failed to map memory");
+    std::memcpy(ptr, &_main_staging_buffer_data, sizeof(main_data));
+    vmaUnmapMemory(_allocator, _main_staging_buffer_allocation);
 
     RB_VK(vmaMapMemory(_allocator, _world_buffer_allocation, &ptr), "Failed to map memory");
     std::memcpy(ptr, _world_buffer_staging.data(), sizeof(world_data)* _instance_index);
@@ -118,10 +119,12 @@ void graphics_vulkan::present() {
     std::memcpy(ptr, _draw_buffer_staging.data(), sizeof(VkDrawIndexedIndirectCommand)* _instance_index);
     vmaUnmapMemory(_allocator, _draw_buffer_allocation);
 
-
     auto command_buffer = _command_begin();
 
-    vkCmdUpdateBuffer(command_buffer, _main_buffer, 0, sizeof(main_data), &_main_buffer_staging);
+    VkBufferCopy copy;
+    copy.srcOffset = copy.dstOffset = 0;
+    copy.size = sizeof(main_data);
+    vkCmdCopyBuffer(command_buffer, _main_staging_buffer, _main_buffer, 1, &copy);
 
     VkDescriptorSet culling_descriptor_sets[]{
         _forward_descriptor_set,
@@ -184,8 +187,14 @@ void graphics_vulkan::present() {
 }
 
 void graphics_vulkan::_create_main_buffer() {
-    _create_buffer(VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+    _create_buffer(VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
         VMA_MEMORY_USAGE_CPU_TO_GPU,
+        sizeof(main_data),
+        &_main_staging_buffer,
+        &_main_staging_buffer_allocation);
+
+    _create_buffer(VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
+        VMA_MEMORY_USAGE_GPU_ONLY,
         sizeof(main_data),
         &_main_buffer,
         &_main_buffer_allocation);
