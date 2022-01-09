@@ -59,14 +59,14 @@ bool is_visible(uint index) {
 //    float near = u_main.proj[3][2] / (u_main.proj[2][2] - 1.0);
 //    float far = u_main.proj[3][2] / (u_main.proj[2][2] + 1.0);
 
-    visible = visible && distance(center.xyz, u_main.camera_position.xyz) - radius < s_camera_data.z;
+    //visible = visible && distance(center.xyz, u_main.camera_position.xyz) - radius < s_camera_data.z;
 
     return visible;
 }
 
 void main() {
 	uint index = uint(gl_GlobalInvocationID.x);
-
+    
     if (index < u_main.instance_count) {
 	    if (gl_LocalInvocationIndex == 0) {
             s_camera_data.x = 2.0 * atan(1.0 / u_main.proj[1][1]) * 180.0 / PI;
