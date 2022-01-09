@@ -44,24 +44,13 @@ layout(local_size_x = 16, local_size_y = 1, local_size_z = 1) in;
 bool is_visible(uint index) {
     vec4 bsphere = u_world.data[index].bsphere;
 
-    vec4 center = u_world.data[index].transform * vec4(bsphere.xyz, 1.0);
-    center = (u_main.view * vec4(center.xyz / center.w, 1.0));
+    vec4 world_center = u_world.data[index].transform * vec4(bsphere.xyz, 1.0);
+    vec4 center = (u_main.view * vec4(world_center.xyz, 1.0));
     float radius = length(( u_world.data[index].transform * vec4(bsphere.w, 0.0, 0.0, 0.0)).xyz);
-
-    bool visible = true;
     
-    // frustum culling
-	visible = visible && center.z * u_main.camera_frustum.y - abs(center.x) * u_main.camera_frustum.x > -radius;
-	visible = visible && center.z * u_main.camera_frustum.w - abs(center.y) * u_main.camera_frustum.z > -radius;
-
-
-//    float fov = 2.0 * atan(1.0 / u_main.proj[1][1]) * 180.0 / PI;
-//    float near = u_main.proj[3][2] / (u_main.proj[2][2] - 1.0);
-//    float far = u_main.proj[3][2] / (u_main.proj[2][2] + 1.0);
-
-    //visible = visible && distance(center.xyz, u_main.camera_position.xyz) - radius < s_camera_data.z;
-
-    return visible;
+    return center.z * u_main.camera_frustum.y - abs(center.x) * u_main.camera_frustum.x > -radius &&
+        center.z * u_main.camera_frustum.w - abs(center.y) * u_main.camera_frustum.z > -radius &&
+        center.z > -s_camera_data.z - radius && center.z < s_camera_data.y + radius;
 }
 
 void main() {
@@ -75,10 +64,9 @@ void main() {
         }
 
         u_draw_output.data[index] = u_draw.data[index];
-
+        
         if (!is_visible(index)) {
             u_draw_output.data[index].instance_count = 0;
-            // atomicMin(u_draw.data[index].instance_count, 0);
         } else {
             u_draw_output.data[index].instance_count = 1;
         }

@@ -106,33 +106,22 @@ void graphics_vulkan::present() {
     _main_buffer_staging.instance_count = _instance_index;
 
     void* ptr;
-    RB_VK(vmaMapMemory(_allocator, _main_buffer_allocation, &ptr), "Failed to map memory");
-    std::memcpy(ptr, &_main_buffer_staging, sizeof(main_data));
-    vmaUnmapMemory(_allocator, _main_buffer_allocation);
+    //RB_VK(vmaMapMemory(_allocator, _main_buffer_allocation, &ptr), "Failed to map memory");
+    //std::memcpy(ptr, &_main_buffer_staging, sizeof(main_data));
+    //vmaUnmapMemory(_allocator, _main_buffer_allocation);
 
     RB_VK(vmaMapMemory(_allocator, _world_buffer_allocation, &ptr), "Failed to map memory");
-    std::memcpy(ptr, _world_buffer_staging.data(), sizeof(world_data) * _instance_index);
+    std::memcpy(ptr, _world_buffer_staging.data(), sizeof(world_data)* _instance_index);
     vmaUnmapMemory(_allocator, _world_buffer_allocation);
 
     RB_VK(vmaMapMemory(_allocator, _draw_buffer_allocation, &ptr), "Failed to map memory");
-    std::memcpy(ptr, _draw_buffer_staging.data(), sizeof(VkDrawIndexedIndirectCommand) * _instance_index);
+    std::memcpy(ptr, _draw_buffer_staging.data(), sizeof(VkDrawIndexedIndirectCommand)* _instance_index);
     vmaUnmapMemory(_allocator, _draw_buffer_allocation);
+
 
     auto command_buffer = _command_begin();
 
-    _buffer_barrier(command_buffer, _main_buffer, 0, sizeof(main_data),
-        VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_ACCESS_SHADER_READ_BIT,
-        VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT);
-
-    _buffer_barrier(command_buffer, _world_buffer, 0, sizeof(world_data) * _instance_index,
-        VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_ACCESS_SHADER_READ_BIT,
-        VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT);
-
-    //_buffer_barrier(command_buffer, _draw_buffer, 0, sizeof(VkDrawIndexedIndirectCommand) * _instance_index,
-    //    VK_ACCESS_TRANSFER_WRITE_BIT, VK_ACCESS_SHADER_WRITE_BIT,
-    //    VK_PIPELINE_STAGE_ALL_GRAPHICS_BIT, VK_PIPELINE_STAGE_DRAW_INDIRECT_BIT | VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT);
-
-   // vkCmdUpdateBuffer(command_buffer, _main_buffer, 0, sizeof(main_data), &_main_buffer_staging);
+    vkCmdUpdateBuffer(command_buffer, _main_buffer, 0, sizeof(main_data), &_main_buffer_staging);
 
     VkDescriptorSet culling_descriptor_sets[]{
         _forward_descriptor_set,
@@ -141,36 +130,15 @@ void graphics_vulkan::present() {
     vkCmdBindDescriptorSets(command_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, _culling_pipeline_layout, 0, 2, culling_descriptor_sets, 0, nullptr);
     vkCmdBindPipeline(command_buffer, VK_PIPELINE_BIND_POINT_COMPUTE, _culling_pipeline);
 
-    VkBufferMemoryBarrier barriers[1];
-    barriers[0].sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
-    barriers[0].pNext = nullptr;
-    barriers[0].srcAccessMask = VK_ACCESS_INDIRECT_COMMAND_READ_BIT;
-    barriers[0].dstAccessMask = VK_ACCESS_SHADER_WRITE_BIT;
-    barriers[0].srcQueueFamilyIndex = _graphics_family;
-    barriers[0].dstQueueFamilyIndex = _graphics_family;
-    barriers[0].buffer = _draw_output_buffer;
-    barriers[0].offset = 0;
-    barriers[0].size = sizeof(VkDrawIndexedIndirectCommand) * _instance_index;
-
-    vkCmdPipelineBarrier(command_buffer,
-        VK_PIPELINE_STAGE_DRAW_INDIRECT_BIT | VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
-        0, 0, nullptr, sizeof(barriers) / sizeof(*barriers), barriers, 0, nullptr);
+    _buffer_barrier(command_buffer, _draw_output_buffer, 0, sizeof(VkDrawIndexedIndirectCommand) * _instance_index,
+        VK_ACCESS_INDIRECT_COMMAND_READ_BIT, VK_ACCESS_SHADER_WRITE_BIT,
+        VK_PIPELINE_STAGE_DRAW_INDIRECT_BIT | VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT);
 
     vkCmdDispatch(command_buffer, (_instance_index + _instance_index % 16) / 16, 1, 1);
 
-    barriers[0].sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER;
-    barriers[0].pNext = nullptr;
-    barriers[0].srcAccessMask = VK_ACCESS_SHADER_WRITE_BIT;
-    barriers[0].dstAccessMask = VK_ACCESS_INDIRECT_COMMAND_READ_BIT;
-    barriers[0].srcQueueFamilyIndex = _graphics_family;
-    barriers[0].dstQueueFamilyIndex = _graphics_family;
-    barriers[0].buffer = _draw_output_buffer;
-    barriers[0].offset = 0;
-    barriers[0].size = sizeof(VkDrawIndexedIndirectCommand) * _instance_index;
-
-    vkCmdPipelineBarrier(command_buffer,
-        VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT | VK_PIPELINE_STAGE_DRAW_INDIRECT_BIT, VK_PIPELINE_STAGE_DRAW_INDIRECT_BIT,
-        0, 0, nullptr, sizeof(barriers) / sizeof(*barriers), barriers, 0, nullptr);
+    _buffer_barrier(command_buffer, _draw_output_buffer, 0, sizeof(VkDrawIndexedIndirectCommand) * _instance_index,
+        VK_ACCESS_SHADER_WRITE_BIT, VK_ACCESS_INDIRECT_COMMAND_READ_BIT,
+        VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT | VK_PIPELINE_STAGE_DRAW_INDIRECT_BIT, VK_PIPELINE_STAGE_DRAW_INDIRECT_BIT);
 
     VkClearValue clear_values[2];
     clear_values[0].color = { { 0.0f, 0.0f, 0.0f, 0.0f } };
@@ -255,7 +223,7 @@ void graphics_vulkan::_create_draw_buffer() {
         &_draw_buffer_allocation);
 
     _create_buffer(VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT,
-        VMA_MEMORY_USAGE_CPU_TO_GPU,
+        VMA_MEMORY_USAGE_GPU_ONLY,
         sizeof(VkDrawIndexedIndirectCommand) * max_world_size,
         &_draw_output_buffer,
         &_draw_output_buffer_allocation);

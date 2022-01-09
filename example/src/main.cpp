@@ -9,7 +9,7 @@ struct camera_controller : public rb::system {
     void initialize() override {
         const auto coat = assets::load<prefab>("data/models/coat/scene.gltf");
 
-        for (auto i = 0u; i < 185u; ++i) {
+        for (auto i = 0u; i < 100u; ++i) {
             auto entity = world::registry().create();
             auto& transform = world::registry().emplace<rb::transform>(entity);
             transform.scaling = { 1.5f, 1.5f, 1.5f };

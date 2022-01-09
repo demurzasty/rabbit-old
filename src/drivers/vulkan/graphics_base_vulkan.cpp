@@ -702,6 +702,7 @@ void graphics_base_vulkan::_create_buffer(VkBufferUsageFlags usage, VmaMemoryUsa
 
     VmaAllocationCreateInfo buffer_allocation_info{};
     buffer_allocation_info.usage = memory_usage;
+    buffer_allocation_info.preferredFlags = VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
     RB_VK(vmaCreateBuffer(_allocator, &buffer_info, &buffer_allocation_info, buffer, allocation, nullptr),
         "Failed to create Vulkan buffer.");
 }
