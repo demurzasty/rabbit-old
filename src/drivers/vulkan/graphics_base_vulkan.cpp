@@ -88,11 +88,6 @@ std::shared_ptr<texture> graphics_base_vulkan::make_texture(const texture_desc& 
 
 std::shared_ptr<environment> graphics_base_vulkan::make_environment(const environment_desc& desc) {
     return nullptr;
-
-    const auto environment = std::make_shared<environment_vulkan>(_device, _graphics_queue, _command_pool, _allocator, VK_NULL_HANDLE, desc);
-    /*   _bake_irradiance(environment);
-       _bake_prefilter(environment);*/
-    return environment;
 }
 
 std::shared_ptr<material> graphics_base_vulkan::make_material(const material_desc& desc) {

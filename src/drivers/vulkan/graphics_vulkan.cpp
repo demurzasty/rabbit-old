@@ -176,22 +176,24 @@ void graphics_vulkan::present() {
     clear_values[0].color = { { 0.0f, 0.0f, 0.0f, 0.0f } };
     clear_values[1].depthStencil = { 1.0f, 0 };
 
+    const auto window_size = window::size();
+
     VkRenderPassBeginInfo render_pass_begin_info;
     render_pass_begin_info.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
     render_pass_begin_info.pNext = nullptr;
     render_pass_begin_info.renderPass = _render_pass;
     render_pass_begin_info.framebuffer = _framebuffers[_image_index];
     render_pass_begin_info.renderArea.offset = { 0, 0 };
-    render_pass_begin_info.renderArea.extent = { 1280, 720 };
+    render_pass_begin_info.renderArea.extent = { window_size.x, window_size.y };
     render_pass_begin_info.clearValueCount = sizeof(clear_values) / sizeof(*clear_values);
     render_pass_begin_info.pClearValues = clear_values;
 
     vkCmdBeginRenderPass(command_buffer, &render_pass_begin_info, VK_SUBPASS_CONTENTS_INLINE);
 
-    VkViewport viewport{ 0.0f, 0.0f, 1280.0f, 720.0f, 0.0f, 1.0f };
+    VkViewport viewport{ 0.0f, 0.0f, (float)window_size.x, (float)window_size.y, 0.0f, 1.0f };
     vkCmdSetViewport(command_buffer, 0, 1, &viewport);
 
-    VkRect2D scissor{ { 0, 0 }, { 1280, 720 } };
+    VkRect2D scissor{ { 0, 0 }, { window_size.x, window_size.y } };
     vkCmdSetScissor(command_buffer, 0, 1, &scissor);
 
     VkDeviceSize offset{ 0 };
