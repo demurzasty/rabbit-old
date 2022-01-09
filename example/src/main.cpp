@@ -1,16 +1,29 @@
 #include <rabbit/rabbit.hpp>
 
 #include <filesystem>
+#include <thread>
 
 using namespace rb;
 
 struct camera_controller : public rb::system {
-    void update(registry& registry, float elapsed_time) override {
+    void initialize() override {
+        const auto coat = assets::load<prefab>("data/models/coat/scene.gltf");
+
+        for (auto i = 0u; i < 185u; ++i) {
+            auto entity = world::registry().create();
+            auto& transform = world::registry().emplace<rb::transform>(entity);
+            transform.scaling = { 1.5f, 1.5f, 1.5f };
+            transform.position = { -7.5f - 5.0f * i, 0.0f, 0.0f };
+            coat->apply(world::registry(), entity);
+        }
+    }
+
+    void update(float elapsed_time) override {
         if (input::is_mouse_button_pressed(mouse_button::right)) {
             _last_mouse_position = input::mouse_position();
         }
 
-        for (const auto& [entity, transform, camera] : registry.view<transform, camera>().each()) {
+        for (const auto& [entity, transform, camera] : world::registry().view<transform, camera>().each()) {
             if (input::is_mouse_button_down(mouse_button::right)) {
                 const auto speed = input::is_key_down(keycode::space) ? 10.0f : 2.5f;
 
@@ -18,7 +31,7 @@ struct camera_controller : public rb::system {
                 const auto diff = _last_mouse_position - mouse_position;
                 _last_mouse_position = mouse_position;
 
-                registry.patch<rb::transform>(entity, [this, diff, elapsed_time, speed](rb::transform& transform) {
+                world::registry().patch<rb::transform>(entity, [this, diff, elapsed_time, speed](rb::transform& transform) {
                     _target_camera_rotation.y += diff.x * 0.005f;
                     _target_camera_rotation.x += diff.y * 0.005f;
 
@@ -46,7 +59,7 @@ struct camera_controller : public rb::system {
                 });
             }
 
-            registry.patch<rb::transform>(entity, [this, elapsed_time](rb::transform& transform) {
+            world::registry().patch<rb::transform>(entity, [this, elapsed_time](rb::transform& transform) {
                 transform.position = _smooth(transform.position, _target_camera_position, elapsed_time);
                 transform.rotation = _smooth(transform.rotation, _target_camera_rotation, elapsed_time);
             });
@@ -76,7 +89,7 @@ private:
 
 class fps_meter : public rb::system {
 public:
-    void update(registry& registry, float elapsed_time) override {
+    void update(float elapsed_time) override {
         _time += elapsed_time;
         if (_time > 1.0f) {
             window::set_title(format("RabBit FPS: {}", _fps));
@@ -85,7 +98,7 @@ public:
         }
     }
 
-    void draw(registry& registry) override {
+    void draw() override {
         ++_fps;
     }
 
@@ -104,5 +117,7 @@ int main(int argc, char* argv[]) {
     app::system<camera_controller>();
     app::system<fps_meter>();
     
+    settings::window_size = { 1280, 720 };
+    settings::vsync = false;
     app::run("data/prefabs/scene.scn");
 }

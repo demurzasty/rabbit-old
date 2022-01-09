@@ -1,0 +1,86 @@
+#version 450
+
+#define PI 3.14159265359
+
+struct world_data {
+    mat4 transform;
+    vec4 bsphere;
+};
+
+struct command_data {
+	uint index_count;
+	uint instance_count;
+	uint first_index;
+	int vertex_offset;
+	uint first_instance;
+};
+
+layout (std140, set = 0, binding = 0) uniform main_data {
+    mat4 proj;
+    mat4 view;
+    mat4 proj_view;
+    mat4 inv_proj_view;
+    vec4 camera_position;
+    vec4 camera_frustum;
+    uint instance_count;
+} u_main;
+
+layout (std430, set = 0, binding = 1) readonly buffer world_buffer {
+    world_data data[];
+} u_world;
+
+layout (std430, set = 1, binding = 0) readonly buffer draw_buffer {
+    command_data data[];
+} u_draw;
+
+layout (std430, set = 1, binding = 1) writeonly buffer draw_output_buffer {
+    command_data data[];
+} u_draw_output;
+
+shared vec3 s_camera_data;
+
+layout(local_size_x = 16, local_size_y = 1, local_size_z = 1) in;
+
+bool is_visible(uint index) {
+    vec4 bsphere = u_world.data[index].bsphere;
+
+    vec4 center = u_world.data[index].transform * vec4(bsphere.xyz, 1.0);
+    center = (u_main.view * vec4(center.xyz / center.w, 1.0));
+    float radius = length(( u_world.data[index].transform * vec4(bsphere.w, 0.0, 0.0, 0.0)).xyz);
+
+    bool visible = true;
+    
+    // frustum culling
+	visible = visible && center.z * u_main.camera_frustum.y - abs(center.x) * u_main.camera_frustum.x > -radius;
+	visible = visible && center.z * u_main.camera_frustum.w - abs(center.y) * u_main.camera_frustum.z > -radius;
+
+
+//    float fov = 2.0 * atan(1.0 / u_main.proj[1][1]) * 180.0 / PI;
+//    float near = u_main.proj[3][2] / (u_main.proj[2][2] - 1.0);
+//    float far = u_main.proj[3][2] / (u_main.proj[2][2] + 1.0);
+
+    visible = visible && distance(center.xyz, u_main.camera_position.xyz) - radius < s_camera_data.z;
+
+    return visible;
+}
+
+void main() {
+	uint index = uint(gl_GlobalInvocationID.x);
+
+    if (index < u_main.instance_count) {
+	    if (gl_LocalInvocationIndex == 0) {
+            s_camera_data.x = 2.0 * atan(1.0 / u_main.proj[1][1]) * 180.0 / PI;
+            s_camera_data.y = u_main.proj[3][2] / (u_main.proj[2][2] - 1.0);
+            s_camera_data.z = u_main.proj[3][2] / (u_main.proj[2][2] + 1.0);
+        }
+
+        u_draw_output.data[index] = u_draw.data[index];
+
+        if (!is_visible(index)) {
+            u_draw_output.data[index].instance_count = 0;
+            // atomicMin(u_draw.data[index].instance_count, 0);
+        } else {
+            u_draw_output.data[index].instance_count = 1;
+        }
+    }
+}

@@ -22,6 +22,7 @@
 #include "core/fnv1a.hpp"
 #include "core/format.hpp"
 #include "core/json.hpp"
+#include "core/literal.hpp"
 #include "core/prefab.hpp"
 #include "core/rect_pack.hpp"
 #include "core/reflection.hpp"
@@ -32,6 +33,7 @@
 #include "core/variant.hpp"
 #include "core/version.hpp"
 #include "core/visitor.hpp"
+#include "core/world.hpp"
 
 #include "graphics/color.hpp"
 #include "graphics/environment.hpp"
@@ -57,7 +59,6 @@
 #include "platform/input.hpp"
 #include "platform/window.hpp"
 
-#include "systems/hierarchy.hpp"
 #include "systems/renderer.hpp"
 
 #if !RB_PROD_BUILD

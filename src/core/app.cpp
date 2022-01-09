@@ -16,6 +16,7 @@ void app::setup() {
 	app::submodule<input>();
 	app::submodule<graphics>();
 	app::submodule<assets>();
+	app::submodule<world>();
 
 #if !RB_PROD_BUILD
 	app::submodule<editor>();
@@ -44,7 +45,6 @@ void app::setup() {
 		assets::add_loader<prefab>(&prefab::load);
 	});
 
-	app::system<hierarchy>();
 	app::system<renderer>();
 }
 
@@ -70,14 +70,13 @@ void app::_main_loop(const std::string& initial_scene) {
 		return func();
 	});
 
-	registry registry;
 	for (auto& system : systems) {
-		system->initialize(registry);
+		system->initialize();
 	}
 
 	if (!initial_scene.empty()) {
 		auto scene = assets::load<prefab>(initial_scene);
-		scene->apply(registry, null);
+		scene->apply(world::registry(), null);
 	}
 
 	auto last_time = std::chrono::steady_clock::now();
@@ -92,21 +91,19 @@ void app::_main_loop(const std::string& initial_scene) {
 		last_time = current_time;
 
 		for (auto& system : systems) {
-			system->update(registry, elapsed_time);
+			system->update(elapsed_time);
 		}
 
 		if (!window::is_minimized()) {
 			for (auto& system : systems) {
-				system->draw(registry);
+				system->draw();
 			}
 
-			graphics::swap_buffers();
+			graphics::present();
 		} else {
 			std::this_thread::sleep_for(std::chrono::milliseconds{ 100 });
 		}
 	}
-
-	graphics::flush();
 }
 
 app::deserializer app::get_deserializer(const std::string& name) {

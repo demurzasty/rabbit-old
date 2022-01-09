@@ -5,10 +5,7 @@
 #include "texture.hpp"
 #include "material.hpp"
 #include "mesh.hpp"
-#include "../components/transform.hpp"
-#include "../components/camera.hpp"
-#include "../components/geometry.hpp"
-#include "../components/light.hpp"
+#include "shader.hpp"
 
 #include <memory>
 
@@ -31,8 +28,6 @@ namespace rb {
 	public:
 		virtual ~graphics_impl() = default;
 
-		virtual std::shared_ptr<viewport> make_viewport(const viewport_desc& desc) = 0;
-
 		virtual std::shared_ptr<texture> make_texture(const texture_desc& desc) = 0;
 
 		virtual std::shared_ptr<environment> make_environment(const environment_desc& desc) = 0;
@@ -41,79 +36,11 @@ namespace rb {
 
 		virtual std::shared_ptr<mesh> make_mesh(const mesh_desc& desc) = 0;
 
-		virtual void begin() = 0;
+		virtual void set_camera(const mat4f& proj, const mat4f& view, const mat4f& world) = 0;
 
-		virtual void set_camera(const mat4f& projection, const mat4f& view, const mat4f& world, const std::shared_ptr<environment>& environment) = 0;
+		virtual void render(const mat4f& world, const std::shared_ptr<mesh>& mesh, const std::shared_ptr<material>& material) = 0;
 
-		virtual void begin_depth_pass(const std::shared_ptr<viewport>& viewport) = 0;
-
-		virtual void draw_depth(const std::shared_ptr<viewport>& viewport, const mat4f& world, const std::shared_ptr<mesh>& mesh, std::size_t mesh_lod_index) = 0;
-
-		virtual void end_depth_pass(const std::shared_ptr<viewport>& viewport) = 0;
-
-		virtual void begin_shadow_pass(const transform& transform, const light& light, const directional_light& directional_light, std::size_t cascade) = 0;
-
-		virtual void draw_shadow(const mat4f& world, const geometry& geometry, std::size_t cascade) = 0;
-
-		virtual void end_shadow_pass() = 0;
-
-		virtual void begin_light_pass(const std::shared_ptr<viewport>& viewport) = 0;
-
-		virtual void add_point_light(const std::shared_ptr<viewport>& viewport, const transform& transform, const light& light, const point_light& point_light) = 0;
-
-		virtual void add_directional_light(const std::shared_ptr<viewport>& viewport, const transform& transform, const light& light, const directional_light& directional_light, bool use_shadow) = 0;
-
-		virtual void end_light_pass(const std::shared_ptr<viewport>& viewport) = 0;
-
-		virtual void begin_forward_pass(const std::shared_ptr<viewport>& viewport) = 0;
-
-		virtual void draw_skybox(const std::shared_ptr<viewport>& viewport) = 0;
-
-		virtual void draw_forward(const std::shared_ptr<viewport>& viewport, const mat4f& world, const std::shared_ptr<mesh>& mesh, const std::shared_ptr<material>& material, std::size_t mesh_lod_index) = 0;
-
-		virtual void end_forward_pass(const std::shared_ptr<viewport>& viewport) = 0;
-
-		virtual void pre_draw_ssao(const std::shared_ptr<viewport>& viewport) = 0;
-
-		virtual void begin_fill_pass(const std::shared_ptr<viewport>& viewport) = 0;
-
-		virtual void draw_fill(const std::shared_ptr<viewport>& viewport, const transform& transform, const geometry& geometry) = 0;
-
-		virtual void end_fill_pass(const std::shared_ptr<viewport>& viewport) = 0;
-
-		virtual void begin_postprocess_pass(const std::shared_ptr<viewport>& viewport) = 0;
-
-		virtual void next_postprocess_pass(const std::shared_ptr<viewport>& viewport) = 0;
-
-		virtual void draw_ssao(const std::shared_ptr<viewport>& viewport) = 0;
-
-		virtual void draw_fxaa(const std::shared_ptr<viewport>& viewport) = 0;
-
-		virtual void draw_blur(const std::shared_ptr<viewport>& viewport, int strength) = 0;
-
-		virtual void draw_sharpen(const std::shared_ptr<viewport>& viewport, float strength) = 0;
-
-		virtual void draw_motion_blur(const std::shared_ptr<viewport>& viewport) = 0;
-
-		virtual void draw_outline(const std::shared_ptr<viewport>& viewport) = 0;
-
-		virtual void end_postprocess_pass(const std::shared_ptr<viewport>& viewport) = 0;
-
-		virtual void begin_immediate_pass() = 0;
-
-		virtual void draw_immediate_color(const span<const vertex>& vertices, const color& color) = 0;
-
-		virtual void draw_immediate_textured(const span<const vertex>& vertices, const std::shared_ptr<texture>& texture) = 0;
-
-		virtual void end_immediate_pass() = 0;
-
-		virtual void present(const std::shared_ptr<viewport>& viewport) = 0;
-
-		virtual void end() = 0;
-
-		virtual void swap_buffers() = 0;
-
-		virtual void flush() = 0;
+		virtual void present() = 0;
 	};
 
 	class graphics {
@@ -121,8 +48,6 @@ namespace rb {
 		static void init();
 
 		static void release();
-
-		static std::shared_ptr<viewport> make_viewport(const viewport_desc& desc);
 
 		static std::shared_ptr<texture> make_texture(const texture_desc& desc);
 
@@ -132,79 +57,11 @@ namespace rb {
 
 		static std::shared_ptr<mesh> make_mesh(const mesh_desc& desc);
 
-		static void begin();
+		static void set_camera(const mat4f& proj, const mat4f& view, const mat4f& world);
 
-		static void set_camera(const mat4f& projection, const mat4f& view, const mat4f& world, const std::shared_ptr<environment>& environment);
+		static void render(const mat4f& world, const std::shared_ptr<mesh>& mesh, const std::shared_ptr<material>& material);
 
-		static void begin_depth_pass(const std::shared_ptr<viewport>& viewport);
-
-		static void draw_depth(const std::shared_ptr<viewport>& viewport, const mat4f& world, const std::shared_ptr<mesh>& mesh, std::size_t mesh_lod_index);
-
-		static void end_depth_pass(const std::shared_ptr<viewport>& viewport);
-
-		static void begin_shadow_pass(const transform& transform, const light& light, const directional_light& directional_light, std::size_t cascade);
-
-		static void draw_shadow(const mat4f& world, const geometry& geometry, std::size_t cascade);
-
-		static void end_shadow_pass();
-
-		static void begin_light_pass(const std::shared_ptr<viewport>& viewport);
-
-		static void add_point_light(const std::shared_ptr<viewport>& viewport, const transform& transform, const light& light, const point_light& point_light);
-
-		static void add_directional_light(const std::shared_ptr<viewport>& viewport, const transform& transform, const light& light, const directional_light& directional_light, bool use_shadow);
-
-		static void end_light_pass(const std::shared_ptr<viewport>& viewport);
-
-		static void begin_forward_pass(const std::shared_ptr<viewport>& viewport);
-
-		static void draw_skybox(const std::shared_ptr<viewport>& viewport);
-
-		static void draw_forward(const std::shared_ptr<viewport>& viewport, const mat4f& world, const std::shared_ptr<mesh>& mesh, const std::shared_ptr<material>& material, std::size_t mesh_lod_index);
-
-		static void end_forward_pass(const std::shared_ptr<viewport>& viewport);
-
-		static void pre_draw_ssao(const std::shared_ptr<viewport>& viewport);
-
-		static void begin_fill_pass(const std::shared_ptr<viewport>& viewport);
-
-		static void draw_fill(const std::shared_ptr<viewport>& viewport, const transform& transform, const geometry& geometry);
-
-		static void end_fill_pass(const std::shared_ptr<viewport>& viewport);
-
-		static void begin_postprocess_pass(const std::shared_ptr<viewport>& viewport);
-
-		static void next_postprocess_pass(const std::shared_ptr<viewport>& viewport);
-
-		static void draw_ssao(const std::shared_ptr<viewport>& viewport);
-
-		static void draw_fxaa(const std::shared_ptr<viewport>& viewport);
-
-		static void draw_blur(const std::shared_ptr<viewport>& viewport, int strength);
-
-		static void draw_sharpen(const std::shared_ptr<viewport>& viewport, float strength);
-
-		static void draw_motion_blur(const std::shared_ptr<viewport>& viewport);
-
-		static void draw_outline(const std::shared_ptr<viewport>& viewport);
-
-		static void end_postprocess_pass(const std::shared_ptr<viewport>& viewport);
-
-		static void begin_immediate_pass();
-
-		static void draw_immediate_color(const span<const vertex>& vertices, const color& color);
-
-		static void draw_immediate_textured(const span<const vertex>& vertices, const std::shared_ptr<texture>& texture);
-
-		static void end_immediate_pass();
-
-		static void present(const std::shared_ptr<viewport>& viewport);
-
-		static void end();
-		
-		static void swap_buffers();
-
-		static void flush();
+		static void present();
 
 	private:
 		static std::shared_ptr<graphics_impl> _impl;

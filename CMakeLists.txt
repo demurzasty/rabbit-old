@@ -17,34 +17,29 @@ option (RB_PROD_BUILD "Enable production build" OFF)
 
 add_subdirectory ("lib")
 
-set (GLSLANG_VALIDATOR "${CMAKE_CURRENT_SOURCE_DIR}/bin/win32/glslangValidator.exe")
 set (B2H "${CMAKE_CURRENT_SOURCE_DIR}/bin/win32/b2h.exe")
 
-file (GLOB_RECURSE GLSL_SOURCE_FILES "data/shaders/*.vert" "data/shaders/*.frag" "data/shaders/*.comp")
+file (GLOB_RECURSE GLSL_SOURCE_FILES "src/*.vert" "src/*.frag" "src/*.comp")
 
 foreach (GLSL_SRC ${GLSL_SOURCE_FILES})
+	get_filename_component (FILE_DIRECTORY ${GLSL_SRC} DIRECTORY)
 	get_filename_component (FILE_NAME ${GLSL_SRC} NAME)
 	get_filename_component (FILE_EXT ${GLSL_SRC} EXT)
 
 	set (GENERATED_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/generated/include/rabbit/generated/shaders")
-	set (GLSL_H "${GENERATED_DIRECTORY}/${FILE_NAME}.glsl.h")
-	set (SPIRV_H "${GENERATED_DIRECTORY}/${FILE_NAME}.spv.h")
+	set (GLSL_H "${FILE_DIRECTORY}/${FILE_NAME}.generated.h")
 
 	string (REPLACE "." "_" VARIABLE_NAME ${FILE_NAME})
 
 	add_custom_command (
-		OUTPUT ${SPIRV_H}
-		COMMAND ${CMAKE_COMMAND} -E make_directory ${GENERATED_DIRECTORY}
-		# GLSL -> C Header
-		COMMAND ${B2H} ${GLSL_SRC} ${GLSL_H} "${VARIABLE_NAME}"
-		# GLSL -> SPIR-V -> C Header
-		COMMAND ${GLSLANG_VALIDATOR} -V ${GLSL_SRC} --vn "${VARIABLE_NAME}" -Os -o ${SPIRV_H}
+		OUTPUT ${GLSL_H}
+		COMMAND ${B2H} ${GLSL_SRC} ${GLSL_H} "${VARIABLE_NAME}" # GLSL -> C Header
 		DEPENDS ${GLSL_SRC}
 	)
-	list (APPEND SPIRV_BINARY_FILES ${SPIRV_H} ${GLSL_H})
+	list (APPEND GLSL_BINARY_FILES ${GLSL_H})
 endforeach (GLSL_SRC)
 
-add_custom_target (shaders DEPENDS ${SPIRV_BINARY_FILES})
+add_custom_target (shaders DEPENDS ${GLSL_BINARY_FILES})
 
 set (SRC 
 	"src/core/app.cpp"
@@ -57,6 +52,7 @@ set (SRC
 	"src/core/settings.cpp"
 	"src/core/system.cpp"
 	"src/core/uuid.cpp"
+	"src/core/world.cpp"
 
 	"src/graphics/environment.cpp"
 	"src/graphics/glsl.cpp"
@@ -72,7 +68,6 @@ set (SRC
 	"src/platform/input.cpp"
 	"src/platform/window.cpp"
 
-	"src/systems/hierarchy.cpp"
 	"src/systems/renderer.cpp"
 )
 
@@ -92,6 +87,7 @@ endif ()
 if (RB_VULKAN) 
 	set (SRC ${SRC}
 		"src/drivers/vulkan/environment_vulkan.cpp"
+		"src/drivers/vulkan/graphics_base_vulkan.cpp"
 		"src/drivers/vulkan/graphics_vulkan.cpp"
 		"src/drivers/vulkan/material_vulkan.cpp"
 		"src/drivers/vulkan/mesh_vulkan.cpp"

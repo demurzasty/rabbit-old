@@ -1,5 +1,7 @@
 #pragma once 
 
+#include "vec3.hpp"
+
 #include <cstddef>
 
 namespace rb {
@@ -41,6 +43,16 @@ namespace rb {
 	template<typename T>
 	constexpr vec4<T> operator/(const vec4<T>& a, const vec4<T>& b) {
 		return { a.x / b.x, a.y / b.y, a.z / b.z, a.w / b.w };
+	}
+
+	template<typename T>
+	constexpr vec4<T> operator/(const vec4<T>& a, T b) {
+		return { a.x / b, a.y / b, a.z / b, a.w / b };
+	}
+
+	template<typename T>
+	vec4<T> normalize_plane(const vec4<T>& plane) {
+		return plane / length(vec3<T>{ plane.x, plane.y, plane.z });
 	}
 
 	using vec4i = vec4<int>;

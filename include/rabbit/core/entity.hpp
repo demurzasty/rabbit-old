@@ -5,6 +5,8 @@
 
 namespace rb {
 	using entt::registry;
+	using entt::basic_registry;
+	using entt::entt_traits;
 	using entt::entity;
 	using entt::null;
 	using entt::exclude;

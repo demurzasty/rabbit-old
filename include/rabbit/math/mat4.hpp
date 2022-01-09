@@ -209,6 +209,16 @@ namespace rb {
 	};
 
     template<typename T>
+    constexpr mat4<T> transpose(const mat4<T>& mat) {
+        return {
+            mat[0], mat[4], mat[8], mat[12],
+            mat[1], mat[5], mat[9], mat[13],
+            mat[2], mat[6], mat[10], mat[14],
+            mat[3], mat[7], mat[11], mat[15]
+        };
+    }
+
+    template<typename T>
     constexpr mat4<T> invert(const mat4<T>& mat) {
         const mat4<T> out = {
             mat[5] * mat[10] * mat[15] -

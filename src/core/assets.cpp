@@ -39,7 +39,7 @@ void assets::load_resources() {
     }
 }
 
-std::shared_ptr<void> assets::_load(std::type_index type_index, const uuid& uuid, fnv1a_result_t magic_number) {
+std::shared_ptr<void> assets::_load(std::type_index type_index, const uuid& uuid, fnv1a_result_t magic_number) {    
     auto& asset = _assets[uuid];
     if (!asset.expired()) {
         return asset.lock();

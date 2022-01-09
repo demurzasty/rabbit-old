@@ -8,22 +8,14 @@
 namespace rb {
 	class mesh_vulkan : public mesh {
 	public:
-		mesh_vulkan(VkDevice device, VmaAllocator allocator, const mesh_desc& desc);
+		mesh_vulkan(std::uint32_t vertex_offset, std::uint32_t index_offset, const mesh_desc& desc);
 
-		~mesh_vulkan();
+		std::uint32_t vertex_offset() const;
 
-		VkBuffer vertex_buffer() const;
-
-		VkBuffer index_buffer() const;
+		std::uint32_t index_offset() const;
 
 	private:
-		VkDevice _device;
-		VmaAllocator _allocator;
-
-		VkBuffer _vertex_buffer;
-		VmaAllocation _vertex_allocation;
-
-		VkBuffer _index_buffer;
-		VmaAllocation _index_allocation;
+		std::uint32_t _vertex_offset;
+		std::uint32_t _index_offset;
 	};
 }
