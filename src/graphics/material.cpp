@@ -52,6 +52,8 @@ inline std::uint32_t calculate_material_flags(const material_desc& desc) {
 }
 
 std::shared_ptr<material> material::load(ibstream& stream) {
+    return nullptr;
+
     material_desc desc;
     stream.read(desc.base_color);
     stream.read(desc.roughness);

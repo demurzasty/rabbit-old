@@ -143,7 +143,7 @@ void graphics_base_vulkan::_create_instance() {
     app_info.applicationVersion = VK_MAKE_VERSION(major, minor, patch);
     app_info.pEngineName = "RabBit";
     app_info.engineVersion = VK_MAKE_VERSION(RB_VERSION_MAJOR, RB_VERSION_MINOR, RB_VERSION_PATCH);
-    app_info.apiVersion = VK_API_VERSION_1_0;
+    app_info.apiVersion = VK_API_VERSION_1_2;
 
     const char* enabled_extensions[] = {
         VK_KHR_SURFACE_EXTENSION_NAME,
@@ -651,10 +651,10 @@ void graphics_base_vulkan::_create_command_buffers() {
 
 VkFormat graphics_base_vulkan::_get_supported_depth_format() {
     VkFormat depth_formats[]{
-        VK_FORMAT_D24_UNORM_S8_UINT,
+       // VK_FORMAT_D24_UNORM_S8_UINT,
         VK_FORMAT_D32_SFLOAT,
-        VK_FORMAT_D16_UNORM_S8_UINT,
-        VK_FORMAT_D16_UNORM
+     //   VK_FORMAT_D16_UNORM_S8_UINT,
+     //   VK_FORMAT_D16_UNORM
     };
 
     for (auto& format : depth_formats) {

@@ -22,12 +22,13 @@ layout (std140, set = 0, binding = 0) uniform main_data {
     mat4 inv_proj_view;
     vec4 camera_position;
     vec4 camera_frustum;
-    uint instance_count;
+    uvec4 additional_info;
 } u_main;
 
 layout (std430, set = 0, binding = 1) readonly buffer world_buffer {
     world_data data[];
 } u_world;
+
 
 layout (std430, set = 1, binding = 0) readonly buffer draw_buffer {
     command_data data[];
@@ -37,26 +38,74 @@ layout (std430, set = 1, binding = 1) writeonly buffer draw_output_buffer {
     command_data data[];
 } u_draw_output;
 
+layout (set = 1, binding = 2) uniform sampler2D u_depth_pyramid;
+
 shared vec3 s_camera_data;
 
 layout(local_size_x = 16, local_size_y = 1, local_size_z = 1) in;
 
+// 2D Polyhedral Bounds of a Clipped, Perspective-Projected 3D Sphere. Michael Mara, Morgan McGuire. 2013
+bool project_sphere(vec3 C, float r, float znear, float P00, float P11, out vec4 aabb)
+{
+	if (C.z < r + znear)
+		return false;
+
+	vec2 cx = -C.xz;
+	vec2 vx = vec2(sqrt(dot(cx, cx) - r * r), r);
+	vec2 minx = mat2(vx.x, vx.y, -vx.y, vx.x) * cx;
+	vec2 maxx = mat2(vx.x, -vx.y, vx.y, vx.x) * cx;
+
+	vec2 cy = -C.yz;
+	vec2 vy = vec2(sqrt(dot(cy, cy) - r * r), r);
+	vec2 miny = mat2(vy.x, vy.y, -vy.y, vy.x) * cy;
+	vec2 maxy = mat2(vy.x, -vy.y, vy.y, vy.x) * cy;
+
+	aabb = vec4(minx.x / minx.y * P00, miny.x / miny.y * P11, maxx.x / maxx.y * P00, maxy.x / maxy.y * P11);
+	aabb = aabb.xwzy * vec4(0.5, -0.5, 0.5, -0.5) + vec4(0.5); // clip space -> uv space
+
+	return true;
+}
+
 bool is_visible(uint index) {
     vec4 bsphere = u_world.data[index].bsphere;
 
+   // mat4 transform = u_world.data[index].transform;
+    //vec3 translation = vec3(transform[12], transform[13], transform[14]);
     vec4 world_center = u_world.data[index].transform * vec4(bsphere.xyz, 1.0);
     vec4 center = (u_main.view * vec4(world_center.xyz, 1.0));
-    float radius = length(( u_world.data[index].transform * vec4(bsphere.w, 0.0, 0.0, 0.0)).xyz);
-    
-    return center.z * u_main.camera_frustum.y - abs(center.x) * u_main.camera_frustum.x > -radius &&
+    float radius = length((u_world.data[index].transform * vec4(bsphere.w, 0.0, 0.0, 0.0)).xyz);
+  
+    bool visible = true;
+
+    visible = center.z * u_main.camera_frustum.y - abs(center.x) * u_main.camera_frustum.x > -radius &&
         center.z * u_main.camera_frustum.w - abs(center.y) * u_main.camera_frustum.z > -radius &&
         center.z > -s_camera_data.z - radius && center.z < s_camera_data.y + radius;
+        
+    center.z = -center.z;
+   // center.y = -center.y;
+
+    if (visible && u_main.additional_info.y > 0) {
+        vec4 aabb;
+        if (project_sphere(center.xyz, radius, 0.5, u_main.proj[0][0], u_main.proj[1][1], aabb)) {
+		    float width = (aabb.z - aabb.x) * 1280.0; // cullData.pyramidWidth;
+		    float height = (aabb.w - aabb.y) * 720.0; // cullData.pyramidHeight;
+            float level = floor(log2(max(width, height)));
+            float depth = textureLod(u_depth_pyramid, (aabb.xy + aabb.zw) * 0.5, level).x;
+		    //float depthSphere = s_camera_data.y / (center.z - radius);
+           float depthSphere = 0.5 / (center.z - radius);
+            //float depthSphere = center.z - radius;
+
+            visible = depthSphere < depth;
+        }
+    }
+
+    return visible;
 }
 
 void main() {
 	uint index = uint(gl_GlobalInvocationID.x);
     
-    if (index < u_main.instance_count) {
+    if (index < u_main.additional_info.x) {
 	    if (gl_LocalInvocationIndex == 0) {
             s_camera_data.x = 2.0 * atan(1.0 / u_main.proj[1][1]) * 180.0 / PI;
             s_camera_data.y = u_main.proj[3][2] / (u_main.proj[2][2] - 1.0);

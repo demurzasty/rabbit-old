@@ -9,12 +9,14 @@ struct camera_controller : public rb::system {
     void initialize() override {
         const auto coat = assets::load<prefab>("data/models/coat/scene.gltf");
 
-        for (auto i = 0u; i < 100u; ++i) {
-            auto entity = world::registry().create();
-            auto& transform = world::registry().emplace<rb::transform>(entity);
-            transform.scaling = { 1.5f, 1.5f, 1.5f };
-            transform.position = { -7.5f - 5.0f * i, 0.0f, 0.0f };
-            coat->apply(world::registry(), entity);
+        for (auto i = 0u; i < 10u; ++i) {
+            for (auto j = 0u; j < 10u; ++j) {
+                auto entity = world::registry().create();
+                auto& transform = world::registry().emplace<rb::transform>(entity);
+                transform.scaling = { 1.5f, 1.5f, 1.5f };
+                transform.position = { -7.5f - 5.0f * i, 0.0f, 5.0f * j };
+                coat->apply(world::registry(), entity);
+            }
         }
     }
 

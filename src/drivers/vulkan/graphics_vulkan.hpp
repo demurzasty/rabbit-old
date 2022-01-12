@@ -14,6 +14,7 @@ namespace rb {
 			vec4f camera_position;
 			vec4f camera_frustum;
 			std::uint32_t instance_count;
+			std::uint32_t total_frames;
 		};
 
 		struct alignas(16) world_data {
@@ -53,6 +54,8 @@ namespace rb {
 
 		void _create_culling_pipeline();
 
+		void _create_depth_pyramid();
+
 	private:
 		std::uint32_t _instance_index{ 0 };
 
@@ -91,5 +94,19 @@ namespace rb {
 		VkDescriptorSet _culling_descriptor_set;
 		VkPipelineLayout _culling_pipeline_layout;
 		VkPipeline _culling_pipeline;
+
+		std::uint32_t _depth_pyramid_levels;
+		VkImage _depth_pyramid;
+		VmaAllocation _depth_pyramid_allocation;
+		VkSampler _depth_pyramid_sampler;
+		VkImageView _depth_pyramid_view;
+		VkImageView _depth_pyramid_mips[16]{};
+		VkDescriptorSetLayout _depth_pyramid_descriptor_set_layout;
+		VkDescriptorPool _depth_pyramid_descriptor_pool;
+		VkDescriptorSet _depth_pyramid_descriptor_sets[16]{};
+		VkPipelineLayout _depth_pyramid_pipeline_layout;
+		VkPipeline _depth_pyramid_pipeline;
+
+		std::uint32_t _total_frames{ 0 };
 	};
 }
