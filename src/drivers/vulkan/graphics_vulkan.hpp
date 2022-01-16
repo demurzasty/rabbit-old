@@ -54,6 +54,12 @@ namespace rb {
 
 		void _create_culling_pipeline();
 
+		void _create_sphere();
+
+		void _create_occlusion_query_pool();
+
+		void _create_occlusion_pipeline();
+
 		void _create_depth_pyramid();
 
 	private:
@@ -68,6 +74,12 @@ namespace rb {
 		VkBuffer _world_buffer;
 		VmaAllocation _world_buffer_allocation;
 		std::vector<world_data> _world_buffer_staging;
+
+		VkBuffer _sphere_vertex_buffer;
+		VmaAllocation _sphere_vertex_buffer_allocation;
+
+		VkBuffer _sphere_index_buffer;
+		VmaAllocation _sphere_index_buffer_allocation;
 
 		VkBuffer _vertex_buffer;
 		VmaAllocation _vertex_buffer_allocation;
@@ -88,6 +100,13 @@ namespace rb {
 		VkDescriptorSet _forward_descriptor_set;
 		VkPipelineLayout _forward_pipeline_layout;
 		VkPipeline _forward_pipeline;
+
+		VkQueryPool _occlusion_query_pool;
+		std::unique_ptr<std::uint32_t[]> _occlusion_query_result;
+		VkBuffer _occlusion_buffer;
+		VmaAllocation _occlusion_buffer_allocation;
+
+		VkPipeline _occlusion_pipeline;
 
 		VkDescriptorSetLayout _culling_descriptor_set_layout;
 		VkDescriptorPool _culling_descriptor_pool;

@@ -40,6 +40,10 @@ layout (std430, set = 1, binding = 1) writeonly buffer draw_output_buffer {
 
 layout (set = 1, binding = 2) uniform sampler2D u_depth_pyramid;
 
+layout (std430, set = 1, binding = 3) readonly buffer occlusion_buffer {
+    uint data[];
+} u_occlusion;
+
 shared vec3 s_camera_data;
 
 layout(local_size_x = 16, local_size_y = 1, local_size_z = 1) in;
@@ -67,13 +71,15 @@ bool project_sphere(vec3 C, float r, float znear, float P00, float P11, out vec4
 }
 
 bool is_visible(uint index) {
-    vec4 bsphere = u_world.data[index].bsphere;
+    uint world_index = u_draw.data[index].first_instance;
+
+    vec4 bsphere = u_world.data[world_index].bsphere;
 
    // mat4 transform = u_world.data[index].transform;
     //vec3 translation = vec3(transform[12], transform[13], transform[14]);
-    vec4 world_center = u_world.data[index].transform * vec4(bsphere.xyz, 1.0);
+    vec4 world_center = u_world.data[world_index].transform * vec4(bsphere.xyz, 1.0);
     vec4 center = (u_main.view * vec4(world_center.xyz, 1.0));
-    float radius = length((u_world.data[index].transform * vec4(bsphere.w, 0.0, 0.0, 0.0)).xyz);
+    float radius = length((u_world.data[world_index].transform * vec4(bsphere.w, 0.0, 0.0, 0.0)).xyz);
   
     bool visible = true;
 
@@ -81,23 +87,36 @@ bool is_visible(uint index) {
         center.z * u_main.camera_frustum.w - abs(center.y) * u_main.camera_frustum.z > -radius &&
         center.z > -s_camera_data.z - radius && center.z < s_camera_data.y + radius;
         
-    center.z = -center.z;
+    visible = visible && (u_main.additional_info.y == 0 || u_occlusion.data[world_index] > 0);
+
+    // center.z = -center.z;
    // center.y = -center.y;
 
-    if (visible && u_main.additional_info.y > 0) {
-        vec4 aabb;
-        if (project_sphere(center.xyz, radius, 0.5, u_main.proj[0][0], u_main.proj[1][1], aabb)) {
-		    float width = (aabb.z - aabb.x) * 1280.0; // cullData.pyramidWidth;
-		    float height = (aabb.w - aabb.y) * 720.0; // cullData.pyramidHeight;
-            float level = floor(log2(max(width, height)));
-            float depth = textureLod(u_depth_pyramid, (aabb.xy + aabb.zw) * 0.5, level).x;
-		    //float depthSphere = s_camera_data.y / (center.z - radius);
-           float depthSphere = 0.5 / (center.z - radius);
-            //float depthSphere = center.z - radius;
+   //center.y *= -1.0;
 
-            visible = depthSphere < depth;
-        }
-    }
+//    if (visible && u_main.additional_info.y > 0) {
+//        vec4 aabb;
+//        // if (project_sphere(center.xyz, radius, 0.5, u_main.proj[0][0], u_main.proj[1][1], aabb)) {
+//		    float width = (aabb.z - aabb.x) * 1280.0; // cullData.pyramidWidth;
+//		    float height = (aabb.w - aabb.y) * 720.0; // cullData.pyramidHeight;
+//            float level = floor(log2(max(width, height))) + 1;
+//            float depth = textureLod(u_depth_pyramid, (aabb.xy + aabb.zw) * 0.5, level).x;
+//
+//            depth = textureLod(u_depth_pyramid, (aabb.xy + aabb.zw) * 0.5, 0.0).x;
+//
+//            vec4 screenspace = u_main.proj * center;
+//            screenspace.xyz /= screenspace.w;
+//
+//            depth = textureLod(u_depth_pyramid, screenspace.xy * 0.5 + 0.5, 4.0).x;
+//
+//		    //float depthSphere = s_camera_data.y / (center.z - radius);
+//            //float depthSphere = 0.5 / (screenspace.z - radius);
+//            //float depthSphere = center.z - radius;
+//            float depthSphere = screenspace.z;// * 2.0 - 1.0;
+//
+//            visible = depthSphere < depth;
+//        // }
+//    }
 
     return visible;
 }
@@ -114,10 +133,8 @@ void main() {
 
         u_draw_output.data[index] = u_draw.data[index];
         
-        if (!is_visible(index)) {
+        if (u_draw.data[index].instance_count > 0 && !is_visible(index)) {
             u_draw_output.data[index].instance_count = 0;
-        } else {
-            u_draw_output.data[index].instance_count = 1;
         }
     }
 }

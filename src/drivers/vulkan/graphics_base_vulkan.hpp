@@ -74,6 +74,12 @@ namespace rb {
 
 		void _buffer_barrier(VkCommandBuffer command_buffer, VkBuffer buffer, VkDeviceSize offset, VkDeviceSize size, VkAccessFlags src_access, VkAccessFlags dst_access, VkPipelineStageFlags src_stage, VkPipelineStageFlags dst_stage);
 		
+		void _create_image(VkImageType type, VkFormat format, VkExtent3D extent, std::uint32_t mipmaps, std::uint32_t layers, VkImageUsageFlags usage, VkImageLayout layout, VmaMemoryUsage memory_usage, VkImage* image, VmaAllocation* allocation);
+
+		void _create_image_view(VkImage image, VkImageViewType type, VkFormat format, VkImageSubresourceRange range, VkImageView* image_view);
+
+		void _create_sampler(VkFilter filter, VkSamplerMipmapMode mipmap_mode, VkSamplerAddressMode address_mode, float anisotropy, float max_lod, bool min_reduction, VkSampler* sampler);
+
 		VkCommandBuffer _command_begin();
 
 		void _command_end();

@@ -516,10 +516,11 @@ void graphics_base_vulkan::_create_swapchain() {
     depth_attachment.format = depth_format;
     depth_attachment.samples = VK_SAMPLE_COUNT_1_BIT;
     depth_attachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR; // VK_ATTACHMENT_LOAD_OP_CLEAR;
+    depth_attachment.loadOp = VK_ATTACHMENT_LOAD_OP_LOAD; // VK_ATTACHMENT_LOAD_OP_CLEAR;
     depth_attachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
     depth_attachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
     depth_attachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-    depth_attachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    depth_attachment.initialLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
     depth_attachment.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
     VkAttachmentReference color_attachment_reference;
@@ -557,6 +558,25 @@ void graphics_base_vulkan::_create_swapchain() {
     subpass_dependencies[1].srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
     subpass_dependencies[1].dstAccessMask = VK_ACCESS_MEMORY_READ_BIT;
     subpass_dependencies[1].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
+
+    subpass_dependencies[0].srcSubpass = VK_SUBPASS_EXTERNAL;
+    subpass_dependencies[0].dstSubpass = 0;
+    subpass_dependencies[0].srcStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT |
+        VK_PIPELINE_STAGE_LATE_FRAGMENT_TESTS_BIT; // Both stages might have access the depth-buffer, so need both in src/dstStageMask;;
+    subpass_dependencies[0].dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT | VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+    subpass_dependencies[0].srcAccessMask = VK_ACCESS_MEMORY_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT;
+    subpass_dependencies[0].dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT |
+        VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT;
+    subpass_dependencies[0].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
+
+    subpass_dependencies[1].srcSubpass = 0;
+    subpass_dependencies[1].dstSubpass = VK_SUBPASS_EXTERNAL;
+    subpass_dependencies[1].srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+    subpass_dependencies[1].dstStageMask = VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT;
+    subpass_dependencies[1].srcAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+    subpass_dependencies[1].dstAccessMask = VK_ACCESS_MEMORY_READ_BIT;
+    subpass_dependencies[1].dependencyFlags = VK_DEPENDENCY_BY_REGION_BIT;
+
 
     subpass_dependencies[0].srcSubpass = VK_SUBPASS_EXTERNAL;
     subpass_dependencies[0].dstSubpass = 0;
@@ -702,7 +722,7 @@ void graphics_base_vulkan::_create_buffer(VkBufferUsageFlags usage, VmaMemoryUsa
 
     VmaAllocationCreateInfo buffer_allocation_info{};
     buffer_allocation_info.usage = memory_usage;
-    buffer_allocation_info.preferredFlags = VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
+    // buffer_allocation_info.preferredFlags = VK_MEMORY_PROPERTY_HOST_COHERENT_BIT;
     RB_VK(vmaCreateBuffer(_allocator, &buffer_info, &buffer_allocation_info, buffer, allocation, nullptr),
         "Failed to create Vulkan buffer.");
 }
@@ -766,6 +786,79 @@ void graphics_base_vulkan::_buffer_barrier(VkCommandBuffer command_buffer, VkBuf
     barrier.offset = offset;
     barrier.size = size;
     vkCmdPipelineBarrier(command_buffer, src_stage, dst_stage, 0, 0, nullptr, 1, &barrier, 0, nullptr);
+}
+
+void graphics_base_vulkan::_create_image(VkImageType type, VkFormat format, VkExtent3D extent, std::uint32_t mipmaps, std::uint32_t layers, VkImageUsageFlags usage, VkImageLayout layout, VmaMemoryUsage memory_usage, VkImage* image, VmaAllocation* allocation) {
+    VkImageCreateInfo image_info;
+    image_info.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+    image_info.pNext = nullptr;
+    image_info.flags = 0;
+    image_info.imageType = type;
+    image_info.format = format;
+    image_info.extent = extent;
+    image_info.mipLevels = mipmaps;
+    image_info.arrayLayers = layers;
+    image_info.samples = VK_SAMPLE_COUNT_1_BIT;
+    image_info.tiling = VK_IMAGE_TILING_OPTIMAL;
+    image_info.usage = usage;
+    image_info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+    image_info.queueFamilyIndexCount = 0;
+    image_info.pQueueFamilyIndices = 0;
+    image_info.initialLayout = layout;
+
+    VmaAllocationCreateInfo allocation_info{};
+    allocation_info.usage = memory_usage;
+    RB_VK(vmaCreateImage(_allocator, &image_info, &allocation_info, image, allocation, nullptr),
+        "Failed to create Vulkan image.");
+}
+
+void graphics_base_vulkan::_create_image_view(VkImage image, VkImageViewType type, VkFormat format, VkImageSubresourceRange range, VkImageView* image_view) {
+    VkImageViewCreateInfo image_view_info;
+    image_view_info.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+    image_view_info.pNext = nullptr;
+    image_view_info.flags = 0;
+    image_view_info.image = image;
+    image_view_info.viewType = type;
+    image_view_info.format = format;
+    image_view_info.components.r = VK_COMPONENT_SWIZZLE_R;
+    image_view_info.components.g = VK_COMPONENT_SWIZZLE_G;
+    image_view_info.components.b = VK_COMPONENT_SWIZZLE_B;
+    image_view_info.components.a = VK_COMPONENT_SWIZZLE_A;
+    image_view_info.subresourceRange = range;
+    RB_VK(vkCreateImageView(_device, &image_view_info, nullptr, image_view),
+        "Failed to create Vulkan image view");
+}
+
+void graphics_base_vulkan::_create_sampler(VkFilter filter, VkSamplerMipmapMode mipmap_mode, VkSamplerAddressMode address_mode, float anisotropy, float max_lod, bool min_reduction, VkSampler* sampler) {
+    VkSamplerCreateInfo sampler_info;
+    sampler_info.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+    sampler_info.pNext = nullptr;
+    sampler_info.flags = 0;
+    sampler_info.magFilter = filter;
+    sampler_info.minFilter = filter;
+    sampler_info.mipmapMode = mipmap_mode;
+    sampler_info.addressModeU = address_mode;
+    sampler_info.addressModeV = address_mode;
+    sampler_info.addressModeW = address_mode;
+    sampler_info.mipLodBias = 0.0f;
+    sampler_info.anisotropyEnable = VK_TRUE;
+    sampler_info.maxAnisotropy = anisotropy;
+    sampler_info.compareEnable = VK_FALSE;
+    sampler_info.compareOp = VK_COMPARE_OP_ALWAYS;
+    sampler_info.minLod = 0.0f;
+    sampler_info.maxLod = max_lod;
+    sampler_info.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
+    sampler_info.unnormalizedCoordinates = VK_FALSE;
+
+    VkSamplerReductionModeCreateInfoEXT reduction_info{ VK_STRUCTURE_TYPE_SAMPLER_REDUCTION_MODE_CREATE_INFO_EXT };
+
+    if (min_reduction) {
+        reduction_info.reductionMode = VK_SAMPLER_REDUCTION_MODE_MIN;
+        reduction_info.reductionMode = VK_SAMPLER_REDUCTION_MODE_MAX;
+        sampler_info.pNext = &reduction_info;
+    }
+
+    RB_VK(vkCreateSampler(_device, &sampler_info, nullptr, sampler), "Failed to create Vulkan sampler");
 }
 
 VkCommandBuffer graphics_base_vulkan::_command_begin() {
